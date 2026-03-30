@@ -289,52 +289,76 @@ async function generateChildImage(imagePrompt) {
     imageLoading.classList.remove('hidden');
     childImage.classList.remove('loaded');
 
-    try {
-        // Use Pollinations.ai for free AI image generation (no API key needed)
-        // This is a free service that generates images from text prompts
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=800&seed=${Date.now()}&nologo=true`;
-
-        // Load the image
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-
-        img.onload = () => {
-            childImage.src = img.src;
-            childImage.classList.add('loaded');
-            imageLoading.classList.add('hidden');
-        };
-
-        img.onerror = () => {
-            console.error('Error loading generated image');
-            showPlaceholderImage();
-        };
-
-        img.src = imageUrl;
-
-    } catch (error) {
-        console.error('Error generating image:', error);
-        showPlaceholderImage();
-    }
+    // For now, use styled placeholder until we integrate proper image generation
+    // This shows age-appropriate visual representation
+    showPlaceholderImage(imagePrompt);
 }
 
 // Show placeholder image
-function showPlaceholderImage() {
-    // Create a placeholder with text
+function showPlaceholderImage(prompt) {
+    // Create a visually appealing placeholder
     const canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 500;
+    canvas.width = 800;
+    canvas.height = 800;
     const ctx = canvas.getContext('2d');
 
-    // Draw background
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(0, 0, 500, 500);
+    // Gradient background based on moral alignment
+    const gradient = ctx.createLinearGradient(0, 0, 800, 800);
+    if (gameState.moralAlignment === 'good') {
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+    } else if (gameState.moralAlignment === 'bad') {
+        gradient.addColorStop(0, '#cc2b5e');
+        gradient.addColorStop(1, '#753a88');
+    } else {
+        gradient.addColorStop(0, '#36d1dc');
+        gradient.addColorStop(1, '#5b86e5');
+    }
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 800, 800);
 
-    // Draw text
-    ctx.fillStyle = '#333';
-    ctx.font = '24px Arial';
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(0, 0, 800, 800);
+
+    // Draw age in large text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 120px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`Age: ${gameState.currentAge}`, 250, 250);
+    ctx.fillText(`AGE ${gameState.currentAge}`, 400, 300);
+
+    // Draw destiny
+    if (gameState.destiny && gameState.destiny !== 'UNKNOWN') {
+        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+
+        // Word wrap destiny if too long
+        const words = gameState.destiny.split(' ');
+        let line = '';
+        let y = 450;
+
+        words.forEach((word, index) => {
+            const testLine = line + word + ' ';
+            const metrics = ctx.measureText(testLine);
+
+            if (metrics.width > 700 && index > 0) {
+                ctx.fillText(line, 400, y);
+                line = word + ' ';
+                y += 40;
+            } else {
+                line = testLine;
+            }
+        });
+        ctx.fillText(line, 400, y);
+    }
+
+    // Draw decorative circle
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(400, 400, 350, 0, 2 * Math.PI);
+    ctx.stroke();
 
     // Set the image
     childImage.src = canvas.toDataURL();
