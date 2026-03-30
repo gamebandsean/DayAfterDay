@@ -57,7 +57,7 @@ This project uses the standard Gemini API for native image generation via `gemin
 4. Optional: override the default models if you want to experiment:
 
    ```env
-   ANTHROPIC_MODEL=claude-sonnet-4-20250514
+   ANTHROPIC_MODEL=claude-opus-4-6
    GEMINI_IMAGE_MODEL=gemini-3.1-flash-image-preview
    ```
 
@@ -97,7 +97,7 @@ Set these environment variables in Vercel before using the deployed app:
 ```env
 ANTHROPIC_API_KEY=your_real_anthropic_key
 GEMINI_API_KEY=your_real_gemini_key
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
+ANTHROPIC_MODEL=claude-opus-4-6
 GEMINI_IMAGE_MODEL=gemini-3.1-flash-image-preview
 ```
 
