@@ -489,8 +489,8 @@ closeDebugBtn.addEventListener('click', closeDebugModal);
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // Press D to toggle debug modal
-    if (e.key === 'd' || e.key === 'D') {
+    // Press the backquote/tilde key to toggle debug modal
+    if (e.code === 'Backquote') {
         if (debugModal.classList.contains('hidden')) {
             openDebugModal();
         } else {
