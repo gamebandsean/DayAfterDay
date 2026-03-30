@@ -289,9 +289,38 @@ async function generateChildImage(imagePrompt) {
     imageLoading.classList.remove('hidden');
     childImage.classList.remove('loaded');
 
-    // For now, use styled placeholder until we integrate proper image generation
-    // This shows age-appropriate visual representation
-    showPlaceholderImage(imagePrompt);
+    try {
+        // Call backend to generate image with Gemini
+        const response = await fetch('http://localhost:3000/api/generate-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: imagePrompt
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Image generation failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Extract the base64 image from Gemini response
+        if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
+            const imageData = data.predictions[0].bytesBase64Encoded;
+            childImage.src = `data:image/png;base64,${imageData}`;
+            childImage.classList.add('loaded');
+            imageLoading.classList.add('hidden');
+        } else {
+            throw new Error('No image data in response');
+        }
+
+    } catch (error) {
+        console.error('Error generating image:', error);
+        showPlaceholderImage(imagePrompt);
+    }
 }
 
 // Show placeholder image

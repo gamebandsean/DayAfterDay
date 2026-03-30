@@ -6,13 +6,20 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = 3000;
 
-// Load API key from environment variable
+// Load API keys from environment variables
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!ANTHROPIC_API_KEY) {
     console.error('\n❌ ERROR: ANTHROPIC_API_KEY not found in environment variables!');
     console.error('Please create a .env file with your API key.\n');
     console.error('See .env.example for the format.\n');
+    process.exit(1);
+}
+
+if (!GEMINI_API_KEY) {
+    console.error('\n❌ ERROR: GEMINI_API_KEY not found in environment variables!');
+    console.error('Please add GEMINI_API_KEY to your .env file.\n');
     process.exit(1);
 }
 
@@ -59,8 +66,49 @@ app.post('/api/oracle', async (req, res) => {
     }
 });
 
+// Proxy endpoint for Gemini Image Generation
+app.post('/api/generate-image', async (req, res) => {
+    try {
+        const { prompt } = req.body;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                instances: [{
+                    prompt: prompt
+                }],
+                parameters: {
+                    sampleCount: 1,
+                    aspectRatio: "1:1",
+                    negativePrompt: "blurry, low quality, distorted",
+                    safetyFilterLevel: "block_some"
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Gemini Image API error:', response.status, errorText);
+            throw new Error(`Image generation failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Return the generated image data
+        res.json(data);
+
+    } catch (error) {
+        console.error('Error in image generation endpoint:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`\n🎮 DayAfterDay server running!`);
     console.log(`\n🌐 Open your browser to: http://localhost:${PORT}`);
-    console.log(`\n🔮 Oracle API proxy ready\n`);
+    console.log(`\n🔮 Oracle API proxy ready`);
+    console.log(`\n🖼️  Gemini Image generation ready\n`);
 });
