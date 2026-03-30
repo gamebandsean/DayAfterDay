@@ -24,6 +24,7 @@ const finalScore = document.getElementById('final-score');
 const finalDestiny = document.getElementById('final-destiny');
 const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
+const progressSegments = document.querySelectorAll('.progress-segment');
 
 // Initialize Game
 async function initGame() {
@@ -52,11 +53,26 @@ function loadYear(age) {
     playerInput.value = '';
     playerInput.focus();
 
+    // Update progress bar
+    updateProgressBar(age);
+
     // Generate image for this year
     if (age === 0) {
         // First image - newborn baby
         generateChildImage(yearData.imagePrompt, '');
     }
+}
+
+// Update progress bar
+function updateProgressBar(age) {
+    // Fill in segments up to current age (age 0 = 1 segment, age 18 = 18 segments, etc.)
+    progressSegments.forEach((segment, index) => {
+        if (index < age + 1) {
+            segment.classList.add('filled');
+        } else {
+            segment.classList.remove('filled');
+        }
+    });
 }
 
 // Handle answer submission
@@ -161,7 +177,7 @@ async function generateChildImage(basePrompt, additionalContext) {
     childImage.classList.remove('loaded');
 
     // Check if API key is configured
-    if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+    if (GEMINI_API_KEY === AIzaSyD6TCmh38ldWrSf7JWyrP0w6x_sPtBaRI4) {
         console.warn('Gemini API key not configured. Using placeholder.');
         showPlaceholderImage();
         return;
