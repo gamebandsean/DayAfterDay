@@ -1,8 +1,51 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "game.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "styles.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "questions.json",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/api/oracle$",
+      "dest": "/api/oracle.js"
+    },
+    {
+      "src": "^/api/generate-image$",
+      "dest": "/api/generate-image.js"
+    },
+    {
+      "src": "^/game.js$",
+      "dest": "/game.js"
+    },
+    {
+      "src": "^/styles.css$",
+      "dest": "/styles.css"
+    },
+    {
+      "src": "^/questions.json$",
+      "dest": "/questions.json"
     }
   ]
 }
