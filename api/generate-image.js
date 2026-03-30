@@ -10,7 +10,9 @@ module.exports = async (req, res) => {
         const result = await generateImage(req.body?.prompt);
         return res.status(200).json(result);
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
+        console.error('Image generation fallback:', error);
+        return res.status(200).json({
+            usePlaceholder: true,
             error: error.message,
             ...(error.detail ? { detail: error.detail } : {}),
         });

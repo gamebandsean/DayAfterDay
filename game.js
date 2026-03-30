@@ -324,6 +324,11 @@ async function generateChildImage(imagePrompt) {
 
         const data = await readJsonResponse(response, 'Image generation failed.');
 
+        if (data?.usePlaceholder) {
+            showPlaceholderImage(imagePrompt);
+            return;
+        }
+
         if (data?.imageData) {
             childImage.src = `data:${data.mimeType || 'image/png'};base64,${data.imageData}`;
             childImage.classList.add('loaded');

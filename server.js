@@ -41,8 +41,9 @@ app.post('/api/generate-image', async (req, res) => {
         const result = await generateImage(req.body?.prompt);
         res.json(result);
     } catch (error) {
-        console.error('Error in image generation endpoint:', error);
-        res.status(error.statusCode || 500).json({
+        console.error('Image generation fallback:', error);
+        res.status(200).json({
+            usePlaceholder: true,
             error: error.message,
             ...(error.detail ? { detail: error.detail } : {}),
         });
