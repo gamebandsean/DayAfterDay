@@ -10,6 +10,14 @@ let gameState = {
     score: 0
 };
 
+const FALLBACK_ORACLE_RESPONSE = {
+    destiny: 'Mysterious Soul',
+    moral_alignment: 'grey',
+    justification: "The Oracle's vision is clouded...",
+    image_prompt: 'semi-realistic portrait of a child, head and shoulders',
+    physical_description: 'newborn baby with soft features'
+};
+
 // DOM Elements
 const destinyValue = document.getElementById('destiny-value');
 const currentAge = document.getElementById('current-age');
@@ -31,6 +39,23 @@ const debugDestiny = document.getElementById('debug-destiny');
 const debugAlignment = document.getElementById('debug-alignment');
 const debugJustification = document.getElementById('debug-justification');
 const debugPhysical = document.getElementById('debug-physical');
+
+async function readJsonResponse(response, fallbackMessage) {
+    const raw = await response.text();
+    let data = null;
+
+    try {
+        data = raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        throw new Error(raw || fallbackMessage);
+    }
+
+    if (!response.ok) {
+        throw new Error(data?.detail || data?.error || fallbackMessage);
+    }
+
+    return data;
+}
 
 // Oracle System Prompt (from destiny_prompt.md)
 const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, darkly comedic soothsayer who can read a child's destiny from the choices their parent makes. You speak with absolute conviction. You do not hedge. You do not say "it depends." You see the thread of fate clearly, and you call it like it is.
@@ -114,7 +139,7 @@ Based on ALL of the above — every answer, not just the latest — determine th
 
     try {
         // Call our backend server instead of Anthropic directly (avoids CORS issues)
-        const response = await fetch('http://localhost:3000/api/oracle', {
+        const response = await fetch('/api/oracle', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -125,22 +150,18 @@ Based on ALL of the above — every answer, not just the latest — determine th
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`Oracle API failed: ${response.status}`);
+        const data = await readJsonResponse(response, 'Oracle API failed.');
+        if (!data?.oracle) {
+            throw new Error('Oracle response was missing normalized data.');
         }
 
-        const data = await response.json();
-        const oracleResponse = JSON.parse(data.content[0].text);
-
-        return oracleResponse;
+        return data.oracle;
 
     } catch (error) {
         console.error('Error consulting Oracle:', error);
         // Return fallback response
         return {
-            destiny: 'Mysterious Soul',
-            moral_alignment: 'grey',
-            justification: 'The Oracle\'s vision is clouded...',
+            ...FALLBACK_ORACLE_RESPONSE,
             image_prompt: `portrait of a ${gameState.currentAge} year old child`,
             physical_description: gameState.physicalDescription
         };
@@ -291,7 +312,7 @@ async function generateChildImage(imagePrompt) {
 
     try {
         // Call backend to generate image with Gemini
-        const response = await fetch('http://localhost:3000/api/generate-image', {
+        const response = await fetch('/api/generate-image', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -301,20 +322,14 @@ async function generateChildImage(imagePrompt) {
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`Image generation failed: ${response.status}`);
-        }
+        const data = await readJsonResponse(response, 'Image generation failed.');
 
-        const data = await response.json();
-
-        // Extract the base64 image from Gemini response
-        if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
-            const imageData = data.predictions[0].bytesBase64Encoded;
-            childImage.src = `data:image/png;base64,${imageData}`;
+        if (data?.imageData) {
+            childImage.src = `data:${data.mimeType || 'image/png'};base64,${data.imageData}`;
             childImage.classList.add('loaded');
             imageLoading.classList.add('hidden');
         } else {
-            throw new Error('No image data in response');
+            throw new Error('No image data in response.');
         }
 
     } catch (error) {

@@ -1,108 +1,51 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch');
+const { callOracle, ensureImageEnv, ensureOracleEnv, generateImage } = require('./lib/ai');
 
 const app = express();
-const PORT = 3000;
-
-// Load API keys from environment variables
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-if (!ANTHROPIC_API_KEY) {
-    console.error('\n❌ ERROR: ANTHROPIC_API_KEY not found in environment variables!');
-    console.error('Please create a .env file with your API key.\n');
-    console.error('See .env.example for the format.\n');
-    process.exit(1);
-}
-
-if (!GEMINI_API_KEY) {
-    console.error('\n❌ ERROR: GEMINI_API_KEY not found in environment variables!');
-    console.error('Please add GEMINI_API_KEY to your .env file.\n');
-    process.exit(1);
-}
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+try {
+    ensureOracleEnv();
+    ensureImageEnv();
+} catch (error) {
+    console.error(`\n❌ ERROR: ${error.message}`);
+    console.error('Please update your .env file.');
+    console.error('See .env.example for the expected format.\n');
+    process.exit(1);
+}
+
 // Proxy endpoint for Oracle API
 app.post('/api/oracle', async (req, res) => {
     try {
-        const { system, userPrompt } = req.body;
-
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': ANTHROPIC_API_KEY,
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20241022',
-                max_tokens: 1024,
-                temperature: 0.9,
-                system: system,
-                messages: [{
-                    role: 'user',
-                    content: userPrompt
-                }]
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Anthropic API error:', response.status, errorText);
-            throw new Error(`API failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-        res.json(data);
-
+        const result = await callOracle(req.body?.system, req.body?.userPrompt);
+        res.json(result);
     } catch (error) {
         console.error('Error in oracle endpoint:', error);
-        res.status(500).json({ error: error.message });
+        res.status(error.statusCode || 500).json({
+            error: error.message,
+            ...(error.detail ? { detail: error.detail } : {}),
+            ...(error.rawText ? { rawText: error.rawText } : {}),
+        });
     }
 });
 
-// Proxy endpoint for Gemini Image Generation
+// Proxy endpoint for Gemini native image generation
 app.post('/api/generate-image', async (req, res) => {
     try {
-        const { prompt } = req.body;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                instances: [{
-                    prompt: prompt
-                }],
-                parameters: {
-                    sampleCount: 1,
-                    aspectRatio: "1:1",
-                    negativePrompt: "blurry, low quality, distorted",
-                    safetyFilterLevel: "block_some"
-                }
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Gemini Image API error:', response.status, errorText);
-            throw new Error(`Image generation failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Return the generated image data
-        res.json(data);
-
+        const result = await generateImage(req.body?.prompt);
+        res.json(result);
     } catch (error) {
         console.error('Error in image generation endpoint:', error);
-        res.status(500).json({ error: error.message });
+        res.status(error.statusCode || 500).json({
+            error: error.message,
+            ...(error.detail ? { detail: error.detail } : {}),
+        });
     }
 });
 

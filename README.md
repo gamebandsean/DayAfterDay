@@ -22,13 +22,23 @@ Watch a child grow over 18 years while making meaningful choices that impact the
 
 ## Setup Instructions
 
-### 1. Get an Anthropic API Key
+### 1. Get your API keys
+
+#### Anthropic
 
 1. Go to [Anthropic Console](https://console.anthropic.com/)
 2. Sign up or log in
-3. Go to API Keys section
+3. Open the API Keys section
 4. Create a new API key
 5. Copy the key (starts with `sk-ant-`)
+
+#### Gemini
+
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Create a Gemini API key
+3. Copy the key
+
+This project uses the standard Gemini API for native image generation via `gemini-3.1-flash-image-preview`.
 
 ### 2. Configure the Game
 
@@ -37,12 +47,23 @@ Watch a child grow over 18 years while making meaningful choices that impact the
    cp .env.example .env
    ```
 2. Open `.env` in a text editor
-3. Replace `your_api_key_here` with your actual Anthropic API key
-4. Save the file
+3. Set both API keys:
+
+   ```env
+   ANTHROPIC_API_KEY=your_real_anthropic_key
+   GEMINI_API_KEY=your_real_gemini_key
+   ```
+
+4. Optional: override the default models if you want to experiment:
+
+   ```env
+   ANTHROPIC_MODEL=claude-3-5-sonnet-20240620
+   GEMINI_IMAGE_MODEL=gemini-3.1-flash-image-preview
+   ```
+
+5. Save the file
 
 **Note**: The `.env` file is git-ignored for security. Never commit API keys to version control!
-
-**Note**: Images are generated using Pollinations.ai (free, no API key needed)
 
 ### 3. Install Dependencies and Run
 
@@ -56,7 +77,31 @@ npm start
 
 Then open your browser to **http://localhost:3000**
 
-The server runs a backend that proxies the Anthropic API calls (required to avoid CORS issues) and serves the game files.
+The server:
+
+- serves the static game files
+- proxies Anthropic Oracle requests through `/api/oracle`
+- proxies Gemini image generation through `/api/generate-image`
+
+There is no build step. This is a plain Node + Express + vanilla JS app.
+
+### Deploying to Vercel
+
+This repo is set up to deploy as:
+
+- static frontend files from the project root
+- Vercel serverless functions in `api/oracle.js` and `api/generate-image.js`
+
+Set these environment variables in Vercel before using the deployed app:
+
+```env
+ANTHROPIC_API_KEY=your_real_anthropic_key
+GEMINI_API_KEY=your_real_gemini_key
+ANTHROPIC_MODEL=claude-3-5-sonnet-20240620
+GEMINI_IMAGE_MODEL=gemini-3.1-flash-image-preview
+```
+
+After the project is imported into Vercel, redeploy once the env vars are saved.
 
 ## Customizing Questions
 
@@ -122,8 +167,8 @@ DayAfterDay/
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Backend**: Node.js, Express
-- **AI**: Anthropic Claude API (Oracle of Fates)
-- **Images**: Pollinations.ai (free AI image generation)
+- **Oracle**: Anthropic Claude Messages API
+- **Images**: Google Gemini API (`gemini-3.1-flash-image-preview`)
 
 ## License
 
