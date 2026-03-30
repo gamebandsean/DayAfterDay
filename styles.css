@@ -1,0 +1,275 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.game-container {
+    max-width: 600px;
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Destiny Bar */
+.destiny-bar {
+    background: #f5f5f5;
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    text-align: left;
+    font-family: 'Courier New', monospace;
+}
+
+.destiny-label {
+    font-weight: normal;
+    color: #666;
+    font-size: 14px;
+}
+
+#destiny-value {
+    font-weight: bold;
+    color: #333;
+    font-size: 18px;
+    margin-left: 10px;
+}
+
+/* Image Container */
+.image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 3px solid #333;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f9f9f9;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#child-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+#child-image.loaded {
+    display: block;
+}
+
+.image-placeholder {
+    font-family: 'Courier New', monospace;
+    font-size: 48px;
+    color: #ccc;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Age Display */
+.age-display {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#current-age {
+    font-weight: bold;
+    font-size: 18px;
+    color: #667eea;
+}
+
+/* Question Container */
+.question-container {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+}
+
+#question-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    text-align: center;
+    width: 100%;
+}
+
+/* Input Container */
+.input-container {
+    display: flex;
+    gap: 10px;
+}
+
+#player-input {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: border-color 0.3s;
+}
+
+#player-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#submit-btn {
+    padding: 15px 30px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.1s;
+}
+
+#submit-btn:hover {
+    background: #5568d3;
+}
+
+#submit-btn:active {
+    transform: scale(0.98);
+}
+
+#submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Final Score */
+.final-score {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    z-index: 100;
+}
+
+.final-score.hidden {
+    display: none;
+}
+
+.final-score h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 32px;
+}
+
+.final-score p {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+#restart-btn {
+    margin-top: 20px;
+    padding: 15px 40px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#restart-btn:hover {
+    background: #5568d3;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .game-container {
+        padding: 20px;
+    }
+
+    #destiny-value {
+        font-size: 16px;
+    }
+
+    .image-placeholder {
+        font-size: 32px;
+    }
+
+    #question-text {
+        font-size: 14px;
+    }
+
+    #player-input {
+        font-size: 14px;
+    }
+
+    #submit-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+}

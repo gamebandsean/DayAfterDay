@@ -1,0 +1,99 @@
+{
+  "years": [
+    {
+      "age": 0,
+      "question": "Your child has been born! They are crying with hunger. What will you give them to eat?",
+      "imagePrompt": "A newborn baby, just born, peaceful and innocent"
+    },
+    {
+      "age": 1,
+      "question": "Your child is learning to walk. They keep falling down. How do you encourage them?",
+      "imagePrompt": "A 1-year-old toddler"
+    },
+    {
+      "age": 2,
+      "question": "Your child wants a toy that another kid is playing with. What do you teach them?",
+      "imagePrompt": "A 2-year-old child"
+    },
+    {
+      "age": 3,
+      "question": "It's time for preschool. Your child is nervous about meeting new kids. What do you say?",
+      "imagePrompt": "A 3-year-old child"
+    },
+    {
+      "age": 4,
+      "question": "Your child asks you about their biggest fear. How do you help them face it?",
+      "imagePrompt": "A 4-year-old child"
+    },
+    {
+      "age": 5,
+      "question": "Your child shows interest in a new hobby. What activity do you introduce them to?",
+      "imagePrompt": "A 5-year-old child"
+    },
+    {
+      "age": 6,
+      "question": "First day of elementary school! Your child wants to bring something special. What do they bring?",
+      "imagePrompt": "A 6-year-old child starting elementary school"
+    },
+    {
+      "age": 7,
+      "question": "Your child got into a disagreement with a friend. How do you guide them?",
+      "imagePrompt": "A 7-year-old child"
+    },
+    {
+      "age": 8,
+      "question": "Your child wants to learn something new. What skill do they start developing?",
+      "imagePrompt": "An 8-year-old child"
+    },
+    {
+      "age": 9,
+      "question": "Your child faces a challenging situation at school. How do they handle it?",
+      "imagePrompt": "A 9-year-old child"
+    },
+    {
+      "age": 10,
+      "question": "Double digits! Your child wants to celebrate this milestone. How do they celebrate?",
+      "imagePrompt": "A 10-year-old child"
+    },
+    {
+      "age": 11,
+      "question": "Your child is discovering their identity. What makes them feel most like themselves?",
+      "imagePrompt": "An 11-year-old child"
+    },
+    {
+      "age": 12,
+      "question": "Middle school begins. Your child wants to join a group or club. Which one?",
+      "imagePrompt": "A 12-year-old child starting middle school"
+    },
+    {
+      "age": 13,
+      "question": "Your teen is going through changes. What positive habit do they develop?",
+      "imagePrompt": "A 13-year-old teenager"
+    },
+    {
+      "age": 14,
+      "question": "Your teen faces peer pressure. How do they respond?",
+      "imagePrompt": "A 14-year-old teenager"
+    },
+    {
+      "age": 15,
+      "question": "High school life is busy. What does your teen prioritize?",
+      "imagePrompt": "A 15-year-old teenager in high school"
+    },
+    {
+      "age": 16,
+      "question": "Your teen is thinking about their future. What path interests them most?",
+      "imagePrompt": "A 16-year-old teenager"
+    },
+    {
+      "age": 17,
+      "question": "College applications and big decisions loom. What values guide your teen?",
+      "imagePrompt": "A 17-year-old teenager"
+    },
+    {
+      "age": 18,
+      "question": "Graduation day! Your young adult reflects on their journey. What are they most proud of?",
+      "imagePrompt": "An 18-year-old young adult, graduating"
+    }
+  ]
+}
