@@ -28,6 +28,14 @@ const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
 const progressSegments = document.querySelectorAll('.progress-segment');
 
+// Debug Modal Elements
+const debugModal = document.getElementById('debug-modal');
+const closeDebugBtn = document.getElementById('close-debug');
+const debugDestiny = document.getElementById('debug-destiny');
+const debugAlignment = document.getElementById('debug-alignment');
+const debugJustification = document.getElementById('debug-justification');
+const debugPhysical = document.getElementById('debug-physical');
+
 // Oracle System Prompt (from destiny_prompt.md)
 const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, darkly comedic soothsayer who can read a child's destiny from the choices their parent makes. You speak with absolute conviction. You do not hedge. You do not say "it depends." You see the thread of fate clearly, and you call it like it is.
 
@@ -258,12 +266,11 @@ async function submitAnswer() {
 function updateDestiny(newDestiny, justification) {
     destinyValue.textContent = newDestiny;
 
-    // Show justification below destiny (if element exists)
-    const justificationElement = document.getElementById('justification-text');
-    if (justificationElement && justification) {
-        justificationElement.textContent = justification;
-        justificationElement.style.display = 'block';
-    }
+    // Update debug modal content (but don't show it)
+    if (debugDestiny) debugDestiny.textContent = newDestiny || '-';
+    if (debugJustification) debugJustification.textContent = justification || '-';
+    if (debugAlignment) debugAlignment.textContent = gameState.moralAlignment || '-';
+    if (debugPhysical) debugPhysical.textContent = gameState.physicalDescription || '-';
 }
 
 // Calculate score for an answer
@@ -390,11 +397,6 @@ function restartGame() {
 
     // Reset UI
     destinyValue.textContent = 'UNKNOWN';
-    const justificationElement = document.getElementById('justification-text');
-    if (justificationElement) {
-        justificationElement.style.display = 'none';
-        justificationElement.textContent = '';
-    }
     finalScore.classList.add('hidden');
 
     // Clear extra messages
@@ -415,6 +417,42 @@ playerInput.addEventListener('keypress', (e) => {
     }
 });
 restartBtn.addEventListener('click', restartGame);
+
+// Debug Modal Functions
+function openDebugModal() {
+    debugModal.classList.remove('hidden');
+}
+
+function closeDebugModal() {
+    debugModal.classList.add('hidden');
+}
+
+// Debug Modal Event Listeners
+closeDebugBtn.addEventListener('click', closeDebugModal);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Press D to toggle debug modal
+    if (e.key === 'd' || e.key === 'D') {
+        if (debugModal.classList.contains('hidden')) {
+            openDebugModal();
+        } else {
+            closeDebugModal();
+        }
+    }
+
+    // Press ESC to close debug modal
+    if (e.key === 'Escape') {
+        closeDebugModal();
+    }
+});
+
+// Click outside modal to close
+debugModal.addEventListener('click', (e) => {
+    if (e.target === debugModal) {
+        closeDebugModal();
+    }
+});
 
 // Start the game
 initGame();

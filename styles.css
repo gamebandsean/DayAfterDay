@@ -74,19 +74,6 @@ body {
     margin-left: 10px;
 }
 
-/* Oracle's Justification */
-.justification {
-    background: rgba(103, 126, 234, 0.1);
-    border-left: 4px solid #667eea;
-    border-radius: 5px;
-    padding: 12px 15px;
-    margin-bottom: 20px;
-    font-style: italic;
-    color: #555;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
 /* Image Container */
 .image-container {
     position: relative;
@@ -284,6 +271,113 @@ body {
 
 #restart-btn:hover {
     background: #5568d3;
+}
+
+/* Debug Modal */
+.debug-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.debug-modal.hidden {
+    display: none;
+}
+
+.debug-content {
+    background: white;
+    border-radius: 15px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.debug-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debug-header h3 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.close-debug {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 32px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    transition: background 0.3s;
+}
+
+.close-debug:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.debug-body {
+    padding: 25px;
+}
+
+.debug-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.debug-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.debug-section strong {
+    display: block;
+    color: #667eea;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.debug-section p {
+    margin: 0;
+    color: #333;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.debug-footer {
+    background: #f5f5f5;
+    padding: 15px 25px;
+    border-radius: 0 0 15px 15px;
+    text-align: center;
+}
+
+.debug-footer small {
+    color: #666;
+    font-size: 12px;
 }
 
 /* Responsive Design */

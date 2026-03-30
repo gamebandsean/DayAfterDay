@@ -38,9 +38,6 @@
             <span id="destiny-value">UNKNOWN</span>
         </div>
 
-        <!-- Oracle's Justification -->
-        <div id="justification-text" class="justification" style="display: none;"></div>
-
         <!-- Child Image Container -->
         <div class="image-container">
             <img id="child-image" src="" alt="Child" />
@@ -77,6 +74,37 @@
             <p id="final-destiny"></p>
             <p id="score-display"></p>
             <button id="restart-btn">Play Again</button>
+        </div>
+
+        <!-- Debug Modal (Press D to open) -->
+        <div id="debug-modal" class="debug-modal hidden">
+            <div class="debug-content">
+                <div class="debug-header">
+                    <h3>🔮 Oracle's Vision</h3>
+                    <button id="close-debug" class="close-debug">&times;</button>
+                </div>
+                <div class="debug-body">
+                    <div class="debug-section">
+                        <strong>Destiny:</strong>
+                        <p id="debug-destiny">-</p>
+                    </div>
+                    <div class="debug-section">
+                        <strong>Moral Alignment:</strong>
+                        <p id="debug-alignment">-</p>
+                    </div>
+                    <div class="debug-section">
+                        <strong>Oracle's Justification:</strong>
+                        <p id="debug-justification">-</p>
+                    </div>
+                    <div class="debug-section">
+                        <strong>Physical Description:</strong>
+                        <p id="debug-physical">-</p>
+                    </div>
+                </div>
+                <div class="debug-footer">
+                    <small>Press D or ESC to close</small>
+                </div>
+            </div>
         </div>
     </div>
 
