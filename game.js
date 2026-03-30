@@ -1,16 +1,18 @@
 // Game State
 let gameState = {
     currentAge: 0,
-    answers: [],
+    answers: [], // Will store {age, question, answer}
     questionsData: null,
-    childDescription: '',
+    physicalDescription: 'newborn baby with soft features',
     destiny: 'UNKNOWN',
+    moralAlignment: null,
+    justification: '',
     score: 0
 };
 
 // API Configuration
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE'; // User needs to add their key
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE'; // User needs to add their key
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
 // DOM Elements
 const destinyValue = document.getElementById('destiny-value');
@@ -25,6 +27,128 @@ const finalDestiny = document.getElementById('final-destiny');
 const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
 const progressSegments = document.querySelectorAll('.progress-segment');
+
+// Oracle System Prompt (from destiny_prompt.md)
+const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, darkly comedic soothsayer who can read a child's destiny from the choices their parent makes. You speak with absolute conviction. You do not hedge. You do not say "it depends." You see the thread of fate clearly, and you call it like it is.
+
+Your job: after each parenting decision, synthesize EVERY answer given so far and declare what this child is destined to become. The destiny EVOLVES — it can shift dramatically between rounds as new information changes the trajectory. A child headed for "Beloved Kindergarten Teacher" can pivot to "Charismatic Cult Leader" in a single answer.
+
+## Rules for Destinies
+
+1. A Destiny is 1–5 words describing both WHAT they become and WHO they are. It's a career fused with a character judgment.
+2. Commit to a moral stance. The child is either:
+   - Clearly good (generous, kind, heroic)
+   - Clearly bad (corrupt, cruel, destructive)
+   - Morally grey (well-intentioned but flawed, successful but hollow)
+   Pick a lane. Do NOT sit on the fence with safe, neutral destinies.
+3. Be funny. Be bold. Exaggerate for comedic effect. These should be destinies people screenshot and share with friends.
+4. Ground every destiny in the actual answers. The humor comes from drawing absurd-but-defensible conclusions from real parenting choices. Never make it random.
+5. Vary your range. Don't default to the same archetypes. Pull from unexpected careers, niche lifestyles, historical parallels, and modern absurdity. Think beyond "doctor/lawyer/criminal."
+
+### Destiny examples (for tone calibration only — do NOT reuse these):
+- "Benevolent Warlord"
+- "LinkedIn Influencer With No Friends"
+- "Undercover Nun"
+- "World's Okayest Surgeon"
+- "Emotionally Unavailable Astronaut"
+- "Dog Whisperer, Human Ignorer"
+- "Billionaire Who Tips Poorly"
+- "Whistleblower Living in Exile"
+- "Competitive Eating Champion, Lonely"
+- "Objectively Correct Dictator"
+
+## Rules for Justification
+
+Write 1–2 sentences explaining WHY this destiny emerged from the answers. Be specific — reference the actual answers, not vague generalities. The tone should feel like a fortune teller delivering prophecy with unsettling confidence.
+
+## Rules for the Image Prompt
+
+After determining the Destiny and Justification, generate an image prompt for image generation. This prompt must:
+
+1. Describe a semi-realistic portrait/headshot of this person at the age specified in the input.
+2. Translate the Destiny and Justification into VISUAL storytelling — their expression, clothing, setting, lighting, and small details should all hint at who they are and what they've become.
+3. Preserve physical continuity: use the provided current physical description as a base. Core features (eye color, skin tone, hair color, face shape, distinguishing marks) should carry through, adapted appropriately for the target age.
+4. Include age-appropriate details. A 5-year-old "Future Dictator" might have an eerily composed expression and a too-neat outfit. A 35-year-old version would look very different.
+5. Keep it as a headshot/portrait — head and shoulders, direct or 3/4 angle, with enough background to set a mood but not a full scene.
+
+## Response Format
+
+You MUST respond with valid JSON and nothing else. No markdown, no commentary outside the JSON.
+
+{
+  "destiny": "string — 1 to 5 words, the Destiny",
+  "moral_alignment": "good" | "bad" | "grey",
+  "justification": "string — 1-2 sentences, the Oracle's reasoning",
+  "image_prompt": "string — the full image generation prompt",
+  "physical_description": "string — updated physical description of the child for continuity"
+}`;
+
+// Call the Oracle to determine destiny
+async function consultOracle(currentQuestion, currentAnswer) {
+    // Build previous Q&A history
+    let previousRounds = '';
+    gameState.answers.forEach((qa, index) => {
+        previousRounds += `Q${index + 1}: "${qa.question}"\n`;
+        previousRounds += `A${index + 1}: "${qa.answer}"\n\n`;
+    });
+
+    // Build user prompt
+    const userPrompt = `Here is the current state of the game:
+
+CHILD'S CURRENT AGE: ${gameState.currentAge}
+CHILD'S CURRENT PHYSICAL DESCRIPTION: ${gameState.physicalDescription}
+
+PREVIOUS QUESTIONS AND ANSWERS (in order):
+${previousRounds}
+NEW QUESTION JUST ASKED:
+Q${gameState.answers.length + 1}: "${currentQuestion}"
+
+PLAYER'S NEW ANSWER:
+A${gameState.answers.length + 1}: "${currentAnswer}"
+
+Based on ALL of the above — every answer, not just the latest — determine this child's evolving Destiny. Respond with the JSON object only.`;
+
+    try {
+        const response = await fetch(ANTHROPIC_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 1024,
+                temperature: 0.9,
+                system: ORACLE_SYSTEM_PROMPT,
+                messages: [{
+                    role: 'user',
+                    content: userPrompt
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Oracle API failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const oracleResponse = JSON.parse(data.content[0].text);
+
+        return oracleResponse;
+
+    } catch (error) {
+        console.error('Error consulting Oracle:', error);
+        // Return fallback response
+        return {
+            destiny: 'Mysterious Soul',
+            moral_alignment: 'grey',
+            justification: 'The Oracle\'s vision is clouded...',
+            image_prompt: `portrait of a ${gameState.currentAge} year old child`,
+            physical_description: gameState.physicalDescription
+        };
+    }
+}
 
 // Initialize Game
 async function initGame() {
@@ -58,8 +182,9 @@ function loadYear(age) {
 
     // Generate image for this year
     if (age === 0) {
-        // First image - newborn baby
-        generateChildImage(yearData.imagePrompt, '');
+        // First image - newborn baby with simple prompt
+        const initialPrompt = 'photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression';
+        generateChildImage(initialPrompt);
     }
 }
 
@@ -88,28 +213,39 @@ async function submitAnswer() {
     submitBtn.disabled = true;
     playerInput.disabled = true;
 
-    // Store the answer
+    // Get current question
+    const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
+
+    // Consult the Oracle
+    const oracleResponse = await consultOracle(currentQuestion, answer);
+
+    // Store the answer with question
     gameState.answers.push({
         age: gameState.currentAge,
+        question: currentQuestion,
         answer: answer
     });
 
-    // Update child description and destiny based on answer
-    updateChildState(answer);
+    // Update game state from Oracle
+    gameState.destiny = oracleResponse.destiny;
+    gameState.moralAlignment = oracleResponse.moral_alignment;
+    gameState.justification = oracleResponse.justification;
+    gameState.physicalDescription = oracleResponse.physical_description;
+
+    // Update destiny display
+    updateDestiny(oracleResponse.destiny, oracleResponse.justification);
 
     // Calculate score for this answer
     calculateAnswerScore(answer);
 
-    // Generate new image with updated description
+    // Generate new image using Oracle's prompt
+    await generateChildImage(oracleResponse.image_prompt);
+
+    // Move to next year or end game
     const nextAge = gameState.currentAge + 1;
     if (nextAge < gameState.questionsData.years.length) {
-        const nextYearData = gameState.questionsData.years[nextAge];
-        await generateChildImage(nextYearData.imagePrompt, gameState.childDescription);
-
-        // Move to next year
         loadYear(nextAge);
     } else {
-        // Game is over
         endGame();
     }
 
@@ -118,35 +254,16 @@ async function submitAnswer() {
     playerInput.disabled = false;
 }
 
-// Update child state based on answer
-function updateChildState(answer) {
-    // Add the answer context to the child's description
-    const answerLower = answer.toLowerCase();
-
-    // Update description for image generation
-    gameState.childDescription += ` ${answer}.`;
-
-    // Simple destiny calculation based on keywords
-    // You can make this more sophisticated
-    if (answerLower.includes('book') || answerLower.includes('read') || answerLower.includes('study')) {
-        updateDestiny('SCHOLAR');
-    } else if (answerLower.includes('sport') || answerLower.includes('athletic') || answerLower.includes('exercise')) {
-        updateDestiny('ATHLETE');
-    } else if (answerLower.includes('art') || answerLower.includes('music') || answerLower.includes('creative')) {
-        updateDestiny('ARTIST');
-    } else if (answerLower.includes('help') || answerLower.includes('kind') || answerLower.includes('care')) {
-        updateDestiny('CAREGIVER');
-    } else if (answerLower.includes('business') || answerLower.includes('money') || answerLower.includes('work')) {
-        updateDestiny('ENTREPRENEUR');
-    } else if (answerLower.includes('science') || answerLower.includes('tech') || answerLower.includes('computer')) {
-        updateDestiny('SCIENTIST');
-    }
-}
-
 // Update destiny display
-function updateDestiny(newDestiny) {
-    gameState.destiny = newDestiny;
+function updateDestiny(newDestiny, justification) {
     destinyValue.textContent = newDestiny;
+
+    // Show justification below destiny (if element exists)
+    const justificationElement = document.getElementById('justification-text');
+    if (justificationElement && justification) {
+        justificationElement.textContent = justification;
+        justificationElement.style.display = 'block';
+    }
 }
 
 // Calculate score for an answer
@@ -170,53 +287,33 @@ function calculateAnswerScore(answer) {
     gameState.score += points;
 }
 
-// Generate child image using Gemini API
-async function generateChildImage(basePrompt, additionalContext) {
+// Generate child image using AI
+async function generateChildImage(imagePrompt) {
     // Show loading state
     imageLoading.classList.remove('hidden');
     childImage.classList.remove('loaded');
 
-    // Check if API key is configured
-    if (GEMINI_API_KEY === AIzaSyD6TCmh38ldWrSf7JWyrP0w6x_sPtBaRI4) {
-        console.warn('Gemini API key not configured. Using placeholder.');
-        showPlaceholderImage();
-        return;
-    }
-
     try {
-        // Construct the full prompt
-        const fullPrompt = `Generate a photorealistic image of ${basePrompt}. ${additionalContext} The image should be appropriate for all ages, warm and friendly in tone.`;
+        // Use Pollinations.ai for free AI image generation (no API key needed)
+        // This is a free service that generates images from text prompts
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=800&seed=${Date.now()}&nologo=true`;
 
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `Create an image: ${fullPrompt}`
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.9,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 1024,
-                }
-            })
-        });
+        // Load the image
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
 
-        if (!response.ok) {
-            throw new Error('Failed to generate image');
-        }
+        img.onload = () => {
+            childImage.src = img.src;
+            childImage.classList.add('loaded');
+            imageLoading.classList.add('hidden');
+        };
 
-        const data = await response.json();
+        img.onerror = () => {
+            console.error('Error loading generated image');
+            showPlaceholderImage();
+        };
 
-        // Note: Gemini API doesn't directly generate images via this endpoint
-        // You'll need to use Gemini's image generation capabilities
-        // For now, we'll use a placeholder
-        showPlaceholderImage();
+        img.src = imageUrl;
 
     } catch (error) {
         console.error('Error generating image:', error);
@@ -284,13 +381,20 @@ function restartGame() {
         currentAge: 0,
         answers: [],
         questionsData: gameState.questionsData, // Keep loaded questions
-        childDescription: '',
+        physicalDescription: 'newborn baby with soft features',
         destiny: 'UNKNOWN',
+        moralAlignment: null,
+        justification: '',
         score: 0
     };
 
     // Reset UI
     destinyValue.textContent = 'UNKNOWN';
+    const justificationElement = document.getElementById('justification-text');
+    if (justificationElement) {
+        justificationElement.style.display = 'none';
+        justificationElement.textContent = '';
+    }
     finalScore.classList.add('hidden');
 
     // Clear extra messages

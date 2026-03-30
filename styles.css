@@ -74,6 +74,19 @@ body {
     margin-left: 10px;
 }
 
+/* Oracle's Justification */
+.justification {
+    background: rgba(103, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    border-radius: 5px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-style: italic;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
 /* Image Container */
 .image-container {
     position: relative;

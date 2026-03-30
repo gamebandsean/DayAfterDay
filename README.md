@@ -6,33 +6,38 @@ A life-sim game where you guide a child from birth to age 18, one year at a time
 
 Watch a child grow over 18 years while making meaningful choices that impact their life journey. Each year presents a question or situation, and your text-based responses influence:
 
-- The child's visual appearance (generated via Google Gemini AI)
-- Their developing destiny/career path
+- The child's visual appearance (generated via AI)
+- Their developing destiny/career path (powered by Claude's "Oracle of Fates")
 - Your final score based on the quality of guidance provided
 
 ## Game Features
 
 - 19 years of gameplay (ages 0-18)
+- **The Oracle of Fates**: AI-powered destiny system that evolves based on ALL your answers
 - Dynamic AI-generated images showing the child's growth
-- Destiny tracking system
+- Darkly comedic destiny tracking with justifications
+- Moral alignment system (good/bad/grey)
 - Scoring based on answer quality and positive choices
 - Replayable with different outcomes
 
 ## Setup Instructions
 
-### 1. Get a Google Gemini API Key
+### 1. Get an Anthropic API Key
 
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Create a new API key
-4. Copy the key
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Sign up or log in
+3. Go to API Keys section
+4. Create a new API key
+5. Copy the key (starts with `sk-ant-`)
 
 ### 2. Configure the Game
 
 1. Open `game.js` in a text editor
-2. Find the line: `const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';`
-3. Replace `YOUR_GEMINI_API_KEY_HERE` with your actual API key
+2. Find line 12: `const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';`
+3. Replace `YOUR_ANTHROPIC_API_KEY_HERE` with your actual API key
 4. Save the file
+
+**Note**: Images are generated using Pollinations.ai (free, no API key needed)
 
 ### 3. Run the Game
 
@@ -76,16 +81,27 @@ Edit `questions.json` to customize the questions for each year. Each year has:
 - Bonus for positive keywords: 5 points each
 - Maximum possible score depends on answer quality
 
-## Destiny Categories
+## The Oracle of Fates System
 
-The game tracks the child's destiny based on keywords in your answers:
+Instead of simple keyword matching, destinies are determined by an AI "Oracle" that analyzes ALL your answers holistically:
 
-- **SCHOLAR**: Study, books, learning
-- **ATHLETE**: Sports, exercise, athletics
-- **ARTIST**: Art, music, creativity
-- **CAREGIVER**: Helping, kindness, caring
-- **ENTREPRENEUR**: Business, work, money
-- **SCIENTIST**: Science, technology, computers
+- **Evolving Destinies**: The child's path can shift dramatically based on new answers
+- **Darkly Comedic**: Expect bold, funny destinies like "LinkedIn Influencer With No Friends" or "Benevolent Warlord"
+- **Morally Aligned**: Each destiny is classified as good, bad, or grey
+- **Grounded in Choices**: The Oracle draws specific conclusions from your actual parenting decisions
+- **Unique Every Time**: No two playthroughs will have the same destiny trajectory
+
+The Oracle provides a justification for each destiny update, explaining how your choices led to this path.
+
+### Example Destiny Archetypes
+
+The Oracle creates unique destinies (1-5 words) that fuse career with character judgment:
+- "Emotionally Unavailable Astronaut"
+- "World's Okayest Surgeon"
+- "Dog Whisperer, Human Ignorer"
+- "Whistleblower Living in Exile"
+
+**Note**: These are examples of the STYLE. The Oracle generates fresh, context-specific destinies based on your unique answers.
 
 ## Project Structure
 
