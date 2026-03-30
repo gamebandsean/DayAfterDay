@@ -32,39 +32,31 @@ Watch a child grow over 18 years while making meaningful choices that impact the
 
 ### 2. Configure the Game
 
-1. Open `game.js` in a text editor
-2. Find line 12: `const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';`
-3. Replace `YOUR_ANTHROPIC_API_KEY_HERE` with your actual API key
+1. Create a `.env` file in the project root (copy from `.env.example`):
+   ```bash
+   cp .env.example .env
+   ```
+2. Open `.env` in a text editor
+3. Replace `your_api_key_here` with your actual Anthropic API key
 4. Save the file
+
+**Note**: The `.env` file is git-ignored for security. Never commit API keys to version control!
 
 **Note**: Images are generated using Pollinations.ai (free, no API key needed)
 
-### 3. Run the Game
-
-**Option A: Using a local server (recommended)**
+### 3. Install Dependencies and Run
 
 ```bash
-# If you have Python 3 installed:
-python3 -m http.server 8000
+# Install dependencies (first time only)
+npm install
 
-# Or if you have Python 2:
-python -m SimpleHTTPServer 8000
-
-# Or if you have Node.js:
-npx http-server
+# Start the server
+npm start
 ```
 
-Then open your browser to `http://localhost:8000`
+Then open your browser to **http://localhost:3000**
 
-**Option B: Using VS Code Live Server**
-
-1. Install the "Live Server" extension in VS Code
-2. Right-click on `index.html`
-3. Select "Open with Live Server"
-
-**Option C: Direct file opening**
-
-You can also just open `index.html` directly in your browser, though API calls may be restricted.
+The server runs a backend that proxies the Anthropic API calls (required to avoid CORS issues) and serves the game files.
 
 ## Customizing Questions
 
@@ -109,8 +101,11 @@ The Oracle creates unique destinies (1-5 words) that fuse career with character 
 DayAfterDay/
 ├── index.html          # Main HTML structure
 ├── styles.css          # Game styling
-├── game.js            # Game logic and API integration
+├── game.js            # Frontend game logic
+├── server.js          # Backend API proxy server
+├── package.json       # Node.js dependencies
 ├── questions.json     # Question data for each year
+├── destiny_prompt.md  # Oracle system specification
 └── README.md         # This file
 ```
 
@@ -125,10 +120,10 @@ DayAfterDay/
 
 ## Technologies Used
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Google Gemini AI API
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Backend**: Node.js, Express
+- **AI**: Anthropic Claude API (Oracle of Fates)
+- **Images**: Pollinations.ai (free AI image generation)
 
 ## License
 

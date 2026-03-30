@@ -10,10 +10,6 @@ let gameState = {
     score: 0
 };
 
-// API Configuration
-const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE'; // User needs to add their key
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-
 // DOM Elements
 const destinyValue = document.getElementById('destiny-value');
 const currentAge = document.getElementById('current-age');
@@ -117,22 +113,15 @@ A${gameState.answers.length + 1}: "${currentAnswer}"
 Based on ALL of the above — every answer, not just the latest — determine this child's evolving Destiny. Respond with the JSON object only.`;
 
     try {
-        const response = await fetch(ANTHROPIC_API_URL, {
+        // Call our backend server instead of Anthropic directly (avoids CORS issues)
+        const response = await fetch('http://localhost:3000/api/oracle', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': ANTHROPIC_API_KEY,
-                'anthropic-version': '2023-06-01'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20241022',
-                max_tokens: 1024,
-                temperature: 0.9,
                 system: ORACLE_SYSTEM_PROMPT,
-                messages: [{
-                    role: 'user',
-                    content: userPrompt
-                }]
+                userPrompt: userPrompt
             })
         });
 
