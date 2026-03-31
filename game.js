@@ -46,10 +46,13 @@ const FALLBACK_ORACLE_RESPONSE = {
 };
 
 // DOM Elements
+const gameContainer = document.querySelector('.game-container');
 const destinyValue = document.getElementById('destiny-value');
 const currentAge = document.getElementById('current-age');
+const questionContainer = document.querySelector('.question-container');
 const questionText = document.getElementById('question-text');
 const sampleOptions = document.getElementById('sample-options');
+const inputContainer = document.querySelector('.input-container');
 const playerInput = document.getElementById('player-input');
 const submitBtn = document.getElementById('submit-btn');
 const childImage = document.getElementById('child-image');
@@ -67,6 +70,8 @@ const attributeInput = document.getElementById('attr-input');
 const attributeInputRow = document.getElementById('attribute-input-row');
 const attributeSubmitBtn = document.getElementById('attr-submit-btn');
 const attributeContinueBtn = document.getElementById('attr-continue-btn');
+const attributeTitle = document.querySelector('.attribute-overlay-header h3');
+const attributeCopy = document.querySelector('.attribute-overlay-copy');
 const viewStatsBtn = document.getElementById('view-stats-btn');
 const statsModal = document.getElementById('stats-modal');
 const closeStatsBtn = document.getElementById('close-stats');
@@ -128,9 +133,20 @@ function setAttributeFeedback(message) {
     attributeFeedback.textContent = message || '';
 }
 
+function setGameMode(mode) {
+    gameContainer.classList.toggle('mode-question', mode === 'question');
+    gameContainer.classList.toggle('mode-attribute', mode === 'attribute');
+}
+
 function updatePointsRemaining() {
     const points = gameState.pointsToAllocate;
     pointsRemaining.textContent = `${points} point${points === 1 ? '' : 's'} left`;
+}
+
+function setQuestionPhaseVisible(isVisible) {
+    questionContainer.classList.toggle('phase-hidden', !isVisible);
+    sampleOptions.classList.toggle('phase-hidden', !isVisible);
+    inputContainer.classList.toggle('phase-hidden', !isVisible);
 }
 
 function renderSampleOptions(samples) {
@@ -170,19 +186,9 @@ function renderAttributeBars(container) {
         const row = document.createElement('div');
         row.className = 'attribute-row';
 
-        const header = document.createElement('div');
-        header.className = 'attribute-row-header';
-
         const name = document.createElement('span');
         name.className = 'attribute-name';
         name.textContent = `${index + 1}. ${attribute.label}`;
-
-        const total = document.createElement('span');
-        total.className = 'attribute-total';
-        total.textContent = `${value}/${ATTRIBUTE_MAX}`;
-
-        header.appendChild(name);
-        header.appendChild(total);
 
         const segments = document.createElement('div');
         segments.className = 'attribute-segments';
@@ -190,7 +196,6 @@ function renderAttributeBars(container) {
         for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
             const segment = document.createElement('span');
             segment.className = 'attribute-segment';
-            segment.textContent = `${segmentIndex}`;
 
             if (segmentIndex <= value) {
                 segment.classList.add('filled');
@@ -199,20 +204,31 @@ function renderAttributeBars(container) {
             segments.appendChild(segment);
         }
 
-        row.appendChild(header);
+        const total = document.createElement('span');
+        total.className = 'attribute-total';
+        total.textContent = `${value}/${ATTRIBUTE_MAX}`;
+
+        row.appendChild(name);
         row.appendChild(segments);
+        row.appendChild(total);
         container.appendChild(row);
     });
 }
 
-function showAttributeOverlay() {
+function showAttributeOverlay(mode = 'round') {
     gameState.pointsToAllocate = ATTRIBUTE_POINTS_PER_ROUND;
     hideStatsModal();
+    setGameMode('attribute');
+    setQuestionPhaseVisible(false);
     attributeOverlay.classList.remove('hidden');
     attributeInputRow.classList.remove('hidden');
     attributeContinueBtn.classList.add('hidden');
     attributeInput.value = '';
     setAttributeFeedback('');
+    attributeTitle.textContent = mode === 'opening' ? 'Name the first instincts' : 'Which trait grows next?';
+    attributeCopy.textContent = mode === 'opening'
+        ? 'The newborn portrait is taking shape behind the veil. Spend your first 3 points before the first parenting choice appears.'
+        : 'Choose the trait the year has sharpened. The portrait can finish developing underneath while you decide.';
     updatePointsRemaining();
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
@@ -236,14 +252,14 @@ function allocatePoint(rawIndex) {
     const attrIndex = Number(rawIndex);
 
     if (!Number.isInteger(attrIndex) || attrIndex < 1 || attrIndex > ATTRIBUTE_LIST.length) {
-        setAttributeFeedback('Enter a number from 1 to 12.');
+        setAttributeFeedback('Choose a numbered trait from 1 to 12.');
         return false;
     }
 
     const attribute = ATTRIBUTE_LIST[attrIndex - 1];
 
     if (gameState.attributes[attribute.key] >= ATTRIBUTE_MAX) {
-        setAttributeFeedback(`${attribute.label} is already maxed out.`);
+        setAttributeFeedback(`${attribute.label} has already reached its limit.`);
         return false;
     }
 
@@ -256,10 +272,10 @@ function allocatePoint(rawIndex) {
     if (gameState.pointsToAllocate === 0) {
         attributeInputRow.classList.add('hidden');
         attributeContinueBtn.classList.remove('hidden');
-        setAttributeFeedback('All 3 points assigned. Continue when ready.');
+        setAttributeFeedback('The shape of this year is set. Continue when ready.');
         attributeContinueBtn.focus();
     } else {
-        setAttributeFeedback(`+1 ${attribute.label}.`);
+        setAttributeFeedback(`${attribute.label} grows stronger.`);
     }
 
     return true;
@@ -275,8 +291,8 @@ function onAttributeSubmit() {
     }
 }
 
-function waitForAttributeAllocation() {
-    showAttributeOverlay();
+function waitForAttributeAllocation(mode = 'round') {
+    showAttributeOverlay(mode);
 
     return new Promise((resolve) => {
         attributeAllocationResolver = resolve;
@@ -285,7 +301,7 @@ function waitForAttributeAllocation() {
 
 function completeAttributeAllocation() {
     if (gameState.pointsToAllocate > 0) {
-        setAttributeFeedback(`Spend all ${ATTRIBUTE_POINTS_PER_ROUND} points before continuing.`);
+        setAttributeFeedback(`Spend all ${ATTRIBUTE_POINTS_PER_ROUND} points before moving on.`);
         return;
     }
 
@@ -434,15 +450,24 @@ async function initGame() {
         gameState.questionsData = await response.json();
         renderAttributeBars(attributeGrid);
         renderAttributeBars(statsGrid);
-        loadYear(0);
+        await startOpeningSequence();
     } catch (error) {
         console.error('Error loading questions:', error);
         questionText.textContent = 'Error loading game data. Please refresh the page.';
     }
 }
 
+async function startOpeningSequence() {
+    gameState.currentAge = 0;
+    currentAge.textContent = 'Age: 0';
+    updateProgressBar(0);
+    generateChildImage('photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression');
+    await waitForAttributeAllocation('opening');
+    loadYear(0, { skipImageGeneration: true });
+}
+
 // Load a specific year
-function loadYear(age) {
+function loadYear(age, options = {}) {
     const yearData = gameState.questionsData.years[age];
 
     if (!yearData) {
@@ -452,6 +477,8 @@ function loadYear(age) {
 
     gameState.currentAge = age;
     currentAge.textContent = `Age: ${age}`;
+    setGameMode('question');
+    setQuestionPhaseVisible(true);
     questionText.textContent = yearData.question;
     renderSampleOptions(yearData.samples);
     playerInput.value = '';
@@ -461,7 +488,7 @@ function loadYear(age) {
     updateProgressBar(age);
 
     // Generate image for this year
-    if (age === 0) {
+    if (age === 0 && !options.skipImageGeneration) {
         // First image - newborn baby with simple prompt
         const initialPrompt = 'photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression';
         generateChildImage(initialPrompt);
@@ -524,7 +551,7 @@ async function submitAnswer() {
 
     // Generate the portrait behind the attribute overlay.
     generateChildImage(oracleResponse.image_prompt);
-    await waitForAttributeAllocation();
+    await waitForAttributeAllocation('round');
 
     // Move to next year or end game
     const nextAge = gameState.currentAge + 1;
@@ -732,6 +759,8 @@ function restartGame() {
     attributeAllocationResolver = null;
     hideAttributeOverlay();
     hideStatsModal();
+    setGameMode('attribute');
+    setQuestionPhaseVisible(false);
     renderSampleOptions([]);
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
@@ -743,7 +772,7 @@ function restartGame() {
     });
 
     // Start over
-    loadYear(0);
+    startOpeningSequence();
 }
 
 // Event Listeners

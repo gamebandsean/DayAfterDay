@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Day After Day - Life Sim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -67,7 +70,7 @@
                             inputmode="numeric"
                             autocomplete="off"
                         />
-                        <button id="attr-submit-btn">Add Point</button>
+                        <button id="attr-submit-btn">Shape Trait</button>
                     </div>
                     <button id="attr-continue-btn" class="attr-continue-btn hidden">Continue</button>
                 </div>
@@ -81,6 +84,7 @@
 
         <!-- Question/Prompt Area -->
         <div class="question-container">
+            <p class="question-eyebrow">This Year</p>
             <p id="question-text">Loading...</p>
         </div>
 
@@ -91,13 +95,13 @@
             <input
                 type="text"
                 id="player-input"
-                placeholder="Type your answer here..."
+                placeholder="Write your answer or borrow one below..."
                 autocomplete="off"
             />
             <button id="submit-btn">Submit</button>
         </div>
 
-        <button id="view-stats-btn" class="view-stats-btn" type="button">View Stats</button>
+        <button id="view-stats-btn" class="view-stats-btn" type="button">Open Character Sheet</button>
 
         <!-- Score Display (hidden until end) -->
         <div id="final-score" class="final-score hidden">
@@ -118,7 +122,7 @@
                     <button id="close-stats" class="close-stats" type="button">&times;</button>
                 </div>
                 <div class="stats-body">
-                    <p class="stats-copy">These traits build slowly over time. Early points mostly whisper. Later points start to define who this person becomes.</p>
+                    <p class="stats-copy">At first these traits are only hints. Later they become the skeleton of a personality the Oracle can no longer ignore.</p>
                     <div id="stats-grid" class="attribute-grid stats-grid"></div>
                 </div>
             </div>
