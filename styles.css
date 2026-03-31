@@ -172,6 +172,7 @@ body::before {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     margin-bottom: 18px;
     padding: 15px 18px;
     min-height: 86px;
@@ -197,6 +198,7 @@ body::before {
 .destiny-label {
     display: inline-block;
     color: var(--text-secondary);
+    text-align: center;
 }
 
 #destiny-value {
@@ -206,6 +208,7 @@ body::before {
     font-size: clamp(28px, 4vw, 38px);
     line-height: 0.95;
     color: var(--text-primary);
+    text-align: center;
 }
 
 .question-container {
