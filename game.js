@@ -1,3 +1,28 @@
+const ATTRIBUTE_LIST = [
+    { key: 'intelligence', label: 'Intelligence' },
+    { key: 'looks', label: 'Looks' },
+    { key: 'money', label: 'Money' },
+    { key: 'charisma', label: 'Charisma' },
+    { key: 'honesty', label: 'Honesty' },
+    { key: 'loyalty', label: 'Loyalty' },
+    { key: 'empathy', label: 'Empathy' },
+    { key: 'strength', label: 'Strength' },
+    { key: 'discipline', label: 'Discipline' },
+    { key: 'authority', label: 'Authority' },
+    { key: 'humor', label: 'Humor' },
+    { key: 'temper', label: 'Temper' }
+];
+const ATTRIBUTE_AGE_THRESHOLD = 6;
+const ATTRIBUTE_POINTS_PER_ROUND = 3;
+const ATTRIBUTE_MAX = 10;
+
+function createDefaultAttributes() {
+    return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
+        attributes[attribute.key] = 0;
+        return attributes;
+    }, {});
+}
+
 // Game State
 let gameState = {
     currentAge: 0,
@@ -7,7 +32,9 @@ let gameState = {
     destiny: 'UNKNOWN',
     moralAlignment: null,
     justification: '',
-    score: 0
+    score: 0,
+    attributes: createDefaultAttributes(),
+    pointsToAllocate: 0
 };
 
 const FALLBACK_ORACLE_RESPONSE = {
@@ -22,6 +49,7 @@ const FALLBACK_ORACLE_RESPONSE = {
 const destinyValue = document.getElementById('destiny-value');
 const currentAge = document.getElementById('current-age');
 const questionText = document.getElementById('question-text');
+const sampleOptions = document.getElementById('sample-options');
 const playerInput = document.getElementById('player-input');
 const submitBtn = document.getElementById('submit-btn');
 const childImage = document.getElementById('child-image');
@@ -31,6 +59,18 @@ const finalDestiny = document.getElementById('final-destiny');
 const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
 const progressSegments = document.querySelectorAll('.progress-segment');
+const attributeOverlay = document.getElementById('attribute-overlay');
+const attributeGrid = document.getElementById('attribute-grid');
+const pointsRemaining = document.getElementById('points-remaining');
+const attributeFeedback = document.getElementById('attribute-feedback');
+const attributeInput = document.getElementById('attr-input');
+const attributeInputRow = document.getElementById('attribute-input-row');
+const attributeSubmitBtn = document.getElementById('attr-submit-btn');
+const attributeContinueBtn = document.getElementById('attr-continue-btn');
+const viewStatsBtn = document.getElementById('view-stats-btn');
+const statsModal = document.getElementById('stats-modal');
+const closeStatsBtn = document.getElementById('close-stats');
+const statsGrid = document.getElementById('stats-grid');
 
 // Debug Modal Elements
 const debugModal = document.getElementById('debug-modal');
@@ -39,6 +79,7 @@ const debugDestiny = document.getElementById('debug-destiny');
 const debugAlignment = document.getElementById('debug-alignment');
 const debugJustification = document.getElementById('debug-justification');
 const debugPhysical = document.getElementById('debug-physical');
+let attributeAllocationResolver = null;
 
 async function readJsonResponse(response, fallbackMessage) {
     const raw = await response.text();
@@ -55,6 +96,215 @@ async function readJsonResponse(response, fallbackMessage) {
     }
 
     return data;
+}
+
+function getAttributeInfluenceLevel(age) {
+    if (age < ATTRIBUTE_AGE_THRESHOLD) {
+        return 'minimal';
+    }
+
+    if (age < 13) {
+        return 'moderate';
+    }
+
+    return 'significant';
+}
+
+function getAttributeSummary() {
+    return ATTRIBUTE_LIST.map((attribute, index) => {
+        return `${index + 1}. ${attribute.label}: ${gameState.attributes[attribute.key]}`;
+    }).join('\n');
+}
+
+function isTypingTarget(target) {
+    return Boolean(
+        target &&
+        target.closest &&
+        target.closest('input, textarea, [contenteditable="true"]')
+    );
+}
+
+function setAttributeFeedback(message) {
+    attributeFeedback.textContent = message || '';
+}
+
+function updatePointsRemaining() {
+    const points = gameState.pointsToAllocate;
+    pointsRemaining.textContent = `${points} point${points === 1 ? '' : 's'} left`;
+}
+
+function renderSampleOptions(samples) {
+    if (!sampleOptions) {
+        return;
+    }
+
+    sampleOptions.innerHTML = '';
+
+    if (!Array.isArray(samples) || samples.length === 0) {
+        return;
+    }
+
+    samples.forEach((sampleText) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sample-option-btn';
+        button.textContent = sampleText;
+        button.addEventListener('click', () => {
+            playerInput.value = sampleText;
+            playerInput.focus();
+            playerInput.setSelectionRange(playerInput.value.length, playerInput.value.length);
+        });
+        sampleOptions.appendChild(button);
+    });
+}
+
+function renderAttributeBars(container) {
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    ATTRIBUTE_LIST.forEach((attribute, index) => {
+        const value = gameState.attributes[attribute.key];
+        const row = document.createElement('div');
+        row.className = 'attribute-row';
+
+        const header = document.createElement('div');
+        header.className = 'attribute-row-header';
+
+        const name = document.createElement('span');
+        name.className = 'attribute-name';
+        name.textContent = `${index + 1}. ${attribute.label}`;
+
+        const total = document.createElement('span');
+        total.className = 'attribute-total';
+        total.textContent = `${value}/${ATTRIBUTE_MAX}`;
+
+        header.appendChild(name);
+        header.appendChild(total);
+
+        const segments = document.createElement('div');
+        segments.className = 'attribute-segments';
+
+        for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
+            const segment = document.createElement('span');
+            segment.className = 'attribute-segment';
+            segment.textContent = `${segmentIndex}`;
+
+            if (segmentIndex <= value) {
+                segment.classList.add('filled');
+            }
+
+            segments.appendChild(segment);
+        }
+
+        row.appendChild(header);
+        row.appendChild(segments);
+        container.appendChild(row);
+    });
+}
+
+function showAttributeOverlay() {
+    gameState.pointsToAllocate = ATTRIBUTE_POINTS_PER_ROUND;
+    hideStatsModal();
+    attributeOverlay.classList.remove('hidden');
+    attributeInputRow.classList.remove('hidden');
+    attributeContinueBtn.classList.add('hidden');
+    attributeInput.value = '';
+    setAttributeFeedback('');
+    updatePointsRemaining();
+    renderAttributeBars(attributeGrid);
+    renderAttributeBars(statsGrid);
+    attributeInput.focus();
+}
+
+function hideAttributeOverlay() {
+    attributeOverlay.classList.add('hidden');
+    attributeInput.value = '';
+    gameState.pointsToAllocate = 0;
+    attributeContinueBtn.classList.add('hidden');
+    attributeInputRow.classList.remove('hidden');
+    setAttributeFeedback('');
+}
+
+function allocatePoint(rawIndex) {
+    if (gameState.pointsToAllocate <= 0) {
+        return false;
+    }
+
+    const attrIndex = Number(rawIndex);
+
+    if (!Number.isInteger(attrIndex) || attrIndex < 1 || attrIndex > ATTRIBUTE_LIST.length) {
+        setAttributeFeedback('Enter a number from 1 to 12.');
+        return false;
+    }
+
+    const attribute = ATTRIBUTE_LIST[attrIndex - 1];
+
+    if (gameState.attributes[attribute.key] >= ATTRIBUTE_MAX) {
+        setAttributeFeedback(`${attribute.label} is already maxed out.`);
+        return false;
+    }
+
+    gameState.attributes[attribute.key] += 1;
+    gameState.pointsToAllocate -= 1;
+    renderAttributeBars(attributeGrid);
+    renderAttributeBars(statsGrid);
+    updatePointsRemaining();
+
+    if (gameState.pointsToAllocate === 0) {
+        attributeInputRow.classList.add('hidden');
+        attributeContinueBtn.classList.remove('hidden');
+        setAttributeFeedback('All 3 points assigned. Continue when ready.');
+        attributeContinueBtn.focus();
+    } else {
+        setAttributeFeedback(`+1 ${attribute.label}.`);
+    }
+
+    return true;
+}
+
+function onAttributeSubmit() {
+    const success = allocatePoint(attributeInput.value.trim());
+    if (success) {
+        attributeInput.value = '';
+        if (gameState.pointsToAllocate > 0) {
+            attributeInput.focus();
+        }
+    }
+}
+
+function waitForAttributeAllocation() {
+    showAttributeOverlay();
+
+    return new Promise((resolve) => {
+        attributeAllocationResolver = resolve;
+    });
+}
+
+function completeAttributeAllocation() {
+    if (gameState.pointsToAllocate > 0) {
+        setAttributeFeedback(`Spend all ${ATTRIBUTE_POINTS_PER_ROUND} points before continuing.`);
+        return;
+    }
+
+    hideAttributeOverlay();
+
+    if (attributeAllocationResolver) {
+        const resolve = attributeAllocationResolver;
+        attributeAllocationResolver = null;
+        resolve();
+    }
+}
+
+function showStatsModal() {
+    renderAttributeBars(statsGrid);
+    statsModal.classList.remove('hidden');
+}
+
+function hideStatsModal() {
+    statsModal.classList.add('hidden');
 }
 
 // Oracle System Prompt (from destiny_prompt.md)
@@ -122,10 +372,19 @@ async function consultOracle(currentQuestion, currentAnswer) {
     });
 
     // Build user prompt
+    const attributeInfluenceLevel = getAttributeInfluenceLevel(gameState.currentAge);
     const userPrompt = `Here is the current state of the game:
 
 CHILD'S CURRENT AGE: ${gameState.currentAge}
 CHILD'S CURRENT PHYSICAL DESCRIPTION: ${gameState.physicalDescription}
+CHILD'S ATTRIBUTE SCORES (1-10 scale):
+${getAttributeSummary()}
+
+ATTRIBUTE GUIDANCE:
+Treat these attributes as aptitude modifiers that influence what this child can realistically become.
+The child is currently age ${gameState.currentAge}, so attribute influence should be ${attributeInfluenceLevel}.
+Before age ${ATTRIBUTE_AGE_THRESHOLD}, attributes are still forming and should only subtly shade the destiny.
+From age ${ATTRIBUTE_AGE_THRESHOLD} onward, attributes meaningfully shape the child's abilities, behavior, and future.
 
 PREVIOUS QUESTIONS AND ANSWERS (in order):
 ${previousRounds}
@@ -173,6 +432,8 @@ async function initGame() {
     try {
         const response = await fetch('questions.json');
         gameState.questionsData = await response.json();
+        renderAttributeBars(attributeGrid);
+        renderAttributeBars(statsGrid);
         loadYear(0);
     } catch (error) {
         console.error('Error loading questions:', error);
@@ -192,6 +453,7 @@ function loadYear(age) {
     gameState.currentAge = age;
     currentAge.textContent = `Age: ${age}`;
     questionText.textContent = yearData.question;
+    renderSampleOptions(yearData.samples);
     playerInput.value = '';
     playerInput.focus();
 
@@ -221,6 +483,10 @@ function updateProgressBar(age) {
 // Handle answer submission
 async function submitAnswer() {
     const answer = playerInput.value.trim();
+
+    if (submitBtn.disabled) {
+        return;
+    }
 
     if (!answer) {
         alert('Please enter an answer!');
@@ -256,8 +522,9 @@ async function submitAnswer() {
     // Calculate score for this answer
     calculateAnswerScore(answer);
 
-    // Generate new image using Oracle's prompt
-    await generateChildImage(oracleResponse.image_prompt);
+    // Generate the portrait behind the attribute overlay.
+    generateChildImage(oracleResponse.image_prompt);
+    await waitForAttributeAllocation();
 
     // Move to next year or end game
     const nextAge = gameState.currentAge + 1;
@@ -454,12 +721,20 @@ function restartGame() {
         destiny: 'UNKNOWN',
         moralAlignment: null,
         justification: '',
-        score: 0
+        score: 0,
+        attributes: createDefaultAttributes(),
+        pointsToAllocate: 0
     };
 
     // Reset UI
     destinyValue.textContent = 'UNKNOWN';
     finalScore.classList.add('hidden');
+    attributeAllocationResolver = null;
+    hideAttributeOverlay();
+    hideStatsModal();
+    renderSampleOptions([]);
+    renderAttributeBars(attributeGrid);
+    renderAttributeBars(statsGrid);
 
     // Clear extra messages
     const messages = finalScore.querySelectorAll('p');
@@ -473,12 +748,27 @@ function restartGame() {
 
 // Event Listeners
 submitBtn.addEventListener('click', submitAnswer);
-playerInput.addEventListener('keypress', (e) => {
+playerInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         submitAnswer();
     }
 });
 restartBtn.addEventListener('click', restartGame);
+attributeSubmitBtn.addEventListener('click', onAttributeSubmit);
+attributeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        onAttributeSubmit();
+    }
+});
+attributeContinueBtn.addEventListener('click', completeAttributeAllocation);
+viewStatsBtn.addEventListener('click', showStatsModal);
+closeStatsBtn.addEventListener('click', hideStatsModal);
+statsModal.addEventListener('click', (e) => {
+    if (e.target === statsModal) {
+        hideStatsModal();
+    }
+});
 
 // Debug Modal Functions
 function openDebugModal() {
@@ -494,6 +784,10 @@ closeDebugBtn.addEventListener('click', closeDebugModal);
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+    if (isTypingTarget(e.target) && e.key !== 'Escape') {
+        return;
+    }
+
     // Press the backquote/tilde key to toggle debug modal
     if (e.code === 'Backquote') {
         if (debugModal.classList.contains('hidden')) {
@@ -506,6 +800,7 @@ document.addEventListener('keydown', (e) => {
     // Press ESC to close debug modal
     if (e.key === 'Escape') {
         closeDebugModal();
+        hideStatsModal();
     }
 });
 

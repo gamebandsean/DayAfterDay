@@ -45,6 +45,33 @@
                 <div class="spinner"></div>
                 <p>Generating image...</p>
             </div>
+            <div id="attribute-overlay" class="attribute-overlay hidden">
+                <div class="attribute-overlay-shell">
+                    <div class="attribute-overlay-header">
+                        <div>
+                            <p class="attribute-eyebrow">Character Build</p>
+                            <h3>Spend 3 points</h3>
+                        </div>
+                        <span id="points-remaining" class="points-remaining">3 points left</span>
+                    </div>
+                    <p class="attribute-overlay-copy">Type an attribute number from 1 to 12, then press submit. Your portrait can finish loading underneath.</p>
+                    <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
+                    <div id="attribute-grid" class="attribute-grid"></div>
+                    <div id="attribute-input-row" class="attribute-input-row">
+                        <input
+                            type="number"
+                            id="attr-input"
+                            min="1"
+                            max="12"
+                            placeholder="1-12"
+                            inputmode="numeric"
+                            autocomplete="off"
+                        />
+                        <button id="attr-submit-btn">Add Point</button>
+                    </div>
+                    <button id="attr-continue-btn" class="attr-continue-btn hidden">Continue</button>
+                </div>
+            </div>
         </div>
 
         <!-- Age Display -->
@@ -57,6 +84,8 @@
             <p id="question-text">Loading...</p>
         </div>
 
+        <div id="sample-options" class="sample-options" aria-label="Sample answers"></div>
+
         <!-- Input Area -->
         <div class="input-container">
             <input
@@ -68,6 +97,8 @@
             <button id="submit-btn">Submit</button>
         </div>
 
+        <button id="view-stats-btn" class="view-stats-btn" type="button">View Stats</button>
+
         <!-- Score Display (hidden until end) -->
         <div id="final-score" class="final-score hidden">
             <h2>Game Over!</h2>
@@ -76,7 +107,24 @@
             <button id="restart-btn">Play Again</button>
         </div>
 
-        <!-- Debug Modal (Press D to open) -->
+        <!-- Attribute Stats Modal -->
+        <div id="stats-modal" class="stats-modal hidden">
+            <div class="stats-content">
+                <div class="stats-header">
+                    <div>
+                        <p class="stats-eyebrow">Character Sheet</p>
+                        <h3>Current Attributes</h3>
+                    </div>
+                    <button id="close-stats" class="close-stats" type="button">&times;</button>
+                </div>
+                <div class="stats-body">
+                    <p class="stats-copy">These traits build slowly over time. Early points mostly whisper. Later points start to define who this person becomes.</p>
+                    <div id="stats-grid" class="attribute-grid stats-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Modal -->
         <div id="debug-modal" class="debug-modal hidden">
             <div class="debug-content">
                 <div class="debug-header">
@@ -102,7 +150,7 @@
                     </div>
                 </div>
                 <div class="debug-footer">
-                    <small>Press D or ESC to close</small>
+                    <small>Press ` or ESC to close</small>
                 </div>
             </div>
         </div>
