@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 20;
+const BUILD_NUMBER = 21;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -147,7 +147,7 @@ function setGameMode(mode) {
 function updateTimelineHeader(age) {
     const yearsRemaining = Math.max(0, 18 - age);
 
-    gameTitle.textContent = `${yearsRemaining} ${yearsRemaining === 1 ? 'Year' : 'Years'} Until Adulthood`;
+    gameTitle.textContent = `${yearsRemaining} ${yearsRemaining === 1 ? 'YEAR' : 'YEARS'} UNTIL ADULTHOOD`;
 }
 
 function updatePointsRemaining() {
