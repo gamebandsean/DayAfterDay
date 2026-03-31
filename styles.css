@@ -251,8 +251,8 @@ body::before {
 }
 
 .sample-options {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 16px;
     transition: opacity 0.25s ease, transform 0.25s ease;
@@ -272,8 +272,7 @@ body::before {
 }
 
 .sample-option-btn {
-    flex: 1 1 160px;
-    min-height: 54px;
+    min-height: 140px;
     padding: 12px 14px;
     border-radius: 16px;
     border: 1px solid var(--border-soft);
@@ -924,11 +923,11 @@ body::before {
     }
 
     .sample-options {
-        flex-direction: column;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .sample-option-btn {
-        width: 100%;
+        min-height: 120px;
     }
 
     #submit-btn,

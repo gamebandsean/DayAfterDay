@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 13;
+const BUILD_NUMBER = 14;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -182,13 +182,13 @@ function configurePrimaryInput(mode) {
 
     playerInput.classList.remove('phase-hidden');
     playerInput.disabled = false;
-    playerInput.placeholder = 'Write your answer or borrow one below...';
+    playerInput.placeholder = 'Write your answer or borrow one above...';
     playerInput.inputMode = 'text';
     playerInput.setAttribute('aria-label', 'Write your answer');
     submitBtn.textContent = 'Submit';
     submitBtn.disabled = false;
     inputContainer.classList.remove('phase-hidden');
-    setInputFeedback('Answer in your own words or start with one of the prompts below.', 'muted');
+    setInputFeedback('Answer in your own words or start with one of the prompts above.', 'muted');
 }
 
 function renderSampleOptions(samples) {
