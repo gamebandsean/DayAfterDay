@@ -580,15 +580,15 @@ body::before {
 
 .attribute-overlay .attribute-grid {
     flex: 1;
-    grid-template-columns: repeat(3, 56px);
-    gap: 8px 10px;
+    grid-template-columns: repeat(3, 84px);
+    gap: 12px 14px;
     align-content: center;
     justify-content: center;
 }
 
 .attribute-card {
     position: relative;
-    width: 56px;
+    width: 84px;
     min-height: 0;
     aspect-ratio: 1;
     padding: 0;
@@ -627,12 +627,12 @@ body::before {
             oklch(1 0 0 / 0.1) calc(var(--fill-ratio) * 1turn),
             oklch(1 0 0 / 0.1) 1turn
         );
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 11px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 11px));
 }
 
 .attribute-card::after {
-    inset: 7px;
+    inset: 10px;
     background:
         radial-gradient(circle at top, oklch(1 0 0 / 0.12), transparent 58%),
         oklch(0.29 0.04 325 / 0.92);
@@ -641,7 +641,7 @@ body::before {
 
 .attribute-card-content {
     position: absolute;
-    inset: 11px;
+    inset: 16px;
     z-index: 1;
     display: flex;
     flex-direction: column;
@@ -652,7 +652,7 @@ body::before {
 }
 
 .attribute-card-name {
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 700;
     line-height: 1.15;
     text-wrap: balance;
@@ -956,8 +956,8 @@ body::before {
     }
 
     .attribute-overlay .attribute-grid {
-        grid-template-columns: repeat(3, 48px);
-        gap: 8px;
+        grid-template-columns: repeat(3, 66px);
+        gap: 10px;
     }
 
     .stats-content,
