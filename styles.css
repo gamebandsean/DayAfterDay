@@ -111,7 +111,9 @@ body::before {
 .age-display {
     display: flex;
     justify-content: center;
-    margin-bottom: 6px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -127,7 +129,7 @@ body::before {
 
 .game-title {
     max-width: none;
-    margin: 10px auto 12px;
+    margin: 0;
     font-family: 'Instrument Sans', sans-serif;
     font-size: 11px;
     font-weight: 700;
@@ -825,7 +827,7 @@ body::before {
 
     .game-title {
         font-size: 11px;
-        margin-bottom: 12px;
+        margin: 0;
     }
 
     #destiny-value {
