@@ -129,7 +129,7 @@ body::before {
     max-width: 18ch;
     margin: 10px auto 12px;
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(20px, 2.7vw, 30px);
+    font-size: clamp(8px, 0.9vw, 12px);
     font-weight: 700;
     line-height: 0.98;
     text-align: center;
