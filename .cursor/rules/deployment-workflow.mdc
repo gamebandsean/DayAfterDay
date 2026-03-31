@@ -1,0 +1,19 @@
+---
+description: Build bump and deploy workflow for implementation tasks
+alwaysApply: true
+---
+
+# Build And Deploy Workflow
+
+For implementation tasks in this project:
+
+- After completing the implementation, increment the app build number shown in the bottom footer UI.
+- Then commit all intended changes with git and push them to the remote repository.
+- Then push and redeploy the latest changes to Vercel.
+- Treat this workflow as the default for code changes unless the user explicitly says not to commit or not to deploy.
+
+Guardrails:
+
+- Do not apply this workflow to read-only exploration, planning, or review-only turns.
+- If the build number location or deploy target is unclear, ask before shipping.
+- Mention the new build number and deployment result in the final response.

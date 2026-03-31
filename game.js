@@ -15,6 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
+const BUILD_NUMBER = 1;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -55,6 +56,7 @@ const sampleOptions = document.getElementById('sample-options');
 const inputContainer = document.querySelector('.input-container');
 const playerInput = document.getElementById('player-input');
 const submitBtn = document.getElementById('submit-btn');
+const inputFeedback = document.getElementById('input-feedback');
 const childImage = document.getElementById('child-image');
 const imageLoading = document.getElementById('image-loading');
 const finalScore = document.getElementById('final-score');
@@ -66,16 +68,13 @@ const attributeOverlay = document.getElementById('attribute-overlay');
 const attributeGrid = document.getElementById('attribute-grid');
 const pointsRemaining = document.getElementById('points-remaining');
 const attributeFeedback = document.getElementById('attribute-feedback');
-const attributeInput = document.getElementById('attr-input');
-const attributeInputRow = document.getElementById('attribute-input-row');
-const attributeSubmitBtn = document.getElementById('attr-submit-btn');
-const attributeContinueBtn = document.getElementById('attr-continue-btn');
 const attributeTitle = document.querySelector('.attribute-overlay-header h3');
 const attributeCopy = document.querySelector('.attribute-overlay-copy');
 const viewStatsBtn = document.getElementById('view-stats-btn');
 const statsModal = document.getElementById('stats-modal');
 const closeStatsBtn = document.getElementById('close-stats');
 const statsGrid = document.getElementById('stats-grid');
+const buildBadge = document.getElementById('build-badge');
 
 // Debug Modal Elements
 const debugModal = document.getElementById('debug-modal');
@@ -133,6 +132,15 @@ function setAttributeFeedback(message) {
     attributeFeedback.textContent = message || '';
 }
 
+function setInputFeedback(message, state = 'default') {
+    if (!inputFeedback) {
+        return;
+    }
+
+    inputFeedback.textContent = message || '';
+    inputFeedback.dataset.state = state;
+}
+
 function setGameMode(mode) {
     gameContainer.classList.toggle('mode-question', mode === 'question');
     gameContainer.classList.toggle('mode-attribute', mode === 'attribute');
@@ -146,7 +154,29 @@ function updatePointsRemaining() {
 function setQuestionPhaseVisible(isVisible) {
     questionContainer.classList.toggle('phase-hidden', !isVisible);
     sampleOptions.classList.toggle('phase-hidden', !isVisible);
-    inputContainer.classList.toggle('phase-hidden', !isVisible);
+}
+
+function configurePrimaryInput(mode) {
+    if (mode === 'attribute') {
+        playerInput.value = '';
+        playerInput.disabled = false;
+        playerInput.placeholder = 'Choose trait 1-12';
+        playerInput.inputMode = 'numeric';
+        playerInput.setAttribute('aria-label', 'Choose trait from 1 to 12');
+        submitBtn.textContent = gameState.pointsToAllocate > 0 ? 'Shape Trait' : 'Continue';
+        inputContainer.classList.remove('phase-hidden');
+        setInputFeedback('Spend every point before continuing.', 'muted');
+        playerInput.focus();
+        return;
+    }
+
+    playerInput.disabled = false;
+    playerInput.placeholder = 'Write your answer or borrow one below...';
+    playerInput.inputMode = 'text';
+    playerInput.setAttribute('aria-label', 'Write your answer');
+    submitBtn.textContent = 'Submit';
+    inputContainer.classList.remove('phase-hidden');
+    setInputFeedback('Answer in your own words or start with one of the prompts below.', 'muted');
 }
 
 function renderSampleOptions(samples) {
@@ -221,9 +251,6 @@ function showAttributeOverlay(mode = 'round') {
     setGameMode('attribute');
     setQuestionPhaseVisible(false);
     attributeOverlay.classList.remove('hidden');
-    attributeInputRow.classList.remove('hidden');
-    attributeContinueBtn.classList.add('hidden');
-    attributeInput.value = '';
     setAttributeFeedback('');
     attributeTitle.textContent = mode === 'opening' ? 'Name the first instincts' : 'Which trait grows next?';
     attributeCopy.textContent = mode === 'opening'
@@ -232,15 +259,12 @@ function showAttributeOverlay(mode = 'round') {
     updatePointsRemaining();
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
-    attributeInput.focus();
+    configurePrimaryInput('attribute');
 }
 
 function hideAttributeOverlay() {
     attributeOverlay.classList.add('hidden');
-    attributeInput.value = '';
     gameState.pointsToAllocate = 0;
-    attributeContinueBtn.classList.add('hidden');
-    attributeInputRow.classList.remove('hidden');
     setAttributeFeedback('');
 }
 
@@ -268,12 +292,11 @@ function allocatePoint(rawIndex) {
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
     updatePointsRemaining();
+    configurePrimaryInput('attribute');
 
     if (gameState.pointsToAllocate === 0) {
-        attributeInputRow.classList.add('hidden');
-        attributeContinueBtn.classList.remove('hidden');
         setAttributeFeedback('The shape of this year is set. Continue when ready.');
-        attributeContinueBtn.focus();
+        submitBtn.focus();
     } else {
         setAttributeFeedback(`${attribute.label} grows stronger.`);
     }
@@ -282,12 +305,15 @@ function allocatePoint(rawIndex) {
 }
 
 function onAttributeSubmit() {
-    const success = allocatePoint(attributeInput.value.trim());
-    if (success) {
-        attributeInput.value = '';
-        if (gameState.pointsToAllocate > 0) {
-            attributeInput.focus();
-        }
+    if (gameState.pointsToAllocate === 0) {
+        completeAttributeAllocation();
+        return;
+    }
+
+    const success = allocatePoint(playerInput.value.trim());
+    if (success && gameState.pointsToAllocate > 0) {
+        playerInput.value = '';
+        playerInput.focus();
     }
 }
 
@@ -315,6 +341,10 @@ function completeAttributeAllocation() {
 }
 
 function showStatsModal() {
+    if (!finalScore.classList.contains('hidden')) {
+        return;
+    }
+
     renderAttributeBars(statsGrid);
     statsModal.classList.remove('hidden');
 }
@@ -446,6 +476,10 @@ Based on ALL of the above — every answer, not just the latest — determine th
 // Initialize Game
 async function initGame() {
     try {
+        if (buildBadge) {
+            buildBadge.textContent = `Build ${String(BUILD_NUMBER).padStart(3, '0')}`;
+        }
+
         const response = await fetch('questions.json');
         gameState.questionsData = await response.json();
         renderAttributeBars(attributeGrid);
@@ -461,6 +495,7 @@ async function startOpeningSequence() {
     gameState.currentAge = 0;
     currentAge.textContent = 'Age: 0';
     updateProgressBar(0);
+    setInputFeedback('The first reading begins with instinct.', 'muted');
     generateChildImage('photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression');
     await waitForAttributeAllocation('opening');
     loadYear(0, { skipImageGeneration: true });
@@ -479,9 +514,11 @@ function loadYear(age, options = {}) {
     currentAge.textContent = `Age: ${age}`;
     setGameMode('question');
     setQuestionPhaseVisible(true);
+    configurePrimaryInput('question');
     questionText.textContent = yearData.question;
     renderSampleOptions(yearData.samples);
     playerInput.value = '';
+    setInputFeedback('Answer in your own words or borrow one of the sample responses.', 'muted');
     playerInput.focus();
 
     // Update progress bar
@@ -516,9 +553,12 @@ async function submitAnswer() {
     }
 
     if (!answer) {
-        alert('Please enter an answer!');
+        setInputFeedback('Write a response before asking the Oracle to judge it.');
+        playerInput.focus();
         return;
     }
+
+    setInputFeedback('');
 
     // Disable input while processing
     submitBtn.disabled = true;
@@ -648,38 +688,44 @@ function showPlaceholderImage(prompt) {
     // Gradient background based on moral alignment
     const gradient = ctx.createLinearGradient(0, 0, 800, 800);
     if (gameState.moralAlignment === 'good') {
-        gradient.addColorStop(0, '#667eea');
-        gradient.addColorStop(1, '#764ba2');
+        gradient.addColorStop(0, '#d6b36a');
+        gradient.addColorStop(1, '#7a405b');
     } else if (gameState.moralAlignment === 'bad') {
-        gradient.addColorStop(0, '#cc2b5e');
-        gradient.addColorStop(1, '#753a88');
+        gradient.addColorStop(0, '#944154');
+        gradient.addColorStop(1, '#462337');
     } else {
-        gradient.addColorStop(0, '#36d1dc');
-        gradient.addColorStop(1, '#5b86e5');
+        gradient.addColorStop(0, '#c59d58');
+        gradient.addColorStop(1, '#5b3554');
     }
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 800, 800);
 
     // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillStyle = 'rgba(246, 239, 225, 0.08)';
     ctx.fillRect(0, 0, 800, 800);
 
+    ctx.strokeStyle = 'rgba(247, 239, 226, 0.22)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(42, 42, 716, 716);
+
     // Draw age in large text
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 120px Arial';
+    ctx.fillStyle = 'rgba(255, 248, 237, 0.92)';
+    ctx.font = 'bold 24px Georgia';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`AGE ${gameState.currentAge}`, 400, 300);
+    ctx.fillText('THE ORACLE SEES', 400, 216);
+    ctx.font = 'bold 120px Georgia';
+    ctx.fillText(`AGE ${gameState.currentAge}`, 400, 320);
 
     // Draw destiny
     if (gameState.destiny && gameState.destiny !== 'UNKNOWN') {
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = 'bold 32px Georgia';
+        ctx.fillStyle = 'rgba(255, 245, 232, 0.92)';
 
         // Word wrap destiny if too long
         const words = gameState.destiny.split(' ');
         let line = '';
-        let y = 450;
+        let y = 470;
 
         words.forEach((word, index) => {
             const testLine = line + word + ' ';
@@ -688,7 +734,7 @@ function showPlaceholderImage(prompt) {
             if (metrics.width > 700 && index > 0) {
                 ctx.fillText(line, 400, y);
                 line = word + ' ';
-                y += 40;
+                y += 44;
             } else {
                 line = testLine;
             }
@@ -697,7 +743,7 @@ function showPlaceholderImage(prompt) {
     }
 
     // Draw decorative circle
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.strokeStyle = 'rgba(255, 241, 225, 0.22)';
     ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.arc(400, 400, 350, 0, 2 * Math.PI);
@@ -715,9 +761,13 @@ function endGame() {
     const maxScore = gameState.questionsData.years.length * 25;
     const percentage = Math.round((gameState.score / maxScore) * 100);
 
+    hideStatsModal();
+    closeDebugModal();
+    setInputFeedback('');
+
     // Show final score screen
-    finalDestiny.textContent = `Final Destiny: ${gameState.destiny}`;
-    scoreDisplay.textContent = `Score: ${gameState.score} / ${maxScore} (${percentage}%)`;
+    finalDestiny.textContent = gameState.destiny;
+    scoreDisplay.textContent = `Score ${gameState.score} / ${maxScore} · ${percentage}%`;
 
     let message = '';
     if (percentage >= 80) {
@@ -730,9 +780,13 @@ function endGame() {
         message = 'Every journey is unique. Perhaps try different choices?';
     }
 
-    const messageElement = document.createElement('p');
+    let messageElement = finalScore.querySelector('.final-message');
+    if (!messageElement) {
+        messageElement = document.createElement('p');
+        messageElement.className = 'final-message';
+        restartBtn.insertAdjacentElement('beforebegin', messageElement);
+    }
     messageElement.textContent = message;
-    finalScore.insertBefore(messageElement, restartBtn);
 
     finalScore.classList.remove('hidden');
 }
@@ -759,38 +813,55 @@ function restartGame() {
     attributeAllocationResolver = null;
     hideAttributeOverlay();
     hideStatsModal();
+    closeDebugModal();
     setGameMode('attribute');
     setQuestionPhaseVisible(false);
+    configurePrimaryInput('attribute');
     renderSampleOptions([]);
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
 
     // Clear extra messages
-    const messages = finalScore.querySelectorAll('p');
-    messages.forEach((msg, index) => {
-        if (index > 1) msg.remove();
-    });
+    const finalMessage = finalScore.querySelector('.final-message');
+    if (finalMessage) {
+        finalMessage.remove();
+    }
 
     // Start over
     startOpeningSequence();
 }
 
 // Event Listeners
-submitBtn.addEventListener('click', submitAnswer);
+submitBtn.addEventListener('click', () => {
+    if (gameContainer.classList.contains('mode-attribute')) {
+        onAttributeSubmit();
+        return;
+    }
+
+    submitAnswer();
+});
 playerInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
+        e.preventDefault();
+
+        if (gameContainer.classList.contains('mode-attribute')) {
+            onAttributeSubmit();
+            return;
+        }
+
         submitAnswer();
     }
 });
-restartBtn.addEventListener('click', restartGame);
-attributeSubmitBtn.addEventListener('click', onAttributeSubmit);
-attributeInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        onAttributeSubmit();
+playerInput.addEventListener('input', () => {
+    if (gameContainer.classList.contains('mode-attribute')) {
+        return;
+    }
+
+    if (playerInput.value.trim()) {
+        setInputFeedback('', 'muted');
     }
 });
-attributeContinueBtn.addEventListener('click', completeAttributeAllocation);
+restartBtn.addEventListener('click', restartGame);
 viewStatsBtn.addEventListener('click', showStatsModal);
 closeStatsBtn.addEventListener('click', hideStatsModal);
 statsModal.addEventListener('click', (e) => {

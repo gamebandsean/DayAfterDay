@@ -11,6 +11,8 @@
 </head>
 <body>
     <div class="game-container">
+        <h1 class="game-title">Years Until Adulthood</h1>
+
         <!-- Progress Bar -->
         <div class="progress-bar-container">
             <div class="progress-bar" id="progress-bar">
@@ -41,42 +43,6 @@
             <span id="destiny-value">UNKNOWN</span>
         </div>
 
-        <!-- Child Image Container -->
-        <div class="image-container">
-            <img id="child-image" src="" alt="Child" />
-            <div id="image-loading" class="loading-overlay">
-                <div class="spinner"></div>
-                <p>Generating image...</p>
-            </div>
-            <div id="attribute-overlay" class="attribute-overlay hidden">
-                <div class="attribute-overlay-shell">
-                    <div class="attribute-overlay-header">
-                        <div>
-                            <p class="attribute-eyebrow">Character Build</p>
-                            <h3>Spend 3 points</h3>
-                        </div>
-                        <span id="points-remaining" class="points-remaining">3 points left</span>
-                    </div>
-                    <p class="attribute-overlay-copy">Type an attribute number from 1 to 12, then press submit. Your portrait can finish loading underneath.</p>
-                    <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
-                    <div id="attribute-grid" class="attribute-grid"></div>
-                    <div id="attribute-input-row" class="attribute-input-row">
-                        <input
-                            type="number"
-                            id="attr-input"
-                            min="1"
-                            max="12"
-                            placeholder="1-12"
-                            inputmode="numeric"
-                            autocomplete="off"
-                        />
-                        <button id="attr-submit-btn">Shape Trait</button>
-                    </div>
-                    <button id="attr-continue-btn" class="attr-continue-btn hidden">Continue</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Age Display -->
         <div class="age-display">
             <span id="current-age">Age: 0</span>
@@ -100,26 +66,53 @@
             />
             <button id="submit-btn">Submit</button>
         </div>
+        <p id="input-feedback" class="input-feedback" aria-live="polite"></p>
 
         <button id="view-stats-btn" class="view-stats-btn" type="button">Open Character Sheet</button>
 
+        <!-- Child Image Container -->
+        <div class="image-container">
+            <img id="child-image" src="" alt="Child portrait" />
+            <div id="image-loading" class="loading-overlay">
+                <div class="spinner"></div>
+                <p>The oracle is sketching a face...</p>
+            </div>
+            <div id="attribute-overlay" class="attribute-overlay hidden">
+                <div class="attribute-overlay-shell">
+                    <div class="attribute-overlay-header">
+                        <div>
+                            <p class="attribute-eyebrow">Character Build</p>
+                            <h3>Spend 3 points</h3>
+                        </div>
+                        <span id="points-remaining" class="points-remaining">3 points left</span>
+                    </div>
+                    <p class="attribute-overlay-copy">Type an attribute number from 1 to 12, then press submit. Your portrait can finish loading underneath.</p>
+                    <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
+                    <div id="attribute-grid" class="attribute-grid"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Score Display (hidden until end) -->
         <div id="final-score" class="final-score hidden">
-            <h2>Game Over!</h2>
-            <p id="final-destiny"></p>
-            <p id="score-display"></p>
-            <button id="restart-btn">Play Again</button>
+            <div class="final-score-panel" role="dialog" aria-modal="true" aria-labelledby="final-score-title">
+                <p class="stats-eyebrow">Final Reading</p>
+                <h2 id="final-score-title">Your Child Comes Into Focus</h2>
+                <p id="final-destiny"></p>
+                <p id="score-display"></p>
+                <button id="restart-btn">Begin Again</button>
+            </div>
         </div>
 
         <!-- Attribute Stats Modal -->
-        <div id="stats-modal" class="stats-modal hidden">
+        <div id="stats-modal" class="stats-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stats-title">
             <div class="stats-content">
                 <div class="stats-header">
                     <div>
                         <p class="stats-eyebrow">Character Sheet</p>
-                        <h3>Current Attributes</h3>
+                        <h3 id="stats-title">Current Attributes</h3>
                     </div>
-                    <button id="close-stats" class="close-stats" type="button">&times;</button>
+                    <button id="close-stats" class="close-stats" type="button" aria-label="Close character sheet">&times;</button>
                 </div>
                 <div class="stats-body">
                     <p class="stats-copy">At first these traits are only hints. Later they become the skeleton of a personality the Oracle can no longer ignore.</p>
@@ -129,11 +122,14 @@
         </div>
 
         <!-- Debug Modal -->
-        <div id="debug-modal" class="debug-modal hidden">
+        <div id="debug-modal" class="debug-modal hidden" role="dialog" aria-modal="true" aria-labelledby="debug-title">
             <div class="debug-content">
                 <div class="debug-header">
-                    <h3>🔮 Oracle's Vision</h3>
-                    <button id="close-debug" class="close-debug">&times;</button>
+                    <div>
+                        <p class="stats-eyebrow">Behind The Curtain</p>
+                        <h3 id="debug-title">Oracle's Vision</h3>
+                    </div>
+                    <button id="close-debug" class="close-debug" type="button" aria-label="Close oracle vision">&times;</button>
                 </div>
                 <div class="debug-body">
                     <div class="debug-section">
@@ -158,6 +154,8 @@
                 </div>
             </div>
         </div>
+
+        <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
     </div>
 
     <script src="game.js"></script>
