@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 1;
+const BUILD_NUMBER = 2;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -48,9 +48,11 @@ const FALLBACK_ORACLE_RESPONSE = {
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
+const gameTitle = document.querySelector('.game-title');
 const destinyValue = document.getElementById('destiny-value');
 const currentAge = document.getElementById('current-age');
 const questionContainer = document.querySelector('.question-container');
+const questionEyebrow = document.querySelector('.question-eyebrow');
 const questionText = document.getElementById('question-text');
 const sampleOptions = document.getElementById('sample-options');
 const inputContainer = document.querySelector('.input-container');
@@ -66,10 +68,7 @@ const restartBtn = document.getElementById('restart-btn');
 const progressSegments = document.querySelectorAll('.progress-segment');
 const attributeOverlay = document.getElementById('attribute-overlay');
 const attributeGrid = document.getElementById('attribute-grid');
-const pointsRemaining = document.getElementById('points-remaining');
 const attributeFeedback = document.getElementById('attribute-feedback');
-const attributeTitle = document.querySelector('.attribute-overlay-header h3');
-const attributeCopy = document.querySelector('.attribute-overlay-copy');
 const viewStatsBtn = document.getElementById('view-stats-btn');
 const statsModal = document.getElementById('stats-modal');
 const closeStatsBtn = document.getElementById('close-stats');
@@ -146,13 +145,24 @@ function setGameMode(mode) {
     gameContainer.classList.toggle('mode-attribute', mode === 'attribute');
 }
 
+function updateTimelineHeader(age) {
+    const yearsRemaining = Math.max(0, 18 - age);
+
+    currentAge.textContent = `Age: ${age}`;
+    gameTitle.textContent = `${yearsRemaining} ${yearsRemaining === 1 ? 'Year' : 'Years'} Until Adulthood`;
+}
+
 function updatePointsRemaining() {
     const points = gameState.pointsToAllocate;
-    pointsRemaining.textContent = `${points} point${points === 1 ? '' : 's'} left`;
+    if (points > 0) {
+        setInputFeedback(`${points} point${points === 1 ? '' : 's'} left. Spend every point before continuing.`, 'muted');
+        return;
+    }
+
+    setInputFeedback('All points spent. Continue when ready.', 'muted');
 }
 
 function setQuestionPhaseVisible(isVisible) {
-    questionContainer.classList.toggle('phase-hidden', !isVisible);
     sampleOptions.classList.toggle('phase-hidden', !isVisible);
 }
 
@@ -165,7 +175,6 @@ function configurePrimaryInput(mode) {
         playerInput.setAttribute('aria-label', 'Choose trait from 1 to 12');
         submitBtn.textContent = gameState.pointsToAllocate > 0 ? 'Shape Trait' : 'Continue';
         inputContainer.classList.remove('phase-hidden');
-        setInputFeedback('Spend every point before continuing.', 'muted');
         playerInput.focus();
         return;
     }
@@ -252,8 +261,8 @@ function showAttributeOverlay(mode = 'round') {
     setQuestionPhaseVisible(false);
     attributeOverlay.classList.remove('hidden');
     setAttributeFeedback('');
-    attributeTitle.textContent = mode === 'opening' ? 'Name the first instincts' : 'Which trait grows next?';
-    attributeCopy.textContent = mode === 'opening'
+    questionEyebrow.textContent = 'Character Build';
+    questionText.textContent = mode === 'opening'
         ? 'The newborn portrait is taking shape behind the veil. Spend your first 3 points before the first parenting choice appears.'
         : 'Choose the trait the year has sharpened. The portrait can finish developing underneath while you decide.';
     updatePointsRemaining();
@@ -493,7 +502,7 @@ async function initGame() {
 
 async function startOpeningSequence() {
     gameState.currentAge = 0;
-    currentAge.textContent = 'Age: 0';
+    updateTimelineHeader(0);
     updateProgressBar(0);
     setInputFeedback('The first reading begins with instinct.', 'muted');
     generateChildImage('photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression');
@@ -511,10 +520,11 @@ function loadYear(age, options = {}) {
     }
 
     gameState.currentAge = age;
-    currentAge.textContent = `Age: ${age}`;
+    updateTimelineHeader(age);
     setGameMode('question');
     setQuestionPhaseVisible(true);
     configurePrimaryInput('question');
+    questionEyebrow.textContent = 'This Year';
     questionText.textContent = yearData.question;
     renderSampleOptions(yearData.samples);
     playerInput.value = '';

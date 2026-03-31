@@ -11,7 +11,11 @@
 </head>
 <body>
     <div class="game-container">
-        <h1 class="game-title">Years Until Adulthood</h1>
+        <div class="age-display">
+            <span id="current-age">Age: 0</span>
+        </div>
+
+        <h1 class="game-title">18 Years Until Adulthood</h1>
 
         <!-- Progress Bar -->
         <div class="progress-bar-container">
@@ -43,9 +47,19 @@
             <span id="destiny-value">UNKNOWN</span>
         </div>
 
-        <!-- Age Display -->
-        <div class="age-display">
-            <span id="current-age">Age: 0</span>
+        <!-- Child Image Container -->
+        <div class="image-container">
+            <img id="child-image" src="" alt="Child portrait" />
+            <div id="image-loading" class="loading-overlay">
+                <div class="spinner"></div>
+                <p>The oracle is sketching a face...</p>
+            </div>
+            <div id="attribute-overlay" class="attribute-overlay hidden">
+                <div class="attribute-overlay-shell">
+                    <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
+                    <div id="attribute-grid" class="attribute-grid"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Question/Prompt Area -->
@@ -69,29 +83,6 @@
         <p id="input-feedback" class="input-feedback" aria-live="polite"></p>
 
         <button id="view-stats-btn" class="view-stats-btn" type="button">Open Character Sheet</button>
-
-        <!-- Child Image Container -->
-        <div class="image-container">
-            <img id="child-image" src="" alt="Child portrait" />
-            <div id="image-loading" class="loading-overlay">
-                <div class="spinner"></div>
-                <p>The oracle is sketching a face...</p>
-            </div>
-            <div id="attribute-overlay" class="attribute-overlay hidden">
-                <div class="attribute-overlay-shell">
-                    <div class="attribute-overlay-header">
-                        <div>
-                            <p class="attribute-eyebrow">Character Build</p>
-                            <h3>Spend 3 points</h3>
-                        </div>
-                        <span id="points-remaining" class="points-remaining">3 points left</span>
-                    </div>
-                    <p class="attribute-overlay-copy">Type an attribute number from 1 to 12, then press submit. Your portrait can finish loading underneath.</p>
-                    <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
-                    <div id="attribute-grid" class="attribute-grid"></div>
-                </div>
-            </div>
-        </div>
 
         <!-- Score Display (hidden until end) -->
         <div id="final-score" class="final-score hidden">

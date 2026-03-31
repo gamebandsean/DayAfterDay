@@ -108,6 +108,13 @@ body::before {
     z-index: 1;
 }
 
+.age-display {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 6px;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
 .build-badge {
     margin-top: 18px;
     text-align: center;
@@ -119,19 +126,19 @@ body::before {
 }
 
 .game-title {
-    max-width: 12ch;
-    margin: 0 auto 14px;
+    max-width: 18ch;
+    margin: 0 auto 10px;
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(38px, 5.4vw, 54px);
+    font-size: clamp(28px, 3.8vw, 40px);
     font-weight: 700;
-    line-height: 0.9;
+    line-height: 0.98;
     text-align: center;
     text-wrap: balance;
     color: var(--text-primary);
 }
 
 .progress-bar-container {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .progress-bar {
@@ -171,9 +178,7 @@ body::before {
 
 .destiny-label,
 .question-eyebrow,
-.attribute-eyebrow,
 .stats-eyebrow,
-#current-age,
 .debug-section strong {
     font-size: 10px;
     font-weight: 700;
@@ -186,6 +191,22 @@ body::before {
     color: var(--text-secondary);
 }
 
+#current-age {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    color: var(--text-secondary);
+    background: color-mix(in oklab, var(--surface-card) 88%, white 12%);
+    border: 1px solid var(--border-soft);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: none;
+}
+
 #destiny-value {
     display: block;
     margin-top: 8px;
@@ -195,31 +216,12 @@ body::before {
     color: var(--text-primary);
 }
 
-.age-display {
-    display: flex;
-    justify-content: flex-start;
-    margin-bottom: 12px;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-#current-age {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 0 14px;
-    border-radius: 999px;
-    color: var(--text-secondary);
-    background: color-mix(in oklab, var(--surface-card) 88%, white 12%);
-    border: 1px solid var(--border-soft);
-}
-
 .question-container {
     display: grid;
     gap: 12px;
-    min-height: 118px;
+    min-height: 96px;
     margin-bottom: 18px;
-    padding: 22px 22px 24px;
+    padding: 18px 20px 20px;
     border-radius: 24px;
     border: 1px solid var(--border-strong);
     background:
@@ -248,7 +250,7 @@ body::before {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -315,13 +317,10 @@ body::before {
 
 .input-container {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 8px;
     transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.mode-attribute .input-container {
-    margin-top: 16px;
 }
 
 #player-input {
@@ -358,7 +357,7 @@ body::before {
 }
 
 #submit-btn {
-    min-width: 150px;
+    width: 100%;
     padding: 15px 24px;
     border-radius: 16px;
     background: linear-gradient(125deg, var(--accent-primary-deep), var(--accent-primary));
@@ -392,7 +391,7 @@ body::before {
 
 .view-stats-btn {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 0;
     padding: 13px 16px;
     border-radius: 14px;
     border: 1px solid var(--border-soft);
@@ -412,7 +411,7 @@ body::before {
     position: relative;
     width: min(100%, 500px);
     aspect-ratio: 1 / 1;
-    margin: 0 auto;
+    margin: 0 auto 18px;
     border-radius: 26px;
     border: 1px solid var(--border-soft);
     overflow: hidden;
@@ -486,7 +485,7 @@ body::before {
     position: absolute;
     inset: 0;
     z-index: 20;
-    padding: 16px 16px 18px;
+    padding: 10px;
     overflow: hidden;
     background:
         radial-gradient(circle at top, color-mix(in oklab, var(--accent-highlight) 20%, transparent) 0%, transparent 28%),
@@ -502,7 +501,8 @@ body::before {
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    justify-content: center;
+    gap: 6px;
     color: var(--text-inverse);
 }
 
@@ -515,7 +515,6 @@ body::before {
     align-items: flex-start;
 }
 
-.attribute-overlay-header h3,
 .stats-header h3,
 .debug-header h3,
 .final-score h2 {
@@ -523,37 +522,17 @@ body::before {
     line-height: 0.95;
 }
 
-.attribute-overlay-header h3,
 .stats-header h3,
 .debug-header h3 {
     font-size: 30px;
     color: var(--text-inverse);
 }
 
-.attribute-eyebrow,
 .stats-eyebrow {
     margin-bottom: 4px;
     color: oklch(0.88 0.03 82 / 0.74);
 }
 
-.points-remaining {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 112px;
-    min-height: 36px;
-    padding: 0 12px;
-    border-radius: 999px;
-    background: oklch(1 0 0 / 0.08);
-    border: 1px solid oklch(0.92 0.02 85 / 0.12);
-    color: var(--text-brass);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.attribute-overlay-copy,
 .stats-copy {
     font-size: 12px;
     line-height: 1.45;
@@ -561,39 +540,40 @@ body::before {
 }
 
 .attribute-feedback {
-    min-height: 16px;
-    font-size: 11px;
+    min-height: 14px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--text-brass);
+    text-align: center;
 }
 
 .attribute-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 6px;
-    margin-top: 2px;
+    gap: 4px;
+    margin-top: 0;
 }
 
 .attribute-row {
     display: grid;
-    grid-template-columns: minmax(92px, 112px) minmax(0, 1fr) 40px;
+    grid-template-columns: minmax(76px, 92px) minmax(0, 1fr) 34px;
     align-items: center;
-    gap: 8px;
-    padding: 8px 9px;
-    border-radius: 14px;
+    gap: 6px;
+    padding: 6px 7px;
+    border-radius: 12px;
     background: oklch(1 0 0 / 0.07);
     border: 1px solid oklch(0.94 0.01 85 / 0.08);
 }
 
 .attribute-name {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--text-inverse);
     line-height: 1.2;
 }
 
 .attribute-total {
-    font-size: 10px;
+    font-size: 9px;
     color: oklch(0.92 0.01 85 / 0.64);
     text-align: right;
 }
@@ -605,7 +585,7 @@ body::before {
 }
 
 .attribute-segment {
-    min-height: 10px;
+    min-height: 8px;
     border-radius: 999px;
     background: oklch(1 0 0 / 0.08);
     border: 1px solid oklch(0.94 0.01 85 / 0.12);
@@ -792,16 +772,11 @@ body::before {
 
 .mode-attribute .destiny-bar,
 .mode-attribute .age-display,
-.mode-attribute .view-stats-btn {
-    opacity: 0.52;
-    transform: translateY(-2px);
-}
-
+.mode-attribute .view-stats-btn,
 .mode-attribute .question-container,
-.mode-attribute .sample-options {
-    opacity: 0.12;
-    transform: translateY(8px);
-    pointer-events: none;
+.mode-attribute .image-container {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .mode-attribute #player-input {
@@ -821,13 +796,24 @@ body::before {
     box-shadow: 0 16px 28px oklch(0.76 0.11 82 / 0.2);
 }
 
+.mode-attribute .question-eyebrow {
+    color: var(--accent-primary-deep);
+}
+
+.mode-attribute #question-text {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: clamp(17px, 2.6vw, 22px);
+    line-height: 1.35;
+    text-wrap: pretty;
+}
+
 @media (max-width: 640px) {
     .game-container {
         padding: 20px;
     }
 
     .game-title {
-        font-size: 34px;
+        font-size: 26px;
         margin-bottom: 12px;
     }
 
@@ -845,10 +831,6 @@ body::before {
 
     .sample-option-btn {
         width: 100%;
-    }
-
-    .input-container {
-        flex-direction: column;
     }
 
     #submit-btn,
@@ -872,8 +854,8 @@ body::before {
     }
 
     .attribute-row {
-        grid-template-columns: 82px 1fr 34px;
-        gap: 6px;
+        grid-template-columns: 72px 1fr 30px;
+        gap: 5px;
     }
 
     .stats-content,
