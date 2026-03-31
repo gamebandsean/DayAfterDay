@@ -377,6 +377,7 @@ body::before {
     font-size: 12px;
     line-height: 1.35;
     color: var(--accent-secondary);
+    text-align: center;
 }
 
 .input-feedback[data-state='muted'] {
