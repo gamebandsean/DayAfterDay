@@ -385,8 +385,10 @@ body::before {
 }
 
 .view-stats-btn {
-    width: 100%;
+    display: block;
+    width: clamp(170px, 30%, 220px);
     margin-bottom: 0;
+    margin-inline: auto;
     padding: 13px 16px;
     border-radius: 14px;
     border: 1px solid var(--border-soft);
@@ -395,6 +397,10 @@ body::before {
     font: inherit;
     font-weight: 600;
     cursor: pointer;
+}
+
+.view-stats-btn.hidden {
+    display: none;
 }
 
 .view-stats-btn:hover {
