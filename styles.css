@@ -580,15 +580,15 @@ body::before {
 
 .attribute-overlay .attribute-grid {
     flex: 1;
-    grid-template-columns: repeat(3, 84px);
-    gap: 12px 14px;
+    grid-template-columns: repeat(3, 96px);
+    gap: 8px;
     align-content: center;
     justify-content: center;
 }
 
 .attribute-card {
     position: relative;
-    width: 84px;
+    width: 96px;
     min-height: 0;
     aspect-ratio: 1;
     padding: 0;
@@ -956,8 +956,8 @@ body::before {
     }
 
     .attribute-overlay .attribute-grid {
-        grid-template-columns: repeat(3, 66px);
-        gap: 10px;
+        grid-template-columns: repeat(3, 72px);
+        gap: 8px;
     }
 
     .stats-content,
