@@ -127,9 +127,9 @@ body::before {
 
 .game-title {
     max-width: 18ch;
-    margin: 0 auto 10px;
+    margin: 10px auto 12px;
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(28px, 3.8vw, 40px);
+    font-size: clamp(20px, 2.7vw, 30px);
     font-weight: 700;
     line-height: 0.98;
     text-align: center;
@@ -506,6 +506,15 @@ body::before {
     color: var(--text-inverse);
 }
 
+.attribute-traits-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: oklch(0.9 0.02 82 / 0.78);
+    text-align: left;
+}
+
 .attribute-overlay-header,
 .stats-header,
 .debug-header {
@@ -544,7 +553,7 @@ body::before {
     font-size: 10px;
     font-weight: 700;
     color: var(--text-brass);
-    text-align: center;
+    text-align: left;
 }
 
 .attribute-grid {
@@ -802,7 +811,7 @@ body::before {
 
 .mode-attribute #question-text {
     font-family: 'Instrument Sans', sans-serif;
-    font-size: clamp(17px, 2.6vw, 22px);
+    font-size: clamp(16px, 2.3vw, 20px);
     line-height: 1.35;
     text-wrap: pretty;
 }

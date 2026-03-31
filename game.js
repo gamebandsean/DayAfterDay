@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 2;
+const BUILD_NUMBER = 3;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -170,10 +170,10 @@ function configurePrimaryInput(mode) {
     if (mode === 'attribute') {
         playerInput.value = '';
         playerInput.disabled = false;
-        playerInput.placeholder = 'Choose trait 1-12';
+        playerInput.placeholder = 'What number trait should you add to?';
         playerInput.inputMode = 'numeric';
-        playerInput.setAttribute('aria-label', 'Choose trait from 1 to 12');
-        submitBtn.textContent = gameState.pointsToAllocate > 0 ? 'Shape Trait' : 'Continue';
+        playerInput.setAttribute('aria-label', 'What number trait should you add to?');
+        submitBtn.textContent = gameState.pointsToAllocate > 0 ? 'Add to Trait' : 'Continue';
         inputContainer.classList.remove('phase-hidden');
         playerInput.focus();
         return;
@@ -261,10 +261,10 @@ function showAttributeOverlay(mode = 'round') {
     setQuestionPhaseVisible(false);
     attributeOverlay.classList.remove('hidden');
     setAttributeFeedback('');
-    questionEyebrow.textContent = 'Character Build';
+    questionEyebrow.textContent = mode === 'opening' ? 'Add 3 Traits' : 'Add 3 Traits';
     questionText.textContent = mode === 'opening'
-        ? 'The newborn portrait is taking shape behind the veil. Spend your first 3 points before the first parenting choice appears.'
-        : 'Choose the trait the year has sharpened. The portrait can finish developing underneath while you decide.';
+        ? 'Your baby is born! Pick 3 traits to pass on to your newborn baby.'
+        : 'Choose the next trait to strengthen this year by entering its number below.';
     updatePointsRemaining();
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
