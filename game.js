@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 18;
+const BUILD_NUMBER = 19;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -293,7 +293,7 @@ function showAttributeOverlay(mode = 'round') {
     setAttributeFeedback('');
     questionEyebrow.textContent = mode === 'opening' ? 'Add 3 Traits' : 'Add 3 Traits';
     questionText.textContent = mode === 'opening'
-        ? 'Your baby is born! Pick 3 traits to pass on to your newborn baby.'
+        ? 'Pick 3 traits to pass on to your newborn baby.'
         : 'Tap one trait below each time you want to strengthen it this year.';
     updatePointsRemaining();
     renderAttributeBars(attributeGrid);
