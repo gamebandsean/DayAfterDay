@@ -578,18 +578,18 @@ body::before {
 .attribute-overlay .attribute-grid {
     flex: 1;
     box-sizing: border-box;
-    width: 100%;
-    padding-inline: 50px;
-    grid-template-columns: repeat(3, 100px);
-    column-gap: 14px;
-    row-gap: 10px;
+    width: min(100%, 395px);
+    margin-inline: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 16px;
+    row-gap: 16px;
     align-content: center;
     justify-content: center;
 }
 
 .attribute-card {
     position: relative;
-    width: 100px;
+    width: 100%;
     min-height: 0;
     aspect-ratio: 1;
     padding: 0;
@@ -957,9 +957,10 @@ body::before {
     }
 
     .attribute-overlay .attribute-grid {
-        grid-template-columns: repeat(3, 50px);
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         column-gap: 12px;
-        row-gap: 22px;
+        row-gap: 12px;
     }
 
     .stats-content,

@@ -4,18 +4,15 @@ const ATTRIBUTE_LIST = [
     { key: 'money', label: 'Money' },
     { key: 'charisma', label: 'Charisma' },
     { key: 'honesty', label: 'Honesty' },
-    { key: 'loyalty', label: 'Loyalty' },
     { key: 'empathy', label: 'Empathy' },
     { key: 'strength', label: 'Strength' },
     { key: 'discipline', label: 'Discipline' },
-    { key: 'authority', label: 'Authority' },
-    { key: 'humor', label: 'Humor' },
-    { key: 'temper', label: 'Temper' }
+    { key: 'authority', label: 'Authority' }
 ];
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 24;
+const BUILD_NUMBER = 25;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -114,7 +111,7 @@ function getAttributeInfluenceLevel(age) {
 
 function getAttributeSummary() {
     return ATTRIBUTE_LIST.map((attribute, index) => {
-        return `${index + 1}. ${attribute.label}: ${gameState.attributes[attribute.key]}`;
+        return `${attribute.label}: ${gameState.attributes[attribute.key]}`;
     }).join('\n');
 }
 
@@ -220,7 +217,7 @@ function createAttributeSummaryRow(attribute, index, value) {
 
     const name = document.createElement('span');
     name.className = 'attribute-name';
-    name.textContent = `${index + 1}. ${attribute.label}`;
+    name.textContent = attribute.label;
 
     const segments = document.createElement('div');
     segments.className = 'attribute-segments';
@@ -315,7 +312,7 @@ function allocatePoint(rawIndex) {
     const attrIndex = Number(rawIndex);
 
     if (!Number.isInteger(attrIndex) || attrIndex < 1 || attrIndex > ATTRIBUTE_LIST.length) {
-        setAttributeFeedback('Choose a numbered trait from 1 to 12.');
+        setAttributeFeedback('Choose one of the available traits.');
         return false;
     }
 
