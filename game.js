@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 14;
+const BUILD_NUMBER = 15;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -547,7 +547,7 @@ function loadYear(age, options = {}) {
     setGameMode('question');
     setQuestionPhaseVisible(true);
     configurePrimaryInput('question');
-    questionEyebrow.textContent = 'This Year';
+    questionEyebrow.textContent = `Age: ${age}`;
     questionText.textContent = yearData.question;
     renderSampleOptions(yearData.samples);
     playerInput.value = '';
