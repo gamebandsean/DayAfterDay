@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 16;
+const BUILD_NUMBER = 17;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -50,7 +50,6 @@ const FALLBACK_ORACLE_RESPONSE = {
 const gameContainer = document.querySelector('.game-container');
 const gameTitle = document.querySelector('.game-title');
 const destinyValue = document.getElementById('destiny-value');
-const currentAge = document.getElementById('current-age');
 const questionContainer = document.querySelector('.question-container');
 const questionEyebrow = document.querySelector('.question-eyebrow');
 const questionText = document.getElementById('question-text');
@@ -148,7 +147,6 @@ function setGameMode(mode) {
 function updateTimelineHeader(age) {
     const yearsRemaining = Math.max(0, 18 - age);
 
-    currentAge.textContent = `Age: ${age}`;
     gameTitle.textContent = `${yearsRemaining} ${yearsRemaining === 1 ? 'Year' : 'Years'} Until Adulthood`;
 }
 

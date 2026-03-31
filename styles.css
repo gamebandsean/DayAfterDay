@@ -112,7 +112,7 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 0;
     margin-bottom: 10px;
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
@@ -197,22 +197,6 @@ body::before {
 .destiny-label {
     display: inline-block;
     color: var(--text-secondary);
-}
-
-#current-age {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 0 16px;
-    border-radius: 999px;
-    color: var(--text-secondary);
-    background: color-mix(in oklab, var(--surface-card) 88%, white 12%);
-    border: 1px solid var(--border-soft);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: none;
 }
 
 #destiny-value {
