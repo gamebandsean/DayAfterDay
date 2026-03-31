@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 7;
+const BUILD_NUMBER = 8;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -253,44 +253,16 @@ function createAttributeCard(attribute, index, value) {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'attribute-card';
-    card.dataset.attributeIndex = String(index + 1);
-    card.setAttribute('aria-label', `Add to ${attribute.label}`);
-
-    const ring = document.createElement('div');
-    ring.className = 'attribute-card-ring';
-
-    for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
-        const segment = document.createElement('span');
-        segment.className = 'attribute-card-segment';
-        segment.dataset.segment = String(segmentIndex);
-
-        if (segmentIndex <= value) {
-            segment.classList.add('filled');
-        }
-
-        ring.appendChild(segment);
-    }
+    card.style.setProperty('--fill-ratio', String(value / ATTRIBUTE_MAX));
+    card.setAttribute('aria-label', `Add to ${attribute.label}. Current value ${value} out of ${ATTRIBUTE_MAX}.`);
 
     const content = document.createElement('div');
     content.className = 'attribute-card-content';
 
-    const indexLabel = document.createElement('span');
-    indexLabel.className = 'attribute-card-index';
-    indexLabel.textContent = `${index + 1}.`;
-
     const name = document.createElement('span');
     name.className = 'attribute-card-name';
     name.textContent = attribute.label;
-
-    const total = document.createElement('span');
-    total.className = 'attribute-card-total';
-    total.textContent = `${value}/${ATTRIBUTE_MAX}`;
-
-    content.appendChild(indexLabel);
     content.appendChild(name);
-    content.appendChild(total);
-
-    card.appendChild(ring);
     card.appendChild(content);
     card.addEventListener('click', () => allocatePoint(index + 1));
 
