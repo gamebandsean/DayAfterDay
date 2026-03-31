@@ -15,7 +15,7 @@ const ATTRIBUTE_LIST = [
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 6;
+const BUILD_NUMBER = 7;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -169,21 +169,24 @@ function setQuestionPhaseVisible(isVisible) {
 function configurePrimaryInput(mode) {
     if (mode === 'attribute') {
         playerInput.value = '';
-        playerInput.disabled = false;
-        playerInput.placeholder = 'What number trait should you add to?';
-        playerInput.inputMode = 'numeric';
-        playerInput.setAttribute('aria-label', 'What number trait should you add to?');
-        submitBtn.textContent = gameState.pointsToAllocate > 0 ? 'Add to Trait' : 'Continue';
+        playerInput.disabled = true;
+        playerInput.classList.add('phase-hidden');
+        submitBtn.textContent = 'Continue';
+        submitBtn.disabled = gameState.pointsToAllocate > 0;
         inputContainer.classList.remove('phase-hidden');
-        playerInput.focus();
+        if (gameState.pointsToAllocate === 0) {
+            submitBtn.focus();
+        }
         return;
     }
 
+    playerInput.classList.remove('phase-hidden');
     playerInput.disabled = false;
     playerInput.placeholder = 'Write your answer or borrow one below...';
     playerInput.inputMode = 'text';
     playerInput.setAttribute('aria-label', 'Write your answer');
     submitBtn.textContent = 'Submit';
+    submitBtn.disabled = false;
     inputContainer.classList.remove('phase-hidden');
     setInputFeedback('Answer in your own words or start with one of the prompts below.', 'muted');
 }
@@ -213,6 +216,87 @@ function renderSampleOptions(samples) {
     });
 }
 
+function createAttributeSummaryRow(attribute, index, value) {
+    const row = document.createElement('div');
+    row.className = 'attribute-row';
+
+    const name = document.createElement('span');
+    name.className = 'attribute-name';
+    name.textContent = `${index + 1}. ${attribute.label}`;
+
+    const segments = document.createElement('div');
+    segments.className = 'attribute-segments';
+
+    for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
+        const segment = document.createElement('span');
+        segment.className = 'attribute-segment';
+
+        if (segmentIndex <= value) {
+            segment.classList.add('filled');
+        }
+
+        segments.appendChild(segment);
+    }
+
+    const total = document.createElement('span');
+    total.className = 'attribute-total';
+    total.textContent = `${value}/${ATTRIBUTE_MAX}`;
+
+    row.appendChild(name);
+    row.appendChild(segments);
+    row.appendChild(total);
+
+    return row;
+}
+
+function createAttributeCard(attribute, index, value) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'attribute-card';
+    card.dataset.attributeIndex = String(index + 1);
+    card.setAttribute('aria-label', `Add to ${attribute.label}`);
+
+    const ring = document.createElement('div');
+    ring.className = 'attribute-card-ring';
+
+    for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
+        const segment = document.createElement('span');
+        segment.className = 'attribute-card-segment';
+        segment.dataset.segment = String(segmentIndex);
+
+        if (segmentIndex <= value) {
+            segment.classList.add('filled');
+        }
+
+        ring.appendChild(segment);
+    }
+
+    const content = document.createElement('div');
+    content.className = 'attribute-card-content';
+
+    const indexLabel = document.createElement('span');
+    indexLabel.className = 'attribute-card-index';
+    indexLabel.textContent = `${index + 1}.`;
+
+    const name = document.createElement('span');
+    name.className = 'attribute-card-name';
+    name.textContent = attribute.label;
+
+    const total = document.createElement('span');
+    total.className = 'attribute-card-total';
+    total.textContent = `${value}/${ATTRIBUTE_MAX}`;
+
+    content.appendChild(indexLabel);
+    content.appendChild(name);
+    content.appendChild(total);
+
+    card.appendChild(ring);
+    card.appendChild(content);
+    card.addEventListener('click', () => allocatePoint(index + 1));
+
+    return card;
+}
+
 function renderAttributeBars(container) {
     if (!container) {
         return;
@@ -222,35 +306,11 @@ function renderAttributeBars(container) {
 
     ATTRIBUTE_LIST.forEach((attribute, index) => {
         const value = gameState.attributes[attribute.key];
-        const row = document.createElement('div');
-        row.className = 'attribute-row';
+        const item = container === attributeGrid
+            ? createAttributeCard(attribute, index, value)
+            : createAttributeSummaryRow(attribute, index, value);
 
-        const name = document.createElement('span');
-        name.className = 'attribute-name';
-        name.textContent = `${index + 1}. ${attribute.label}`;
-
-        const segments = document.createElement('div');
-        segments.className = 'attribute-segments';
-
-        for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
-            const segment = document.createElement('span');
-            segment.className = 'attribute-segment';
-
-            if (segmentIndex <= value) {
-                segment.classList.add('filled');
-            }
-
-            segments.appendChild(segment);
-        }
-
-        const total = document.createElement('span');
-        total.className = 'attribute-total';
-        total.textContent = `${value}/${ATTRIBUTE_MAX}`;
-
-        row.appendChild(name);
-        row.appendChild(segments);
-        row.appendChild(total);
-        container.appendChild(row);
+        container.appendChild(item);
     });
 }
 
@@ -264,7 +324,7 @@ function showAttributeOverlay(mode = 'round') {
     questionEyebrow.textContent = mode === 'opening' ? 'Add 3 Traits' : 'Add 3 Traits';
     questionText.textContent = mode === 'opening'
         ? 'Your baby is born! Pick 3 traits to pass on to your newborn baby.'
-        : 'Choose the next trait to strengthen this year by entering its number below.';
+        : 'Tap one trait below each time you want to strengthen it this year.';
     updatePointsRemaining();
     renderAttributeBars(attributeGrid);
     renderAttributeBars(statsGrid);
@@ -314,16 +374,7 @@ function allocatePoint(rawIndex) {
 }
 
 function onAttributeSubmit() {
-    if (gameState.pointsToAllocate === 0) {
-        completeAttributeAllocation();
-        return;
-    }
-
-    const success = allocatePoint(playerInput.value.trim());
-    if (success && gameState.pointsToAllocate > 0) {
-        playerInput.value = '';
-        playerInput.focus();
-    }
+    completeAttributeAllocation();
 }
 
 function waitForAttributeAllocation(mode = 'round') {

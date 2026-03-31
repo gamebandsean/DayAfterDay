@@ -506,7 +506,7 @@ body::before {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
+    gap: 10px;
     color: var(--text-inverse);
 }
 
@@ -557,7 +557,7 @@ body::before {
     font-size: 10px;
     font-weight: 700;
     color: var(--text-brass);
-    text-align: left;
+    text-align: center;
 }
 
 .attribute-grid {
@@ -576,6 +576,112 @@ body::before {
     border-radius: 12px;
     background: oklch(1 0 0 / 0.07);
     border: 1px solid oklch(0.94 0.01 85 / 0.08);
+}
+
+.attribute-overlay .attribute-grid {
+    flex: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-content: center;
+}
+
+.attribute-card {
+    position: relative;
+    min-height: 104px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid oklch(0.94 0.01 85 / 0.12);
+    background: oklch(1 0 0 / 0.07);
+    cursor: pointer;
+    color: var(--text-inverse);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.05);
+}
+
+.attribute-card:hover {
+    background: oklch(1 0 0 / 0.1);
+}
+
+.attribute-card:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.attribute-card-ring {
+    position: absolute;
+    inset: 8px;
+    pointer-events: none;
+}
+
+.attribute-card-segment {
+    position: absolute;
+    width: 22px;
+    height: 8px;
+    border-radius: 999px;
+    background: oklch(1 0 0 / 0.08);
+    border: 1px solid oklch(0.94 0.01 85 / 0.12);
+}
+
+.attribute-card-segment.filled {
+    background: linear-gradient(90deg, var(--accent-highlight) 0%, color-mix(in oklab, var(--accent-secondary) 44%, var(--accent-primary) 56%) 100%);
+    border-color: color-mix(in oklab, var(--accent-highlight) 70%, white 30%);
+    box-shadow: 0 0 0 1px oklch(0.84 0.09 82 / 0.18), 0 0 10px oklch(0.8 0.11 82 / 0.15);
+}
+
+.attribute-card-segment[data-segment='1'] { top: 0; left: 16px; }
+.attribute-card-segment[data-segment='2'] { top: 0; left: calc(50% - 11px); }
+.attribute-card-segment[data-segment='3'] { top: 0; right: 16px; }
+.attribute-card-segment[data-segment='4'] {
+    top: 26px;
+    right: -4px;
+    transform: rotate(90deg);
+}
+.attribute-card-segment[data-segment='5'] {
+    bottom: 26px;
+    right: -4px;
+    transform: rotate(90deg);
+}
+.attribute-card-segment[data-segment='6'] { bottom: 0; right: 16px; }
+.attribute-card-segment[data-segment='7'] { bottom: 0; left: calc(50% - 11px); }
+.attribute-card-segment[data-segment='8'] { bottom: 0; left: 16px; }
+.attribute-card-segment[data-segment='9'] {
+    bottom: 26px;
+    left: -4px;
+    transform: rotate(90deg);
+}
+.attribute-card-segment[data-segment='10'] {
+    top: 26px;
+    left: -4px;
+    transform: rotate(90deg);
+}
+
+.attribute-card-content {
+    position: absolute;
+    inset: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-align: center;
+}
+
+.attribute-card-index {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: oklch(0.92 0.02 85 / 0.6);
+}
+
+.attribute-card-name {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.attribute-card-total {
+    font-size: 10px;
+    color: oklch(0.92 0.01 85 / 0.66);
 }
 
 .attribute-name {
@@ -799,6 +905,10 @@ body::before {
     box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06);
 }
 
+.mode-attribute #player-input.phase-hidden {
+    display: none;
+}
+
 .mode-attribute #player-input::placeholder {
     color: oklch(0.92 0.01 85 / 0.48);
 }
@@ -869,6 +979,10 @@ body::before {
     .attribute-row {
         grid-template-columns: 72px 1fr 30px;
         gap: 5px;
+    }
+
+    .attribute-overlay .attribute-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .stats-content,
