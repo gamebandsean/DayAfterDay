@@ -1,0 +1,38 @@
+[
+  {
+    "file": "black.png",
+    "label": "Black",
+    "race": "Black",
+    "physicalDescription": "dark brown skin, soft dark curls, round cheeks, warm brown eyes"
+  },
+  {
+    "file": "east-asian.png",
+    "label": "East Asian",
+    "race": "East Asian",
+    "physicalDescription": "light warm skin, fine dark hair, almond-shaped brown eyes, soft round face"
+  },
+  {
+    "file": "south-asian.png",
+    "label": "South Asian",
+    "race": "South Asian",
+    "physicalDescription": "medium brown skin, thick dark hair, deep brown eyes, soft rounded features"
+  },
+  {
+    "file": "white.png",
+    "label": "White",
+    "race": "White",
+    "physicalDescription": "fair skin, light brown hair, grey-blue eyes, soft pink cheeks"
+  },
+  {
+    "file": "latino.png",
+    "label": "Latino",
+    "race": "Latino",
+    "physicalDescription": "golden tan skin, dark wavy hair, brown eyes, soft rounded cheeks"
+  },
+  {
+    "file": "middle-eastern.png",
+    "label": "Middle Eastern",
+    "race": "Middle Eastern",
+    "physicalDescription": "olive skin, dark hair, dark brown eyes, soft oval face"
+  }
+]

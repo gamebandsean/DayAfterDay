@@ -11,120 +11,150 @@
 </head>
 <body>
     <div class="game-container">
-        <div class="age-display">
-            <h1 class="game-title">18 Years Until Adulthood</h1>
+        <div id="title-screen" class="screen title-screen">
+            <p class="title-eyebrow">A strange little life simulator</p>
+            <h1 class="title-logo">Day After Day</h1>
+            <p class="title-tagline">Every answer nudges a child toward the person they become.</p>
+            <button id="play-btn" class="play-btn" type="button">Play Game</button>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progress-bar"></div>
-        </div>
-
-        <!-- Destiny Display -->
-        <div class="destiny-bar">
-            <span class="destiny-label">DESTINY:</span>
-            <span id="destiny-value">UNKNOWN</span>
-        </div>
-
-        <!-- Child Image Container -->
-        <div class="image-container">
-            <img id="child-image" src="" alt="Child portrait" />
-            <div id="image-loading" class="loading-overlay">
-                <div class="spinner"></div>
-                <p>The oracle is sketching a face...</p>
-            </div>
-            <div id="attribute-overlay" class="attribute-overlay hidden">
-                <div class="attribute-overlay-shell">
-                    <p class="attribute-traits-title">Your Child's Traits</p>
-                    <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
-                    <div id="attribute-grid" class="attribute-grid"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Question/Prompt Area -->
-        <div class="question-container">
-            <p class="question-eyebrow">This Year</p>
-            <p id="question-text">Loading...</p>
-        </div>
-
-        <div id="sample-options" class="sample-options" aria-label="Sample answers"></div>
-
-        <!-- Input Area -->
-        <div class="input-container">
+        <div id="create-screen" class="screen create-screen hidden">
+            <p class="create-eyebrow">A new life begins</p>
+            <h2 class="create-title">Who is being born into your care?</h2>
+            <label class="create-label" for="child-name-input">Child's Name</label>
             <input
+                id="child-name-input"
                 type="text"
-                id="player-input"
-                placeholder="Write your answer or borrow one below..."
+                placeholder="Choose a name..."
                 autocomplete="off"
+                maxlength="32"
             />
-            <button id="submit-btn">Submit</button>
-        </div>
-        <p id="input-feedback" class="input-feedback" aria-live="polite"></p>
-
-        <!-- Score Display (hidden until end) -->
-        <div id="final-score" class="final-score hidden">
-            <div class="final-score-panel" role="dialog" aria-modal="true" aria-labelledby="final-score-title">
-                <p class="stats-eyebrow">Final Reading</p>
-                <h2 id="final-score-title">Your Child Comes Into Focus</h2>
-                <p id="final-destiny"></p>
-                <p id="score-display"></p>
-                <button id="restart-btn">Begin Again</button>
+            <p class="create-label">Gender</p>
+            <div id="gender-options" class="gender-options" aria-label="Select a gender">
+                <button type="button" class="gender-btn" data-gender="male">Male</button>
+                <button type="button" class="gender-btn" data-gender="female">Female</button>
+                <button type="button" class="gender-btn" data-gender="nonbinary">Nonbinary</button>
             </div>
+            <p class="create-help">A newborn portrait will be chosen from a starting pool so the first year begins instantly.</p>
+            <button id="birth-btn" class="birth-btn" type="button" disabled>Birth</button>
         </div>
 
-        <!-- Attribute Stats Modal -->
-        <div id="stats-modal" class="stats-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stats-title">
-            <div class="stats-content">
-                <div class="stats-header">
-                    <div>
-                        <p class="stats-eyebrow">Character Sheet</p>
-                        <h3 id="stats-title">Current Attributes</h3>
-                    </div>
-                    <button id="close-stats" class="close-stats" type="button" aria-label="Close character sheet">&times;</button>
-                </div>
-                <div class="stats-body">
-                    <p class="stats-copy">At first these traits are only hints. Later they become the skeleton of a personality the Oracle can no longer ignore.</p>
-                    <div id="stats-grid" class="attribute-grid stats-grid"></div>
-                </div>
+        <div id="game-screen" class="screen game-screen hidden">
+            <div class="age-display">
+                <h1 class="game-title">18 Years Until Adulthood</h1>
             </div>
-        </div>
 
-        <!-- Debug Modal -->
-        <div id="debug-modal" class="debug-modal hidden" role="dialog" aria-modal="true" aria-labelledby="debug-title">
-            <div class="debug-content">
-                <div class="debug-header">
-                    <div>
-                        <p class="stats-eyebrow">Behind The Curtain</p>
-                        <h3 id="debug-title">Oracle's Vision</h3>
-                    </div>
-                    <button id="close-debug" class="close-debug" type="button" aria-label="Close oracle vision">&times;</button>
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+
+            <!-- Destiny Display -->
+            <div class="destiny-bar">
+                <span class="destiny-label">DESTINY:</span>
+                <span id="destiny-value">UNKNOWN</span>
+            </div>
+
+            <!-- Child Image Container -->
+            <div class="image-container">
+                <img id="child-image" src="" alt="Child portrait" />
+                <div id="image-loading" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <p>The oracle is sketching a face...</p>
                 </div>
-                <div class="debug-body">
-                    <div class="debug-section">
-                        <strong>Destiny:</strong>
-                        <p id="debug-destiny">-</p>
+                <div id="attribute-overlay" class="attribute-overlay hidden">
+                    <div class="attribute-overlay-shell">
+                        <p class="attribute-traits-title">Your Child's Traits</p>
+                        <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
+                        <div id="attribute-grid" class="attribute-grid"></div>
                     </div>
-                    <div class="debug-section">
-                        <strong>Moral Alignment:</strong>
-                        <p id="debug-alignment">-</p>
-                    </div>
-                    <div class="debug-section">
-                        <strong>Oracle's Justification:</strong>
-                        <p id="debug-justification">-</p>
-                    </div>
-                    <div class="debug-section">
-                        <strong>Physical Description:</strong>
-                        <p id="debug-physical">-</p>
-                    </div>
-                </div>
-                <div class="debug-footer">
-                    <small>Press ` or ESC to close</small>
                 </div>
             </div>
-        </div>
 
-        <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
+            <!-- Question/Prompt Area -->
+            <div class="question-container">
+                <p class="question-eyebrow">This Year</p>
+                <p id="question-text">Loading...</p>
+            </div>
+
+            <div id="sample-options" class="sample-options" aria-label="Sample answers"></div>
+
+            <!-- Input Area -->
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="player-input"
+                    placeholder="Write your answer or borrow one below..."
+                    autocomplete="off"
+                />
+                <button id="submit-btn">Submit</button>
+            </div>
+            <p id="input-feedback" class="input-feedback" aria-live="polite"></p>
+
+            <!-- Score Display (hidden until end) -->
+            <div id="final-score" class="final-score hidden">
+                <div class="final-score-panel" role="dialog" aria-modal="true" aria-labelledby="final-score-title">
+                    <p class="stats-eyebrow">Final Reading</p>
+                    <h2 id="final-score-title">Your Child Comes Into Focus</h2>
+                    <p id="final-destiny"></p>
+                    <p id="score-display"></p>
+                    <button id="restart-btn">Begin Again</button>
+                </div>
+            </div>
+
+            <!-- Attribute Stats Modal -->
+            <div id="stats-modal" class="stats-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+                <div class="stats-content">
+                    <div class="stats-header">
+                        <div>
+                            <p class="stats-eyebrow">Character Sheet</p>
+                            <h3 id="stats-title">Current Attributes</h3>
+                        </div>
+                        <button id="close-stats" class="close-stats" type="button" aria-label="Close character sheet">&times;</button>
+                    </div>
+                    <div class="stats-body">
+                        <p class="stats-copy">At first these traits are only hints. Later they become the skeleton of a personality the Oracle can no longer ignore.</p>
+                        <div id="stats-grid" class="attribute-grid stats-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Modal -->
+            <div id="debug-modal" class="debug-modal hidden" role="dialog" aria-modal="true" aria-labelledby="debug-title">
+                <div class="debug-content">
+                    <div class="debug-header">
+                        <div>
+                            <p class="stats-eyebrow">Behind The Curtain</p>
+                            <h3 id="debug-title">Oracle's Vision</h3>
+                        </div>
+                        <button id="close-debug" class="close-debug" type="button" aria-label="Close oracle vision">&times;</button>
+                    </div>
+                    <div class="debug-body">
+                        <div class="debug-section">
+                            <strong>Destiny:</strong>
+                            <p id="debug-destiny">-</p>
+                        </div>
+                        <div class="debug-section">
+                            <strong>Moral Alignment:</strong>
+                            <p id="debug-alignment">-</p>
+                        </div>
+                        <div class="debug-section">
+                            <strong>Oracle's Justification:</strong>
+                            <p id="debug-justification">-</p>
+                        </div>
+                        <div class="debug-section">
+                            <strong>Physical Description:</strong>
+                            <p id="debug-physical">-</p>
+                        </div>
+                    </div>
+                    <div class="debug-footer">
+                        <small>Press ` or ESC to close</small>
+                    </div>
+                </div>
+            </div>
+
+            <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
+        </div>
     </div>
 
     <script src="game.js"></script>

@@ -112,6 +112,135 @@ body::before {
     z-index: 1;
 }
 
+.screen {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+.title-screen {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+    padding-inline: clamp(8px, 2vw, 18px);
+}
+
+.title-eyebrow,
+.create-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--accent-primary-deep) 78%, white 22%);
+}
+
+.title-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(56px, 11vw, 78px);
+    line-height: 0.88;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    text-wrap: balance;
+}
+
+.title-tagline {
+    max-width: 26ch;
+    font-size: 14px;
+    line-height: 1.5;
+    color: color-mix(in oklab, var(--text-secondary) 88%, white 12%);
+}
+
+.play-btn,
+.birth-btn {
+    width: min(100%, 240px);
+    align-self: center;
+}
+
+.create-screen {
+    justify-content: center;
+    gap: 12px;
+}
+
+.create-title {
+    margin-bottom: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(34px, 6vw, 48px);
+    line-height: 0.95;
+    color: var(--text-primary);
+    text-wrap: balance;
+}
+
+.create-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--text-secondary) 82%, var(--accent-primary-deep) 18%);
+}
+
+.create-help {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: color-mix(in oklab, var(--text-secondary) 84%, white 16%);
+}
+
+.gender-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.gender-btn {
+    min-height: 72px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border-soft);
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.82), transparent 100%),
+        color-mix(in oklab, var(--surface-card) 92%, white 8%);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 24px oklch(0.24 0.05 320 / 0.06);
+    transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.gender-btn.selected {
+    border-color: color-mix(in oklab, var(--accent-highlight) 55%, var(--accent-primary) 45%);
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.56), transparent 100%),
+        linear-gradient(125deg, color-mix(in oklab, var(--accent-highlight) 68%, white 32%), color-mix(in oklab, var(--accent-secondary) 18%, var(--accent-primary) 82%));
+    color: var(--text-primary);
+    box-shadow: 0 18px 30px oklch(0.31 0.08 330 / 0.18);
+}
+
+.gender-btn:hover,
+.play-btn:hover,
+.birth-btn:hover {
+    transform: translateY(-1px);
+}
+
+.gender-btn:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 16px 32px oklch(0.24 0.05 320 / 0.1);
+}
+
+.game-screen {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+}
+
 .age-display {
     display: flex;
     justify-content: center;
@@ -267,7 +396,10 @@ body::before {
 }
 
 .sample-option-btn,
+.gender-btn,
 #submit-btn,
+.play-btn,
+.birth-btn,
 .view-stats-btn,
 #restart-btn,
 .close-stats,
@@ -342,7 +474,8 @@ body::before {
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-#player-input {
+#player-input,
+#child-name-input {
     flex: 1;
     min-width: 0;
     padding: 15px 16px;
@@ -356,18 +489,22 @@ body::before {
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-#player-input::placeholder {
+#player-input::placeholder,
+#child-name-input::placeholder {
     color: color-mix(in oklab, var(--text-secondary) 68%, transparent);
 }
 
-#player-input:focus {
+#player-input:focus,
+#child-name-input:focus {
     outline: none;
     border-color: var(--border-strong);
     box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.65), var(--focus-ring);
 }
 
 #submit-btn,
-#restart-btn {
+#restart-btn,
+.play-btn,
+.birth-btn {
     border: none;
     cursor: pointer;
     color: var(--text-inverse);
@@ -375,7 +512,9 @@ body::before {
     font-weight: 700;
 }
 
-#submit-btn {
+#submit-btn,
+.play-btn,
+.birth-btn {
     width: 100%;
     padding: 15px 24px;
     border-radius: 16px;
@@ -384,11 +523,14 @@ body::before {
 }
 
 #submit-btn:hover,
-#restart-btn:hover {
+#restart-btn:hover,
+.play-btn:hover,
+.birth-btn:hover {
     box-shadow: 0 20px 34px oklch(0.28 0.08 330 / 0.34);
 }
 
-#submit-btn:disabled {
+#submit-btn:disabled,
+.birth-btn:disabled {
     cursor: not-allowed;
     color: color-mix(in oklab, var(--text-inverse) 70%, transparent);
     background: linear-gradient(125deg, oklch(0.63 0.03 320), oklch(0.7 0.03 80));
@@ -955,13 +1097,27 @@ body::before {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .title-logo {
+        font-size: clamp(48px, 13vw, 62px);
+    }
+
+    .create-title {
+        font-size: clamp(30px, 9vw, 42px);
+    }
+
     #submit-btn,
-    #restart-btn {
+    #restart-btn,
+    .play-btn,
+    .birth-btn {
         width: 100%;
     }
 
     .image-container {
         width: 100%;
+    }
+
+    .gender-btn {
+        min-height: 64px;
     }
 
     .attribute-overlay {
@@ -1041,6 +1197,26 @@ body::before {
         min-height: clamp(120px, 23dvh, 240px);
         margin-bottom: 10px;
         border-radius: 22px;
+    }
+
+    .title-screen,
+    .create-screen {
+        gap: 10px;
+    }
+
+    .title-tagline,
+    .create-help {
+        font-size: 11px;
+    }
+
+    .gender-options {
+        gap: 8px;
+    }
+
+    .gender-btn {
+        min-height: 56px;
+        padding: 8px 10px;
+        font-size: 11px;
     }
 
     .question-container {

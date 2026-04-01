@@ -20,6 +20,10 @@
     {
       "src": "questions.json",
       "use": "@vercel/static"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -50,6 +54,10 @@
     {
       "src": "^/questions.json$",
       "dest": "/questions.json"
+    },
+    {
+      "src": "^/public/(.*)$",
+      "dest": "/public/$1"
     }
   ]
 }

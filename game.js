@@ -14,6 +14,15 @@ const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
 const BUILD_NUMBER = 33;
+const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
+const FALLBACK_NEWBORN_POOL = [
+    {
+        label: 'Mixed',
+        race: 'Mixed',
+        physicalDescription: DEFAULT_PHYSICAL_DESCRIPTION,
+        prompt: 'photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression'
+    }
+];
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -22,30 +31,45 @@ function createDefaultAttributes() {
     }, {});
 }
 
+function createDefaultGameState(questionsData = null) {
+    return {
+        currentAge: 0,
+        answers: [],
+        questionsData,
+        childName: '',
+        childGender: '',
+        childRace: '',
+        physicalDescription: DEFAULT_PHYSICAL_DESCRIPTION,
+        destiny: 'UNKNOWN',
+        moralAlignment: null,
+        justification: '',
+        score: 0,
+        attributes: createDefaultAttributes(),
+        pointsToAllocate: 0
+    };
+}
+
 // Game State
-let gameState = {
-    currentAge: 0,
-    answers: [], // Will store {age, question, answer}
-    questionsData: null,
-    physicalDescription: 'newborn baby with soft features',
-    destiny: 'UNKNOWN',
-    moralAlignment: null,
-    justification: '',
-    score: 0,
-    attributes: createDefaultAttributes(),
-    pointsToAllocate: 0
-};
+let gameState = createDefaultGameState();
+let newbornManifest = [];
 
 const FALLBACK_ORACLE_RESPONSE = {
     destiny: 'Mysterious Soul',
     moral_alignment: 'grey',
     justification: "The Oracle's vision is clouded...",
     image_prompt: 'semi-realistic portrait of a child, head and shoulders',
-    physical_description: 'newborn baby with soft features'
+    physical_description: DEFAULT_PHYSICAL_DESCRIPTION
 };
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
+const titleScreen = document.getElementById('title-screen');
+const createScreen = document.getElementById('create-screen');
+const gameScreen = document.getElementById('game-screen');
+const playBtn = document.getElementById('play-btn');
+const childNameInput = document.getElementById('child-name-input');
+const genderOptions = document.getElementById('gender-options');
+const birthBtn = document.getElementById('birth-btn');
 const gameTitle = document.querySelector('.game-title');
 const destinyValue = document.getElementById('destiny-value');
 const questionContainer = document.querySelector('.question-container');
@@ -79,6 +103,12 @@ const debugDestiny = document.getElementById('debug-destiny');
 const debugAlignment = document.getElementById('debug-alignment');
 const debugJustification = document.getElementById('debug-justification');
 const debugPhysical = document.getElementById('debug-physical');
+const screenMap = {
+    title: titleScreen,
+    create: createScreen,
+    game: gameScreen
+};
+const genderButtons = Array.from(document.querySelectorAll('.gender-btn'));
 let attributeAllocationResolver = null;
 let activeImageRequestId = 0;
 let activeImageAbortController = null;
@@ -129,6 +159,114 @@ async function readJsonResponse(response, fallbackMessage) {
     }
 
     return data;
+}
+
+async function loadNewbornManifest() {
+    try {
+        const response = await fetch('/public/newborns/manifest.json');
+        const manifest = await readJsonResponse(response, 'Newborn portrait manifest failed to load.');
+        newbornManifest = Array.isArray(manifest) && manifest.length > 0 ? manifest : FALLBACK_NEWBORN_POOL;
+    } catch (error) {
+        console.error('Error loading newborn portrait manifest:', error);
+        newbornManifest = FALLBACK_NEWBORN_POOL;
+    }
+}
+
+function showScreen(screenName) {
+    Object.entries(screenMap).forEach(([key, screen]) => {
+        if (!screen) {
+            return;
+        }
+
+        screen.classList.toggle('hidden', key !== screenName);
+    });
+}
+
+function updateBirthButtonState() {
+    if (!birthBtn || !childNameInput) {
+        return;
+    }
+
+    const hasName = childNameInput.value.trim().length > 0;
+    const hasGender = Boolean(gameState.childGender);
+    birthBtn.disabled = !(hasName && hasGender);
+}
+
+function setSelectedGender(gender) {
+    gameState.childGender = gender || '';
+    genderButtons.forEach((button) => {
+        button.classList.toggle('selected', button.dataset.gender === gameState.childGender);
+    });
+    updateBirthButtonState();
+}
+
+function resetCreateScreen() {
+    if (childNameInput) {
+        childNameInput.value = '';
+    }
+    setSelectedGender('');
+}
+
+function getRandomNewbornOption() {
+    const pool = Array.isArray(newbornManifest) && newbornManifest.length > 0
+        ? newbornManifest
+        : FALLBACK_NEWBORN_POOL;
+
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function applyStartingPortrait(option) {
+    if (!childImage || !imageLoading || !option) {
+        return;
+    }
+
+    cancelPendingImageRequest();
+    activeImageRequestId += 1;
+    childImage.classList.remove('loaded');
+    imageLoading.classList.remove('hidden');
+
+    if (option.file) {
+        childImage.onload = () => {
+            childImage.classList.add('loaded');
+            imageLoading.classList.add('hidden');
+            childImage.onload = null;
+            childImage.onerror = null;
+        };
+        childImage.onerror = () => {
+            childImage.onload = null;
+            childImage.onerror = null;
+            generateChildImage(option.prompt || FALLBACK_NEWBORN_POOL[0].prompt);
+        };
+        childImage.src = `/public/newborns/${option.file}`;
+        return;
+    }
+
+    generateChildImage(option.prompt || FALLBACK_NEWBORN_POOL[0].prompt);
+}
+
+function resetGameUi() {
+    destinyValue.textContent = 'UNKNOWN';
+    finalScore.classList.add('hidden');
+    attributeAllocationResolver = null;
+    hideAttributeOverlay();
+    hideStatsModal();
+    closeDebugModal();
+    setGameMode('attribute');
+    setQuestionPhaseVisible(false);
+    configurePrimaryInput('attribute');
+    renderSampleOptions([]);
+    renderAttributeBars(attributeGrid);
+    renderAttributeBars(statsGrid);
+    updateDestiny('UNKNOWN', '');
+    updateTimelineHeader(0);
+    updateProgressBar(0);
+    playerInput.value = '';
+    setInputFeedback('');
+
+    const finalMessage = finalScore.querySelector('.final-message');
+    if (finalMessage) {
+        finalMessage.remove();
+    }
 }
 
 function getAttributeInfluenceLevel(age) {
@@ -548,6 +686,9 @@ function buildOracleUserPrompt(currentQuestion, currentAnswer) {
     const attributeInfluenceLevel = getAttributeInfluenceLevel(gameState.currentAge);
     return `Here is the current state of the game:
 
+CHILD'S NAME: ${gameState.childName || 'Unknown'}
+CHILD'S GENDER: ${gameState.childGender || 'Unknown'}
+CHILD'S RACE: ${gameState.childRace || 'Unknown'}
 CHILD'S CURRENT AGE: ${gameState.currentAge}
 CHILD'S CURRENT PHYSICAL DESCRIPTION: ${gameState.physicalDescription}
 CHILD'S ATTRIBUTE SCORES (1-10 scale):
@@ -609,12 +750,17 @@ async function initGame() {
             buildBadge.textContent = `Build ${String(BUILD_NUMBER).padStart(3, '0')}`;
         }
 
-        const response = await fetch('questions.json');
-        gameState.questionsData = await response.json();
+        const [questionsResponse] = await Promise.all([
+            fetch('questions.json'),
+            loadNewbornManifest()
+        ]);
+
+        gameState.questionsData = await questionsResponse.json();
         renderProgressSegments();
         renderAttributeBars(attributeGrid);
         renderAttributeBars(statsGrid);
-        await startOpeningSequence();
+        resetGameUi();
+        showScreen('title');
     } catch (error) {
         console.error('Error loading questions:', error);
         questionText.textContent = 'Error loading game data. Please refresh the page.';
@@ -626,9 +772,38 @@ async function startOpeningSequence() {
     updateTimelineHeader(0);
     updateProgressBar(0);
     setInputFeedback('The first reading begins with instinct.', 'muted');
-    generateChildImage('photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression');
+    imageLoading.classList.add('hidden');
+    childImage.classList.add('loaded');
     await waitForAttributeAllocation('opening');
     loadYear(0, { skipImageGeneration: true });
+}
+
+async function beginBirthFlow() {
+    if (!childNameInput || !gameState.childGender) {
+        return;
+    }
+
+    const childName = childNameInput.value.trim();
+    const childGender = gameState.childGender;
+    if (!childName) {
+        updateBirthButtonState();
+        childNameInput.focus();
+        return;
+    }
+
+    const portrait = getRandomNewbornOption();
+    const existingQuestions = gameState.questionsData;
+
+    gameState = createDefaultGameState(existingQuestions);
+    gameState.childName = childName;
+    gameState.childGender = childGender;
+    gameState.childRace = portrait.race || portrait.label || 'Unknown';
+    gameState.physicalDescription = portrait.physicalDescription || DEFAULT_PHYSICAL_DESCRIPTION;
+
+    resetGameUi();
+    showScreen('game');
+    applyStartingPortrait(portrait);
+    await startOpeningSequence();
 }
 
 // Load a specific year
@@ -938,45 +1113,52 @@ function endGame() {
 
 // Restart game
 function restartGame() {
-    // Reset game state
-    gameState = {
-        currentAge: 0,
-        answers: [],
-        questionsData: gameState.questionsData, // Keep loaded questions
-        physicalDescription: 'newborn baby with soft features',
-        destiny: 'UNKNOWN',
-        moralAlignment: null,
-        justification: '',
-        score: 0,
-        attributes: createDefaultAttributes(),
-        pointsToAllocate: 0
-    };
-
-    // Reset UI
-    destinyValue.textContent = 'UNKNOWN';
-    finalScore.classList.add('hidden');
-    attributeAllocationResolver = null;
-    hideAttributeOverlay();
-    hideStatsModal();
-    closeDebugModal();
-    setGameMode('attribute');
-    setQuestionPhaseVisible(false);
-    configurePrimaryInput('attribute');
-    renderSampleOptions([]);
-    renderAttributeBars(attributeGrid);
-    renderAttributeBars(statsGrid);
-
-    // Clear extra messages
-    const finalMessage = finalScore.querySelector('.final-message');
-    if (finalMessage) {
-        finalMessage.remove();
-    }
-
-    // Start over
-    startOpeningSequence();
+    gameState = createDefaultGameState(gameState.questionsData);
+    resetGameUi();
+    resetCreateScreen();
+    showScreen('title');
 }
 
 // Event Listeners
+if (playBtn) {
+    playBtn.addEventListener('click', () => {
+        showScreen('create');
+        if (childNameInput) {
+            childNameInput.focus();
+        }
+    });
+}
+
+if (childNameInput) {
+    childNameInput.addEventListener('input', () => {
+        updateBirthButtonState();
+    });
+
+    childNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && birthBtn && !birthBtn.disabled) {
+            e.preventDefault();
+            beginBirthFlow();
+        }
+    });
+}
+
+if (genderOptions) {
+    genderOptions.addEventListener('click', (e) => {
+        const button = e.target.closest('.gender-btn');
+        if (!button) {
+            return;
+        }
+
+        setSelectedGender(button.dataset.gender);
+    });
+}
+
+if (birthBtn) {
+    birthBtn.addEventListener('click', () => {
+        beginBirthFlow();
+    });
+}
+
 submitBtn.addEventListener('click', () => {
     if (gameContainer.classList.contains('mode-attribute')) {
         onAttributeSubmit();
