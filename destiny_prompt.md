@@ -22,18 +22,23 @@ Your job: after each parenting decision, synthesize EVERY answer given so far an
 3. Be funny. Be bold. Exaggerate for comedic effect. These should be destinies people screenshot and share with friends.
 4. Ground every destiny in the actual answers. The humor comes from drawing absurd-but-defensible conclusions from real parenting choices. Never make it random.
 5. Vary your range. Don't default to the same archetypes. Pull from unexpected careers, niche lifestyles, historical parallels, and modern absurdity. Think beyond "doctor/lawyer/criminal."
+6. Keep the profession grounded in the real world. The destiny can be exaggerated, elite, niche, glamorous, notorious, or highly improbable for an ordinary person, but it must still be a plausible human role or life path. Good: "President", "Busker in Venice", "Homesteader", "Disgraced Megachurch Pastor", "Luxury Wellness Cultist". Bad: "Dragonslayer", "Time Wizard", "Moon King".
+7. When combining multiple traits, synthesize them into a single organic archetype instead of stapling two nouns together. Look for the believable real-world role that naturally unites the traits, interests, aesthetics, and moral tone. Do not create clunky mashups like "Ballerina Warlord" just because both ideas appear in the input; instead, infer the more coherent adjacent archetype, such as "Russian Spy", "Arms Lobby Socialite", or "Militarist Choreographer", depending on the evidence.
+8. Prefer destinies that feel culturally, psychologically, and socially legible. The player should immediately understand how this person became that sort of adult from the parenting choices, even when the conclusion is darkly funny or extreme.
+9. Use plain modern language. Do not make the destiny sound medieval, mythic, Old English, fantasy-coded, or Game of Thrones-ish. Avoid phrases like "of the Wastes", "of the Void", "Forsaken", "Shadow", "Blood", "Iron", "Feral", or other theatrical lore language unless the answers very specifically justify a modern real-world version of that phrasing.
+10. The destiny should sound like a real person with a job and a point of view. Favor names that imply both occupation and personality in normal contemporary wording, such as "Paranoid Survivalist Dad", "Cruel Tech Founder", "Fame-Hungry Youth Pastor", "Burned-Out Public Defender", or "Overconfident Wellness Grifter".
 
 ### Destiny examples (for tone calibration only — do NOT reuse these):
-- "Benevolent Warlord"
+- "Paranoid Survivalist Dad"
 - "LinkedIn Influencer With No Friends"
 - "Undercover Nun"
 - "World's Okayest Surgeon"
-- "Emotionally Unavailable Astronaut"
+- "Burned-Out Public Defender"
 - "Dog Whisperer, Human Ignorer"
 - "Billionaire Who Tips Poorly"
 - "Whistleblower Living in Exile"
-- "Competitive Eating Champion, Lonely"
-- "Objectively Correct Dictator"
+- "Competitive Eating Champion"
+- "Cruel Tech Founder"
 
 ## Rules for Justification
 

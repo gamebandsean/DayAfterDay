@@ -6,8 +6,8 @@
       "imagePrompt": "A newborn baby, just born, peaceful and innocent",
       "samples": [
         "Warm milk and a careful feeding schedule",
-        "Whatever the pediatrician recommends first",
-        "A homemade remedy my family swears by"
+        "Whatever the pediatrician recommends, plus a little extra to help them sleep",
+        "Bone broth and a homemade tonic my aunt swears builds character"
       ]
     },
     {
@@ -16,8 +16,8 @@
       "imagePrompt": "A 1-year-old toddler",
       "samples": [
         "I clap, cheer, and help them try again",
-        "I let them figure it out on their own",
-        "I make a game out of every little step"
+        "I step back and let them get stubborn about it",
+        "I put the toy just out of reach and let spite do the rest"
       ]
     },
     {
@@ -26,8 +26,8 @@
       "imagePrompt": "A 2-year-old child",
       "samples": [
         "Ask nicely and wait your turn",
-        "Trade for it if you have something better",
-        "Take it back if someone took yours first"
+        "Offer a trade and make it sound generous",
+        "Teach them that possession is ninety percent confidence"
       ]
     },
     {
@@ -36,8 +36,8 @@
       "imagePrompt": "A 3-year-old child",
       "samples": [
         "Go be kind and you'll make friends",
-        "Just be yourself and watch who seems interesting",
-        "Make a strong first impression so nobody ignores you"
+        "Find the funniest kid and sit next to them",
+        "Walk in like you already run the place"
       ]
     },
     {
@@ -46,8 +46,8 @@
       "imagePrompt": "A 4-year-old child",
       "samples": [
         "We face it together one tiny step at a time",
-        "I explain it logically so it feels smaller",
-        "I tell them fear is weakness and they should beat it"
+        "I tell them fear shrinks once you stare it down",
+        "I tell them to name the fear so they can bully it back"
       ]
     },
     {
@@ -56,8 +56,8 @@
       "imagePrompt": "A 5-year-old child",
       "samples": [
         "Painting and creative play",
-        "Piano lessons and practice",
-        "Martial arts and discipline drills"
+        "Piano lessons so they learn taste and discipline",
+        "Beginner kickboxing because focus should have consequences"
       ]
     },
     {
@@ -66,8 +66,8 @@
       "imagePrompt": "A 6-year-old child starting elementary school",
       "samples": [
         "A lucky charm from home",
-        "A notebook to sketch and take notes",
-        "The coolest item possible to impress everyone"
+        "A sketchbook so they look interesting and busy",
+        "Sunglasses and a notebook like a tiny detective"
       ]
     },
     {
@@ -76,8 +76,8 @@
       "imagePrompt": "A 7-year-old child",
       "samples": [
         "Talk it out honestly and calmly",
-        "Win the argument with the best reasoning",
-        "Never let anyone think they can push you around"
+        "Make your case clearly, then know when to walk away",
+        "Never apologize first if you're technically winning"
       ]
     },
     {
@@ -86,8 +86,8 @@
       "imagePrompt": "An 8-year-old child",
       "samples": [
         "Coding little games on a tablet",
-        "Cooking with recipes and measurements",
-        "Telling jokes and owning the room"
+        "Cooking something impressive for their age",
+        "Stand-up style joke writing so they can work a room"
       ]
     },
     {
@@ -96,8 +96,8 @@
       "imagePrompt": "A 9-year-old child",
       "samples": [
         "Ask for help and keep trying",
-        "Make a plan and solve it piece by piece",
-        "Push harder than everyone else until they win"
+        "Break the problem into steps and outlast everyone",
+        "Turn competence into a spectator sport"
       ]
     },
     {
@@ -106,8 +106,8 @@
       "imagePrompt": "A 10-year-old child",
       "samples": [
         "A fun day with close friends and family",
-        "A big themed party everyone will remember",
-        "A goal-setting day for the year ahead"
+        "A big themed party with a guest list",
+        "A birthday roast where everyone has to do a speech"
       ]
     },
     {
@@ -116,8 +116,8 @@
       "imagePrompt": "An 11-year-old child",
       "samples": [
         "Helping others and feeling trusted",
-        "Standing out with a unique sense of style",
-        "Being the funniest person in the room"
+        "Dressing like they mean something before they do",
+        "Being the person everyone watches when they enter a room"
       ]
     },
     {
@@ -126,8 +126,8 @@
       "imagePrompt": "A 12-year-old child starting middle school",
       "samples": [
         "Debate club",
-        "Student leadership",
-        "Art club with the weird kids"
+        "Student council because they like influence with a permission slip",
+        "Film club so they can document everyone's downfall"
       ]
     },
     {
@@ -136,8 +136,8 @@
       "imagePrompt": "A 13-year-old teenager",
       "samples": [
         "Journaling every night",
-        "Waking up early to train",
-        "Saving every dollar they can"
+        "Waking up early to train before school",
+        "Tracking every dollar and every grudge in the same notebook"
       ]
     },
     {
@@ -146,8 +146,8 @@
       "imagePrompt": "A 14-year-old teenager",
       "samples": [
         "Politely say no and stick to their values",
-        "Read the room and adapt without losing themselves",
-        "Turn the pressure around and take control"
+        "Play along just enough to stay in control",
+        "Make the other kids feel weird for even asking"
       ]
     },
     {
@@ -156,8 +156,8 @@
       "imagePrompt": "A 15-year-old teenager in high school",
       "samples": [
         "Close relationships",
-        "Academic achievement",
-        "Popularity and influence"
+        "Academic achievement with a side of reputation",
+        "Popularity, leverage, and knowing everybody's business"
       ]
     },
     {
@@ -166,8 +166,8 @@
       "imagePrompt": "A 16-year-old teenager",
       "samples": [
         "A creative life doing meaningful work",
-        "A stable career with good money",
-        "A powerful role where they make the rules"
+        "A stable career that still feels a little impressive",
+        "A job with access, status, and the ability to intimidate a room"
       ]
     },
     {
@@ -177,7 +177,7 @@
       "samples": [
         "Integrity over shortcuts",
         "Ambition with a clear plan",
-        "Winning, no matter what it takes"
+        "Winning, then rewriting the story so it sounds noble"
       ]
     },
     {
@@ -186,8 +186,8 @@
       "imagePrompt": "An 18-year-old young adult, graduating",
       "samples": [
         "The people they helped along the way",
-        "Everything they taught themselves to do",
-        "How far ahead they got before anyone noticed"
+        "How much they built for themselves without waiting for permission",
+        "How often they got what they wanted by staying three moves ahead"
       ]
     }
   ]

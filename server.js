@@ -1,7 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { callOracle, ensureImageEnv, ensureOracleEnv, generateImage } = require('./lib/ai');
+const {
+    callOracle,
+    callOracleWithPortrait,
+    ensureImageEnv,
+    ensureOracleEnv,
+    generateImage
+} = require('./lib/ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +33,21 @@ app.post('/api/oracle', async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error in oracle endpoint:', error);
+        res.status(error.statusCode || 500).json({
+            error: error.message,
+            ...(error.detail ? { detail: error.detail } : {}),
+            ...(error.rawText ? { rawText: error.rawText } : {}),
+        });
+    }
+});
+
+// Combined endpoint to avoid a second portrait round trip after Oracle evaluation.
+app.post('/api/oracle-portrait', async (req, res) => {
+    try {
+        const result = await callOracleWithPortrait(req.body?.system, req.body?.userPrompt);
+        res.json(result);
+    } catch (error) {
+        console.error('Error in oracle portrait endpoint:', error);
         res.status(error.statusCode || 500).json({
             error: error.message,
             ...(error.detail ? { detail: error.detail } : {}),

@@ -9,10 +9,11 @@ const ATTRIBUTE_LIST = [
     { key: 'discipline', label: 'Discipline' },
     { key: 'authority', label: 'Authority' }
 ];
+const PLAYABLE_AGES = [0, 1, 3, 5, 7, 9, 11, 13, 15, 17];
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 26;
+const BUILD_NUMBER = 28;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
@@ -61,7 +62,7 @@ const finalScore = document.getElementById('final-score');
 const finalDestiny = document.getElementById('final-destiny');
 const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
-const progressSegments = document.querySelectorAll('.progress-segment');
+const progressBar = document.getElementById('progress-bar');
 const attributeOverlay = document.getElementById('attribute-overlay');
 const attributeGrid = document.getElementById('attribute-grid');
 const attributeFeedback = document.getElementById('attribute-feedback');
@@ -79,6 +80,36 @@ const debugAlignment = document.getElementById('debug-alignment');
 const debugJustification = document.getElementById('debug-justification');
 const debugPhysical = document.getElementById('debug-physical');
 let attributeAllocationResolver = null;
+let activeImageRequestId = 0;
+let activeImageAbortController = null;
+
+function getPlayableAgeIndex(age) {
+    return PLAYABLE_AGES.indexOf(age);
+}
+
+function getNextPlayableAge(age) {
+    const currentIndex = getPlayableAgeIndex(age);
+    if (currentIndex === -1 || currentIndex >= PLAYABLE_AGES.length - 1) {
+        return null;
+    }
+
+    return PLAYABLE_AGES[currentIndex + 1];
+}
+
+function renderProgressSegments() {
+    if (!progressBar) {
+        return [];
+    }
+
+    progressBar.innerHTML = '';
+
+    return PLAYABLE_AGES.map(() => {
+        const segment = document.createElement('div');
+        segment.className = 'progress-segment';
+        progressBar.appendChild(segment);
+        return segment;
+    });
+}
 
 async function readJsonResponse(response, fallbackMessage) {
     const raw = await response.text();
@@ -91,7 +122,10 @@ async function readJsonResponse(response, fallbackMessage) {
     }
 
     if (!response.ok) {
-        throw new Error(data?.detail || data?.error || fallbackMessage);
+        const error = new Error(data?.detail || data?.error || fallbackMessage);
+        error.status = response.status;
+        error.data = data;
+        throw error;
     }
 
     return data;
@@ -136,6 +170,52 @@ function setInputFeedback(message, state = 'default') {
     inputFeedback.dataset.state = state;
 }
 
+function cancelPendingImageRequest() {
+    if (activeImageAbortController) {
+        activeImageAbortController.abort();
+        activeImageAbortController = null;
+    }
+}
+
+function startImageRequest() {
+    cancelPendingImageRequest();
+    activeImageRequestId += 1;
+    imageLoading.classList.remove('hidden');
+    childImage.classList.remove('loaded');
+    return activeImageRequestId;
+}
+
+function createImageAbortController() {
+    if (typeof AbortController !== 'function') {
+        return null;
+    }
+
+    const controller = new AbortController();
+    activeImageAbortController = controller;
+    return controller;
+}
+
+function clearImageAbortController(controller) {
+    if (controller && activeImageAbortController === controller) {
+        activeImageAbortController = null;
+    }
+}
+
+function isLatestImageRequest(requestId) {
+    return requestId === activeImageRequestId;
+}
+
+function applyGeneratedImage(imageData, mimeType, requestId) {
+    if (!isLatestImageRequest(requestId)) {
+        return false;
+    }
+
+    childImage.src = `data:${mimeType || 'image/png'};base64,${imageData}`;
+    childImage.classList.add('loaded');
+    imageLoading.classList.add('hidden');
+    return true;
+}
+
 function setGameMode(mode) {
     gameContainer.classList.toggle('mode-question', mode === 'question');
     gameContainer.classList.toggle('mode-attribute', mode === 'attribute');
@@ -143,8 +223,8 @@ function setGameMode(mode) {
 
 function updateTimelineHeader(age) {
     const yearsRemaining = Math.max(0, 18 - age);
-
-    gameTitle.textContent = `${yearsRemaining} ${yearsRemaining === 1 ? 'YEAR' : 'YEARS'} UNTIL ADULTHOOD`;
+    const ageLabel = age === 0 ? 'Birth' : `Age ${age}`;
+    gameTitle.textContent = `${ageLabel} · ${yearsRemaining} ${yearsRemaining === 1 ? 'year' : 'years'} until adulthood`;
 }
 
 function updatePointsRemaining() {
@@ -368,6 +448,10 @@ function completeAttributeAllocation() {
 }
 
 function showStatsModal() {
+    if (!statsModal || !viewStatsBtn) {
+        return;
+    }
+
     if (!finalScore.classList.contains('hidden')) {
         return;
     }
@@ -378,8 +462,13 @@ function showStatsModal() {
 }
 
 function hideStatsModal() {
-    statsModal.classList.add('hidden');
-    viewStatsBtn.classList.remove('hidden');
+    if (statsModal) {
+        statsModal.classList.add('hidden');
+    }
+
+    if (viewStatsBtn) {
+        viewStatsBtn.classList.remove('hidden');
+    }
 }
 
 // Oracle System Prompt (from destiny_prompt.md)
@@ -398,18 +487,23 @@ Your job: after each parenting decision, synthesize EVERY answer given so far an
 3. Be funny. Be bold. Exaggerate for comedic effect. These should be destinies people screenshot and share with friends.
 4. Ground every destiny in the actual answers. The humor comes from drawing absurd-but-defensible conclusions from real parenting choices. Never make it random.
 5. Vary your range. Don't default to the same archetypes. Pull from unexpected careers, niche lifestyles, historical parallels, and modern absurdity. Think beyond "doctor/lawyer/criminal."
+6. Keep the profession grounded in the real world. The destiny can be exaggerated, elite, niche, glamorous, notorious, or highly improbable for an ordinary person, but it must still be a plausible human role or life path. Good: "President", "Busker in Venice", "Homesteader", "Disgraced Megachurch Pastor", "Luxury Wellness Cultist". Bad: "Dragonslayer", "Time Wizard", "Moon King".
+7. When combining multiple traits, synthesize them into a single organic archetype instead of stapling two nouns together. Look for the believable real-world role that naturally unites the traits, interests, aesthetics, and moral tone. Do not create clunky mashups like "Ballerina Warlord" just because both ideas appear in the input; instead, infer the more coherent adjacent archetype, such as "Russian Spy", "Arms Lobby Socialite", or "Militarist Choreographer", depending on the evidence.
+8. Prefer destinies that feel culturally, psychologically, and socially legible. The player should immediately understand how this person became that sort of adult from the parenting choices, even when the conclusion is darkly funny or extreme.
+9. Use plain modern language. Do not make the destiny sound medieval, mythic, Old English, fantasy-coded, or Game of Thrones-ish. Avoid phrases like "of the Wastes", "of the Void", "Forsaken", "Shadow", "Blood", "Iron", "Feral", or other theatrical lore language unless the answers very specifically justify a modern real-world version of that phrasing.
+10. The destiny should sound like a real person with a job and a point of view. Favor names that imply both occupation and personality in normal contemporary wording, such as "Paranoid Survivalist Dad", "Cruel Tech Founder", "Fame-Hungry Youth Pastor", "Burned-Out Public Defender", or "Overconfident Wellness Grifter".
 
 ### Destiny examples (for tone calibration only — do NOT reuse these):
-- "Benevolent Warlord"
+- "Paranoid Survivalist Dad"
 - "LinkedIn Influencer With No Friends"
 - "Undercover Nun"
 - "World's Okayest Surgeon"
-- "Emotionally Unavailable Astronaut"
+- "Burned-Out Public Defender"
 - "Dog Whisperer, Human Ignorer"
 - "Billionaire Who Tips Poorly"
 - "Whistleblower Living in Exile"
-- "Competitive Eating Champion, Lonely"
-- "Objectively Correct Dictator"
+- "Competitive Eating Champion"
+- "Cruel Tech Founder"
 
 ## Rules for Justification
 
@@ -437,8 +531,7 @@ You MUST respond with valid JSON and nothing else. No markdown, no commentary ou
   "physical_description": "string — updated physical description of the child for continuity"
 }`;
 
-// Call the Oracle to determine destiny
-async function consultOracle(currentQuestion, currentAnswer) {
+function buildOracleUserPrompt(currentQuestion, currentAnswer) {
     // Build previous Q&A history
     let previousRounds = '';
     gameState.answers.forEach((qa, index) => {
@@ -448,7 +541,7 @@ async function consultOracle(currentQuestion, currentAnswer) {
 
     // Build user prompt
     const attributeInfluenceLevel = getAttributeInfluenceLevel(gameState.currentAge);
-    const userPrompt = `Here is the current state of the game:
+    return `Here is the current state of the game:
 
 CHILD'S CURRENT AGE: ${gameState.currentAge}
 CHILD'S CURRENT PHYSICAL DESCRIPTION: ${gameState.physicalDescription}
@@ -470,9 +563,13 @@ PLAYER'S NEW ANSWER:
 A${gameState.answers.length + 1}: "${currentAnswer}"
 
 Based on ALL of the above — every answer, not just the latest — determine this child's evolving Destiny. Respond with the JSON object only.`;
+}
+
+// Call the Oracle to determine destiny, then let portrait generation run in parallel.
+async function consultOracle(currentQuestion, currentAnswer) {
+    const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer);
 
     try {
-        // Call our backend server instead of Anthropic directly (avoids CORS issues)
         const response = await fetch('/api/oracle', {
             method: 'POST',
             headers: {
@@ -490,10 +587,8 @@ Based on ALL of the above — every answer, not just the latest — determine th
         }
 
         return data.oracle;
-
     } catch (error) {
         console.error('Error consulting Oracle:', error);
-        // Return fallback response
         return {
             ...FALLBACK_ORACLE_RESPONSE,
             image_prompt: `portrait of a ${gameState.currentAge} year old child`,
@@ -511,6 +606,7 @@ async function initGame() {
 
         const response = await fetch('questions.json');
         gameState.questionsData = await response.json();
+        renderProgressSegments();
         renderAttributeBars(attributeGrid);
         renderAttributeBars(statsGrid);
         await startOpeningSequence();
@@ -532,7 +628,7 @@ async function startOpeningSequence() {
 
 // Load a specific year
 function loadYear(age, options = {}) {
-    const yearData = gameState.questionsData.years[age];
+    const yearData = gameState.questionsData.years.find((year) => year.age === age);
 
     if (!yearData) {
         endGame();
@@ -564,9 +660,11 @@ function loadYear(age, options = {}) {
 
 // Update progress bar
 function updateProgressBar(age) {
-    // Fill in segments up to current age (age 0 = 1 segment, age 18 = 18 segments, etc.)
+    const progressSegments = progressBar ? progressBar.querySelectorAll('.progress-segment') : [];
+    const currentIndex = getPlayableAgeIndex(age);
+
     progressSegments.forEach((segment, index) => {
-        if (index < age + 1) {
+        if (index <= currentIndex) {
             segment.classList.add('filled');
         } else {
             segment.classList.remove('filled');
@@ -594,46 +692,50 @@ async function submitAnswer() {
     submitBtn.disabled = true;
     playerInput.disabled = true;
 
-    // Get current question
-    const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
+    try {
+        // Get current question
+        const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
 
-    // Consult the Oracle
-    const oracleResponse = await consultOracle(currentQuestion, answer);
+        // Resolve the Oracle first, then sketch the next face while attributes are being assigned.
+        const oracleResponse = await consultOracle(currentQuestion, answer);
 
-    // Store the answer with question
-    gameState.answers.push({
-        age: gameState.currentAge,
-        question: currentQuestion,
-        answer: answer
-    });
+        // Store the answer with question
+        gameState.answers.push({
+            age: gameState.currentAge,
+            question: currentQuestion,
+            answer: answer
+        });
 
-    // Update game state from Oracle
-    gameState.destiny = oracleResponse.destiny;
-    gameState.moralAlignment = oracleResponse.moral_alignment;
-    gameState.justification = oracleResponse.justification;
-    gameState.physicalDescription = oracleResponse.physical_description;
+        // Update game state from Oracle
+        gameState.destiny = oracleResponse.destiny;
+        gameState.moralAlignment = oracleResponse.moral_alignment;
+        gameState.justification = oracleResponse.justification;
+        gameState.physicalDescription = oracleResponse.physical_description;
 
-    // Update destiny display
-    updateDestiny(oracleResponse.destiny, oracleResponse.justification);
+        // Update destiny display
+        updateDestiny(oracleResponse.destiny, oracleResponse.justification);
 
-    // Calculate score for this answer
-    calculateAnswerScore(answer);
+        // Calculate score for this answer
+        calculateAnswerScore(answer);
 
-    // Generate the portrait behind the attribute overlay.
-    generateChildImage(oracleResponse.image_prompt);
-    await waitForAttributeAllocation('round');
+        generateChildImage(oracleResponse.image_prompt);
 
-    // Move to next year or end game
-    const nextAge = gameState.currentAge + 1;
-    if (nextAge < gameState.questionsData.years.length) {
-        loadYear(nextAge);
-    } else {
-        endGame();
+        await waitForAttributeAllocation('round');
+
+        // Move to next year or end game
+        const nextAge = getNextPlayableAge(gameState.currentAge);
+        if (nextAge !== null) {
+            loadYear(nextAge);
+        } else {
+            endGame();
+        }
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+        setInputFeedback(error.message || 'The Oracle could not process that answer.');
+    } finally {
+        submitBtn.disabled = false;
+        playerInput.disabled = false;
     }
-
-    // Re-enable input
-    submitBtn.disabled = false;
-    playerInput.disabled = false;
 }
 
 // Update destiny display
@@ -670,9 +772,8 @@ function calculateAnswerScore(answer) {
 
 // Generate child image using AI
 async function generateChildImage(imagePrompt) {
-    // Show loading state
-    imageLoading.classList.remove('hidden');
-    childImage.classList.remove('loaded');
+    const requestId = startImageRequest();
+    const controller = createImageAbortController();
 
     try {
         // Call backend to generate image with Gemini
@@ -681,6 +782,7 @@ async function generateChildImage(imagePrompt) {
             headers: {
                 'Content-Type': 'application/json'
             },
+            ...(controller ? { signal: controller.signal } : {}),
             body: JSON.stringify({
                 prompt: imagePrompt
             })
@@ -689,26 +791,34 @@ async function generateChildImage(imagePrompt) {
         const data = await readJsonResponse(response, 'Image generation failed.');
 
         if (data?.usePlaceholder) {
-            showPlaceholderImage(imagePrompt);
+            showPlaceholderImage(imagePrompt, requestId);
             return;
         }
 
         if (data?.imageData) {
-            childImage.src = `data:${data.mimeType || 'image/png'};base64,${data.imageData}`;
-            childImage.classList.add('loaded');
-            imageLoading.classList.add('hidden');
+            applyGeneratedImage(data.imageData, data.mimeType, requestId);
         } else {
             throw new Error('No image data in response.');
         }
 
     } catch (error) {
+        if (error.name === 'AbortError') {
+            return;
+        }
+
         console.error('Error generating image:', error);
-        showPlaceholderImage(imagePrompt);
+        showPlaceholderImage(imagePrompt, requestId);
+    } finally {
+        clearImageAbortController(controller);
     }
 }
 
 // Show placeholder image
-function showPlaceholderImage(prompt) {
+function showPlaceholderImage(prompt, requestId = activeImageRequestId) {
+    if (!isLatestImageRequest(requestId)) {
+        return;
+    }
+
     // Create a visually appealing placeholder
     const canvas = document.createElement('canvas');
     canvas.width = 800;
@@ -892,13 +1002,19 @@ playerInput.addEventListener('input', () => {
     }
 });
 restartBtn.addEventListener('click', restartGame);
-viewStatsBtn.addEventListener('click', showStatsModal);
-closeStatsBtn.addEventListener('click', hideStatsModal);
-statsModal.addEventListener('click', (e) => {
-    if (e.target === statsModal) {
-        hideStatsModal();
-    }
-});
+if (viewStatsBtn) {
+    viewStatsBtn.addEventListener('click', showStatsModal);
+}
+if (closeStatsBtn) {
+    closeStatsBtn.addEventListener('click', hideStatsModal);
+}
+if (statsModal) {
+    statsModal.addEventListener('click', (e) => {
+        if (e.target === statsModal) {
+            hideStatsModal();
+        }
+    });
+}
 
 // Debug Modal Functions
 function openDebugModal() {

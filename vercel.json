@@ -32,6 +32,10 @@
       "dest": "/api/oracle.js"
     },
     {
+      "src": "^/api/oracle-portrait$",
+      "dest": "/api/oracle-portrait.js"
+    },
+    {
       "src": "^/api/generate-image$",
       "dest": "/api/generate-image.js"
     },
