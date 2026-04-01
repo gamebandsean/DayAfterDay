@@ -13,7 +13,7 @@ const PLAYABLE_AGES = [0, 1, 3, 5, 7, 9, 11, 13, 15, 17];
 const ATTRIBUTE_AGE_THRESHOLD = 6;
 const ATTRIBUTE_POINTS_PER_ROUND = 3;
 const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 30;
+const BUILD_NUMBER = 31;
 
 function createDefaultAttributes() {
     return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
