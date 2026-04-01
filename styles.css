@@ -283,6 +283,13 @@ body::before {
     box-shadow: 0 10px 24px oklch(0.24 0.05 320 / 0.06);
 }
 
+.sample-option-label {
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-wrap: balance;
+}
+
 .sample-option-btn:hover,
 .view-stats-btn:hover,
 #submit-btn:hover,
