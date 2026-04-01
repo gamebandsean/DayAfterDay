@@ -6,8 +6,8 @@
       "imagePrompt": "A newborn baby, just born, peaceful and innocent",
       "samples": [
         "Warm milk and a careful feeding schedule",
-        "Whatever the pediatrician recommends, plus a little extra to help them sleep",
-        "Bone broth and a homemade tonic my aunt swears builds character"
+        "Whatever the doctor says, plus a little extra",
+        "Bone broth and a family tonic that builds character"
       ]
     },
     {
@@ -126,7 +126,7 @@
       "imagePrompt": "A 12-year-old child starting middle school",
       "samples": [
         "Debate club",
-        "Student council because they like influence with a permission slip",
+        "Student council — influence with a hall pass",
         "Film club so they can document everyone's downfall"
       ]
     },
@@ -167,7 +167,7 @@
       "samples": [
         "A creative life doing meaningful work",
         "A stable career that still feels a little impressive",
-        "A job with access, status, and the ability to intimidate a room"
+        "A job with access, status, and intimidation"
       ]
     },
     {
@@ -186,8 +186,8 @@
       "imagePrompt": "An 18-year-old young adult, graduating",
       "samples": [
         "The people they helped along the way",
-        "How much they built for themselves without waiting for permission",
-        "How often they got what they wanted by staying three moves ahead"
+        "Everything they built without asking permission",
+        "How often they won by staying three moves ahead"
       ]
     }
   ]
