@@ -1,19 +1,5 @@
-const ATTRIBUTE_LIST = [
-    { key: 'intelligence', label: 'Intelligence' },
-    { key: 'looks', label: 'Looks' },
-    { key: 'money', label: 'Money' },
-    { key: 'charisma', label: 'Charisma' },
-    { key: 'honesty', label: 'Honesty' },
-    { key: 'empathy', label: 'Empathy' },
-    { key: 'strength', label: 'Strength' },
-    { key: 'discipline', label: 'Discipline' },
-    { key: 'authority', label: 'Authority' }
-];
-const PLAYABLE_AGES = [0, 1, 3, 5, 7, 9, 11, 13, 15, 17];
-const ATTRIBUTE_AGE_THRESHOLD = 6;
-const ATTRIBUTE_POINTS_PER_ROUND = 3;
-const ATTRIBUTE_MAX = 10;
-const BUILD_NUMBER = 33;
+const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
+const BUILD_NUMBER = 34;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -23,13 +9,6 @@ const FALLBACK_NEWBORN_POOL = [
         prompt: 'photorealistic portrait of a peaceful newborn baby, soft lighting, warm tones, innocent expression'
     }
 ];
-
-function createDefaultAttributes() {
-    return ATTRIBUTE_LIST.reduce((attributes, attribute) => {
-        attributes[attribute.key] = 0;
-        return attributes;
-    }, {});
-}
 
 function createDefaultGameState(questionsData = null) {
     return {
@@ -44,8 +23,7 @@ function createDefaultGameState(questionsData = null) {
         moralAlignment: null,
         justification: '',
         score: 0,
-        attributes: createDefaultAttributes(),
-        pointsToAllocate: 0
+        values: []
     };
 }
 
@@ -87,13 +65,12 @@ const finalDestiny = document.getElementById('final-destiny');
 const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
 const progressBar = document.getElementById('progress-bar');
-const attributeOverlay = document.getElementById('attribute-overlay');
-const attributeGrid = document.getElementById('attribute-grid');
-const attributeFeedback = document.getElementById('attribute-feedback');
-const viewStatsBtn = document.getElementById('view-stats-btn');
-const statsModal = document.getElementById('stats-modal');
-const closeStatsBtn = document.getElementById('close-stats');
-const statsGrid = document.getElementById('stats-grid');
+const valuesOverlay = document.getElementById('values-overlay');
+const valuesFeedback = document.getElementById('values-feedback');
+const currentValuesList = document.getElementById('current-values-list');
+const valueInput = document.getElementById('value-input');
+const valueSubmitBtn = document.getElementById('value-submit-btn');
+const valueSuggestions = document.getElementById('value-suggestions');
 const buildBadge = document.getElementById('build-badge');
 
 // Debug Modal Elements
@@ -109,7 +86,7 @@ const screenMap = {
     game: gameScreen
 };
 const genderButtons = Array.from(document.querySelectorAll('.gender-btn'));
-let attributeAllocationResolver = null;
+let valueEntryResolver = null;
 let activeImageRequestId = 0;
 let activeImageAbortController = null;
 
@@ -247,16 +224,20 @@ function applyStartingPortrait(option) {
 function resetGameUi() {
     destinyValue.textContent = 'UNKNOWN';
     finalScore.classList.add('hidden');
-    attributeAllocationResolver = null;
-    hideAttributeOverlay();
-    hideStatsModal();
+    valueEntryResolver = null;
+    hideValuesOverlay();
     closeDebugModal();
-    setGameMode('attribute');
+    setGameMode('question');
     setQuestionPhaseVisible(false);
-    configurePrimaryInput('attribute');
+    questionContainer.classList.remove('phase-hidden');
+    questionContainer.removeAttribute('aria-hidden');
+    inputContainer.classList.remove('phase-hidden');
+    inputContainer.removeAttribute('aria-hidden');
+    playerInput.classList.remove('phase-hidden');
+    submitBtn.classList.remove('phase-hidden');
+    configurePrimaryInput('question');
     renderSampleOptions([]);
-    renderAttributeBars(attributeGrid);
-    renderAttributeBars(statsGrid);
+    renderCurrentValues();
     updateDestiny('UNKNOWN', '');
     updateTimelineHeader(0);
     updateProgressBar(0);
@@ -269,24 +250,6 @@ function resetGameUi() {
     }
 }
 
-function getAttributeInfluenceLevel(age) {
-    if (age < ATTRIBUTE_AGE_THRESHOLD) {
-        return 'minimal';
-    }
-
-    if (age < 13) {
-        return 'moderate';
-    }
-
-    return 'significant';
-}
-
-function getAttributeSummary() {
-    return ATTRIBUTE_LIST.map((attribute, index) => {
-        return `${attribute.label}: ${gameState.attributes[attribute.key]}`;
-    }).join('\n');
-}
-
 function isTypingTarget(target) {
     return Boolean(
         target &&
@@ -295,8 +258,52 @@ function isTypingTarget(target) {
     );
 }
 
-function setAttributeFeedback(message) {
-    attributeFeedback.textContent = message || '';
+function sanitizeValue(value) {
+    return value.replace(/\s+/g, ' ').trim();
+}
+
+function getGroupedValues() {
+    const groupedValues = new Map();
+
+    gameState.values.forEach((rawValue) => {
+        const value = sanitizeValue(rawValue);
+        if (!value) {
+            return;
+        }
+
+        const key = value.toLowerCase();
+        const current = groupedValues.get(key);
+        if (current) {
+            current.count += 1;
+            return;
+        }
+
+        groupedValues.set(key, {
+            label: value,
+            count: 1
+        });
+    });
+
+    return Array.from(groupedValues.values());
+}
+
+function getValuesSummary() {
+    const groupedValues = getGroupedValues();
+    if (groupedValues.length === 0) {
+        return 'None yet.';
+    }
+
+    return groupedValues
+        .map((value) => `${value.label} x${value.count}`)
+        .join(', ');
+}
+
+function setValuesFeedback(message) {
+    if (!valuesFeedback) {
+        return;
+    }
+
+    valuesFeedback.textContent = message || '';
 }
 
 function setInputFeedback(message, state = 'default') {
@@ -356,7 +363,7 @@ function applyGeneratedImage(imageData, mimeType, requestId) {
 
 function setGameMode(mode) {
     gameContainer.classList.toggle('mode-question', mode === 'question');
-    gameContainer.classList.toggle('mode-attribute', mode === 'attribute');
+    gameContainer.classList.toggle('mode-values', mode === 'values');
 }
 
 function updateTimelineHeader(age) {
@@ -365,31 +372,28 @@ function updateTimelineHeader(age) {
     gameTitle.textContent = `${ageLabel} · ${yearsRemaining} ${yearsRemaining === 1 ? 'year' : 'years'} until adulthood`;
 }
 
-function updatePointsRemaining() {
-    const points = gameState.pointsToAllocate;
-    if (points > 0) {
-        setInputFeedback(`${points} point${points === 1 ? '' : 's'} left. Spend every point before continuing.`, 'muted');
-        return;
-    }
-
-    setInputFeedback('All points spent. Continue when ready.', 'muted');
-}
-
 function setQuestionPhaseVisible(isVisible) {
     sampleOptions.classList.toggle('phase-hidden', !isVisible);
 }
 
 function configurePrimaryInput(mode) {
-    if (mode === 'attribute') {
-        playerInput.value = '';
+    if (mode === 'values') {
         playerInput.disabled = true;
-        playerInput.classList.add('phase-hidden');
-        submitBtn.textContent = 'Continue';
-        submitBtn.disabled = gameState.pointsToAllocate > 0;
-        inputContainer.classList.remove('phase-hidden');
-        if (gameState.pointsToAllocate === 0) {
-            submitBtn.focus();
+        inputContainer.classList.add('phase-hidden');
+        setInputFeedback('');
+
+        if (valueInput) {
+            valueInput.value = '';
+            valueInput.disabled = false;
+            valueInput.placeholder = 'Money, loyalty, pessimism...';
+            valueInput.inputMode = 'text';
+            valueInput.setAttribute('aria-label', 'Enter one value to instill in your child');
         }
+
+        if (valueSubmitBtn) {
+            valueSubmitBtn.disabled = false;
+        }
+
         return;
     }
 
@@ -434,190 +438,103 @@ function renderSampleOptions(samples) {
     });
 }
 
-function createAttributeSummaryRow(attribute, index, value) {
-    const row = document.createElement('div');
-    row.className = 'attribute-row';
-
-    const name = document.createElement('span');
-    name.className = 'attribute-name';
-    name.textContent = attribute.label;
-
-    const segments = document.createElement('div');
-    segments.className = 'attribute-segments';
-
-    for (let segmentIndex = 1; segmentIndex <= ATTRIBUTE_MAX; segmentIndex += 1) {
-        const segment = document.createElement('span');
-        segment.className = 'attribute-segment';
-
-        if (segmentIndex <= value) {
-            segment.classList.add('filled');
-        }
-
-        segments.appendChild(segment);
-    }
-
-    const total = document.createElement('span');
-    total.className = 'attribute-total';
-    total.textContent = `${value}/${ATTRIBUTE_MAX}`;
-
-    row.appendChild(name);
-    row.appendChild(segments);
-    row.appendChild(total);
-
-    return row;
-}
-
-function createAttributeCard(attribute, index, value) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'attribute-card';
-    card.style.setProperty('--fill-ratio', String(value / ATTRIBUTE_MAX));
-    card.setAttribute('aria-label', `Add to ${attribute.label}. Current value ${value} out of ${ATTRIBUTE_MAX}.`);
-
-    const content = document.createElement('div');
-    content.className = 'attribute-card-content';
-
-    const name = document.createElement('span');
-    name.className = 'attribute-card-name';
-    name.textContent = attribute.label;
-    content.appendChild(name);
-    card.appendChild(content);
-    card.addEventListener('click', () => allocatePoint(index + 1));
-
-    return card;
-}
-
-function renderAttributeBars(container) {
-    if (!container) {
+function renderCurrentValues() {
+    if (!currentValuesList) {
         return;
     }
 
-    container.innerHTML = '';
+    const groupedValues = getGroupedValues();
+    currentValuesList.innerHTML = '';
 
-    ATTRIBUTE_LIST.forEach((attribute, index) => {
-        const value = gameState.attributes[attribute.key];
-        const item = container === attributeGrid
-            ? createAttributeCard(attribute, index, value)
-            : createAttributeSummaryRow(attribute, index, value);
+    if (groupedValues.length === 0) {
+        const emptyState = document.createElement('p');
+        emptyState.className = 'values-empty';
+        emptyState.textContent = 'No values yet. The child is still mostly mystery.';
+        currentValuesList.appendChild(emptyState);
+        return;
+    }
 
-        container.appendChild(item);
+    groupedValues.forEach((value) => {
+        const pill = document.createElement('div');
+        pill.className = 'value-pill';
+
+        const label = document.createElement('span');
+        label.className = 'value-pill-label';
+        label.textContent = value.label;
+
+        const count = document.createElement('span');
+        count.className = 'value-pill-count';
+        count.textContent = `x${value.count}`;
+
+        pill.appendChild(label);
+        pill.appendChild(count);
+        currentValuesList.appendChild(pill);
     });
 }
 
-function showAttributeOverlay(mode = 'round') {
-    gameState.pointsToAllocate = ATTRIBUTE_POINTS_PER_ROUND;
-    hideStatsModal();
-    setGameMode('attribute');
+function showValuesOverlay() {
+    renderCurrentValues();
+    setGameMode('values');
     setQuestionPhaseVisible(false);
-    attributeOverlay.classList.remove('hidden');
-    setAttributeFeedback('');
-    questionEyebrow.textContent = mode === 'opening' ? 'Add 3 Traits' : 'Add 3 Traits';
-    questionText.textContent = mode === 'opening'
-        ? 'Pick 3 traits to pass on to your newborn baby.'
-        : 'Tap one trait below each time you want to strengthen it this year.';
-    updatePointsRemaining();
-    renderAttributeBars(attributeGrid);
-    renderAttributeBars(statsGrid);
-    configurePrimaryInput('attribute');
+    if (valuesOverlay) {
+        valuesOverlay.classList.remove('hidden');
+    }
+    setValuesFeedback('');
+    questionEyebrow.textContent = 'Instill A Value';
+    questionText.textContent = 'While the oracle sketches the next face, choose one value you want this child to carry forward.';
+    configurePrimaryInput('values');
+    if (valueInput) {
+        valueInput.focus();
+    }
 }
 
-function hideAttributeOverlay() {
-    attributeOverlay.classList.add('hidden');
-    gameState.pointsToAllocate = 0;
-    setAttributeFeedback('');
+function hideValuesOverlay() {
+    if (valuesOverlay) {
+        valuesOverlay.classList.add('hidden');
+    }
+    if (valueInput) {
+        valueInput.value = '';
+    }
+    setValuesFeedback('');
 }
 
-function allocatePoint(rawIndex) {
-    if (gameState.pointsToAllocate <= 0) {
-        return false;
+function submitValue() {
+    if (!valueInput || !valueSubmitBtn) {
+        return;
     }
 
-    const attrIndex = Number(rawIndex);
-
-    if (!Number.isInteger(attrIndex) || attrIndex < 1 || attrIndex > ATTRIBUTE_LIST.length) {
-        setAttributeFeedback('Choose one of the available traits.');
-        return false;
+    const value = sanitizeValue(valueInput.value);
+    if (!value) {
+        setValuesFeedback('Name one value before moving on.');
+        valueInput.focus();
+        return;
     }
 
-    const attribute = ATTRIBUTE_LIST[attrIndex - 1];
+    gameState.values.push(value);
+    renderCurrentValues();
+    hideValuesOverlay();
 
-    if (gameState.attributes[attribute.key] >= ATTRIBUTE_MAX) {
-        setAttributeFeedback(`${attribute.label} has already reached its limit.`);
-        return false;
+    if (valueEntryResolver) {
+        const resolve = valueEntryResolver;
+        valueEntryResolver = null;
+        resolve(value);
     }
-
-    gameState.attributes[attribute.key] += 1;
-    gameState.pointsToAllocate -= 1;
-    renderAttributeBars(attributeGrid);
-    renderAttributeBars(statsGrid);
-    updatePointsRemaining();
-    configurePrimaryInput('attribute');
-
-    if (gameState.pointsToAllocate === 0) {
-        setAttributeFeedback('The shape of this year is set. Continue when ready.');
-        submitBtn.focus();
-    } else {
-        setAttributeFeedback(`${attribute.label} grows stronger.`);
-    }
-
-    return true;
 }
 
-function onAttributeSubmit() {
-    completeAttributeAllocation();
-}
-
-function waitForAttributeAllocation(mode = 'round') {
-    showAttributeOverlay(mode);
+function waitForValueEntry() {
+    showValuesOverlay();
 
     return new Promise((resolve) => {
-        attributeAllocationResolver = resolve;
+        valueEntryResolver = resolve;
     });
-}
-
-function completeAttributeAllocation() {
-    if (gameState.pointsToAllocate > 0) {
-        setAttributeFeedback(`Spend all ${ATTRIBUTE_POINTS_PER_ROUND} points before moving on.`);
-        return;
-    }
-
-    hideAttributeOverlay();
-
-    if (attributeAllocationResolver) {
-        const resolve = attributeAllocationResolver;
-        attributeAllocationResolver = null;
-        resolve();
-    }
-}
-
-function showStatsModal() {
-    if (!statsModal || !viewStatsBtn) {
-        return;
-    }
-
-    if (!finalScore.classList.contains('hidden')) {
-        return;
-    }
-
-    renderAttributeBars(statsGrid);
-    statsModal.classList.remove('hidden');
-    viewStatsBtn.classList.add('hidden');
-}
-
-function hideStatsModal() {
-    if (statsModal) {
-        statsModal.classList.add('hidden');
-    }
-
-    if (viewStatsBtn) {
-        viewStatsBtn.classList.remove('hidden');
-    }
 }
 
 // Oracle System Prompt (from destiny_prompt.md)
 const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, darkly comedic soothsayer who can read a child's destiny from the choices their parent makes. You speak with absolute conviction. You do not hedge. You do not say "it depends." You see the thread of fate clearly, and you call it like it is.
 
 Your job: after each parenting decision, synthesize EVERY answer given so far and declare what this child is destined to become. The destiny EVOLVES — it can shift dramatically between rounds as new information changes the trajectory. A child headed for "Beloved Kindergarten Teacher" can pivot to "Charismatic Cult Leader" in a single answer.
+
+The parent may also provide instilled VALUES as freeform tags. Treat those values as recurring moral and psychological signals. If a value appears multiple times, it should feel more deeply rooted in the child.
 
 ## Rules for Destinies
 
@@ -631,7 +548,7 @@ Your job: after each parenting decision, synthesize EVERY answer given so far an
 4. Ground every destiny in the actual answers. The humor comes from drawing absurd-but-defensible conclusions from real parenting choices. Never make it random.
 5. Vary your range. Don't default to the same archetypes. Pull from unexpected careers, niche lifestyles, historical parallels, and modern absurdity. Think beyond "doctor/lawyer/criminal."
 6. Keep the profession grounded in the real world. The destiny can be exaggerated, elite, niche, glamorous, notorious, or highly improbable for an ordinary person, but it must still be a plausible human role or life path. Good: "President", "Busker in Venice", "Homesteader", "Disgraced Megachurch Pastor", "Luxury Wellness Cultist". Bad: "Dragonslayer", "Time Wizard", "Moon King".
-7. When combining multiple traits, synthesize them into a single organic archetype instead of stapling two nouns together. Look for the believable real-world role that naturally unites the traits, interests, aesthetics, and moral tone. Do not create clunky mashups like "Ballerina Warlord" just because both ideas appear in the input; instead, infer the more coherent adjacent archetype, such as "Russian Spy", "Arms Lobby Socialite", or "Militarist Choreographer", depending on the evidence.
+7. When combining multiple traits, answers, and instilled values, synthesize them into a single organic archetype instead of stapling two nouns together. Look for the believable real-world role that naturally unites the evidence, interests, aesthetics, and moral tone. Do not create clunky mashups like "Ballerina Warlord" just because both ideas appear in the input; instead, infer the more coherent adjacent archetype, such as "Russian Spy", "Arms Lobby Socialite", or "Militarist Choreographer", depending on the evidence.
 8. Prefer destinies that feel culturally, psychologically, and socially legible. The player should immediately understand how this person became that sort of adult from the parenting choices, even when the conclusion is darkly funny or extreme.
 9. Use plain modern language. Do not make the destiny sound medieval, mythic, Old English, fantasy-coded, or Game of Thrones-ish. Avoid phrases like "of the Wastes", "of the Void", "Forsaken", "Shadow", "Blood", "Iron", "Feral", or other theatrical lore language unless the answers very specifically justify a modern real-world version of that phrasing.
 10. The destiny should sound like a real person with a job and a point of view. Favor names that imply both occupation and personality in normal contemporary wording, such as "Paranoid Survivalist Dad", "Cruel Tech Founder", "Fame-Hungry Youth Pastor", "Burned-Out Public Defender", or "Overconfident Wellness Grifter".
@@ -683,7 +600,6 @@ function buildOracleUserPrompt(currentQuestion, currentAnswer) {
     });
 
     // Build user prompt
-    const attributeInfluenceLevel = getAttributeInfluenceLevel(gameState.currentAge);
     return `Here is the current state of the game:
 
 CHILD'S NAME: ${gameState.childName || 'Unknown'}
@@ -691,14 +607,13 @@ CHILD'S GENDER: ${gameState.childGender || 'Unknown'}
 CHILD'S RACE: ${gameState.childRace || 'Unknown'}
 CHILD'S CURRENT AGE: ${gameState.currentAge}
 CHILD'S CURRENT PHYSICAL DESCRIPTION: ${gameState.physicalDescription}
-CHILD'S ATTRIBUTE SCORES (1-10 scale):
-${getAttributeSummary()}
+CHILD'S INSTILLED VALUES:
+${getValuesSummary()}
 
-ATTRIBUTE GUIDANCE:
-Treat these attributes as aptitude modifiers that influence what this child can realistically become.
-The child is currently age ${gameState.currentAge}, so attribute influence should be ${attributeInfluenceLevel}.
-Before age ${ATTRIBUTE_AGE_THRESHOLD}, attributes are still forming and should only subtly shade the destiny.
-From age ${ATTRIBUTE_AGE_THRESHOLD} onward, attributes meaningfully shape the child's abilities, behavior, and future.
+VALUE GUIDANCE:
+These are the values the parent has chosen to instill in this child over time.
+Values that appear multiple times are more deeply ingrained.
+Factor these values into the child's personality, worldview, behavior, and destiny.
 
 PREVIOUS QUESTIONS AND ANSWERS (in order):
 ${previousRounds}
@@ -757,8 +672,6 @@ async function initGame() {
 
         gameState.questionsData = await questionsResponse.json();
         renderProgressSegments();
-        renderAttributeBars(attributeGrid);
-        renderAttributeBars(statsGrid);
         resetGameUi();
         showScreen('title');
     } catch (error) {
@@ -772,9 +685,6 @@ async function startOpeningSequence() {
     updateTimelineHeader(0);
     updateProgressBar(0);
     setInputFeedback('The first reading begins with instinct.', 'muted');
-    imageLoading.classList.add('hidden');
-    childImage.classList.add('loaded');
-    await waitForAttributeAllocation('opening');
     loadYear(0, { skipImageGeneration: true });
 }
 
@@ -818,8 +728,14 @@ function loadYear(age, options = {}) {
     gameState.currentAge = age;
     updateTimelineHeader(age);
     setGameMode('question');
+    questionContainer.classList.remove('phase-hidden');
+    questionContainer.removeAttribute('aria-hidden');
     setQuestionPhaseVisible(true);
     configurePrimaryInput('question');
+    inputContainer.classList.remove('phase-hidden');
+    inputContainer.removeAttribute('aria-hidden');
+    playerInput.classList.remove('phase-hidden');
+    submitBtn.classList.remove('phase-hidden');
     questionEyebrow.textContent = `Age: ${age}`;
     questionText.textContent = yearData.question;
     renderSampleOptions(yearData.samples);
@@ -876,7 +792,7 @@ async function submitAnswer() {
         // Get current question
         const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
 
-        // Resolve the Oracle first, then sketch the next face while attributes are being assigned.
+        // Resolve the Oracle first, then let the next portrait render while the player names a value.
         const oracleResponse = await consultOracle(currentQuestion, answer);
 
         // Store the answer with question
@@ -900,7 +816,7 @@ async function submitAnswer() {
 
         generateChildImage(oracleResponse.image_prompt);
 
-        await waitForAttributeAllocation('round');
+        await waitForValueEntry();
 
         // Move to next year or end game
         const nextAge = getNextPlayableAge(gameState.currentAge);
@@ -1078,11 +994,20 @@ function showPlaceholderImage(prompt, requestId = activeImageRequestId) {
 // End game and show results
 function endGame() {
     // Calculate final score
-    const maxScore = gameState.questionsData.years.length * 25;
+    const maxScore = PLAYABLE_AGES.length * 25;
     const percentage = Math.round((gameState.score / maxScore) * 100);
 
-    hideStatsModal();
+    hideValuesOverlay();
     closeDebugModal();
+    questionContainer.classList.add('phase-hidden');
+    questionContainer.setAttribute('aria-hidden', 'true');
+    setQuestionPhaseVisible(false);
+    inputContainer.classList.add('phase-hidden');
+    inputContainer.setAttribute('aria-hidden', 'true');
+    playerInput.classList.add('phase-hidden');
+    submitBtn.classList.add('phase-hidden');
+    playerInput.disabled = true;
+    submitBtn.disabled = true;
     setInputFeedback('');
 
     // Show final score screen
@@ -1160,27 +1085,17 @@ if (birthBtn) {
 }
 
 submitBtn.addEventListener('click', () => {
-    if (gameContainer.classList.contains('mode-attribute')) {
-        onAttributeSubmit();
-        return;
-    }
-
     submitAnswer();
 });
 playerInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
 
-        if (gameContainer.classList.contains('mode-attribute')) {
-            onAttributeSubmit();
-            return;
-        }
-
         submitAnswer();
     }
 });
 playerInput.addEventListener('input', () => {
-    if (gameContainer.classList.contains('mode-attribute')) {
+    if (gameContainer.classList.contains('mode-values')) {
         return;
     }
 
@@ -1189,17 +1104,35 @@ playerInput.addEventListener('input', () => {
     }
 });
 restartBtn.addEventListener('click', restartGame);
-if (viewStatsBtn) {
-    viewStatsBtn.addEventListener('click', showStatsModal);
+if (valueSubmitBtn) {
+    valueSubmitBtn.addEventListener('click', submitValue);
 }
-if (closeStatsBtn) {
-    closeStatsBtn.addEventListener('click', hideStatsModal);
-}
-if (statsModal) {
-    statsModal.addEventListener('click', (e) => {
-        if (e.target === statsModal) {
-            hideStatsModal();
+if (valueInput) {
+    valueInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitValue();
         }
+    });
+}
+if (valueInput) {
+    valueInput.addEventListener('input', () => {
+        if (valueInput.value.trim()) {
+            setValuesFeedback('');
+        }
+    });
+}
+if (valueSuggestions) {
+    valueSuggestions.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-value]');
+        if (!button || !valueInput) {
+            return;
+        }
+
+        valueInput.value = button.dataset.value || '';
+        valueInput.focus();
+        valueInput.setSelectionRange(valueInput.value.length, valueInput.value.length);
+        setValuesFeedback('');
     });
 }
 
@@ -1233,7 +1166,6 @@ document.addEventListener('keydown', (e) => {
     // Press ESC to close debug modal
     if (e.key === 'Escape') {
         closeDebugModal();
-        hideStatsModal();
     }
 });
 

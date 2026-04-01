@@ -62,11 +62,38 @@
                     <div class="spinner"></div>
                     <p>The oracle is sketching a face...</p>
                 </div>
-                <div id="attribute-overlay" class="attribute-overlay hidden">
-                    <div class="attribute-overlay-shell">
-                        <p class="attribute-traits-title">Your Child's Traits</p>
-                        <p id="attribute-feedback" class="attribute-feedback" aria-live="polite"></p>
-                        <div id="attribute-grid" class="attribute-grid"></div>
+                <div id="values-overlay" class="values-overlay hidden">
+                    <div class="values-overlay-shell">
+                        <p class="values-eyebrow">Instill A Value</p>
+                        <h3 class="values-title">What do you want this child to carry forward?</h3>
+                        <p class="values-copy">The portrait renders in the background while you name one value to plant a little deeper.</p>
+                        <div id="current-values-list" class="current-values-list" aria-live="polite"></div>
+                        <div class="values-entry">
+                            <label class="values-input-label" for="value-input">Add one value</label>
+                            <div class="values-input-row">
+                                <input
+                                    id="value-input"
+                                    class="values-input"
+                                    type="text"
+                                    placeholder="Money, charisma, pessimism..."
+                                    autocomplete="off"
+                                    maxlength="32"
+                                />
+                                <button id="value-submit-btn" class="values-submit-btn" type="button">Instill</button>
+                            </div>
+                        </div>
+                        <div id="value-suggestions" class="values-suggestions" aria-label="Suggested values">
+                            <button type="button" class="sample-option-btn values-suggestion-btn" data-value="Money">
+                                <span class="sample-option-label">Money</span>
+                            </button>
+                            <button type="button" class="sample-option-btn values-suggestion-btn" data-value="Charisma">
+                                <span class="sample-option-label">Charisma</span>
+                            </button>
+                            <button type="button" class="sample-option-btn values-suggestion-btn" data-value="Pessimism">
+                                <span class="sample-option-label">Pessimism</span>
+                            </button>
+                        </div>
+                        <p id="values-feedback" class="values-feedback" aria-live="polite"></p>
                     </div>
                 </div>
             </div>
@@ -99,23 +126,6 @@
                     <p id="final-destiny"></p>
                     <p id="score-display"></p>
                     <button id="restart-btn">Begin Again</button>
-                </div>
-            </div>
-
-            <!-- Attribute Stats Modal -->
-            <div id="stats-modal" class="stats-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stats-title">
-                <div class="stats-content">
-                    <div class="stats-header">
-                        <div>
-                            <p class="stats-eyebrow">Character Sheet</p>
-                            <h3 id="stats-title">Current Attributes</h3>
-                        </div>
-                        <button id="close-stats" class="close-stats" type="button" aria-label="Close character sheet">&times;</button>
-                    </div>
-                    <div class="stats-body">
-                        <p class="stats-copy">At first these traits are only hints. Later they become the skeleton of a personality the Oracle can no longer ignore.</p>
-                        <div id="stats-grid" class="attribute-grid stats-grid"></div>
-                    </div>
                 </div>
             </div>
 
