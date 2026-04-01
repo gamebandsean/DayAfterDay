@@ -70,9 +70,13 @@ body::before {
 .game-container {
     position: relative;
     isolation: isolate;
-    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    max-width: 430px;
     width: 100%;
-    padding: clamp(22px, 4vw, 34px);
+    height: 100dvh;
+    max-height: 932px;
+    padding: clamp(18px, 3dvh, 28px) clamp(18px, 4vw, 28px);
     border-radius: var(--radius-lg);
     overflow: hidden;
     background:
@@ -113,12 +117,14 @@ body::before {
     justify-content: center;
     align-items: center;
     gap: 0;
-    margin-bottom: 10px;
+    flex-shrink: 0;
+    margin-bottom: clamp(8px, 1.2dvh, 10px);
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .build-badge {
-    margin-top: 18px;
+    flex-shrink: 0;
+    margin-top: clamp(8px, 1.5dvh, 18px);
     text-align: center;
     font-size: 10px;
     font-weight: 700;
@@ -142,7 +148,8 @@ body::before {
 }
 
 .progress-bar-container {
-    margin-bottom: 14px;
+    flex-shrink: 0;
+    margin-bottom: clamp(10px, 1.8dvh, 14px);
 }
 
 .progress-bar {
@@ -173,9 +180,10 @@ body::before {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-bottom: 18px;
+    flex-shrink: 0;
+    margin-bottom: clamp(8px, 1.5dvh, 18px);
     padding: 15px 18px;
-    min-height: 86px;
+    min-height: clamp(56px, 10dvh, 86px);
     border-radius: 18px;
     border: 1px solid var(--border-soft);
     background:
@@ -214,8 +222,9 @@ body::before {
 .question-container {
     display: grid;
     gap: 8px;
-    min-height: 82px;
-    margin-bottom: 14px;
+    flex-shrink: 0;
+    min-height: clamp(56px, 10dvh, 82px);
+    margin-bottom: clamp(8px, 1.5dvh, 14px);
     padding: 14px 18px 16px;
     border-radius: 24px;
     border: 1px solid var(--border-strong);
@@ -245,7 +254,8 @@ body::before {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-    margin-bottom: 14px;
+    flex-shrink: 0;
+    margin-bottom: clamp(8px, 1.5dvh, 14px);
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -263,7 +273,7 @@ body::before {
 }
 
 .sample-option-btn {
-    min-height: 96px;
+    min-height: clamp(64px, 10dvh, 96px);
     padding: 10px 12px;
     display: flex;
     align-items: center;
@@ -322,8 +332,9 @@ body::before {
 .input-container {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: clamp(4px, 0.8dvh, 8px);
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -382,8 +393,9 @@ body::before {
 }
 
 .input-feedback {
+    flex-shrink: 0;
     min-height: 18px;
-    margin-bottom: 16px;
+    margin-bottom: clamp(10px, 1.8dvh, 16px);
     font-size: 12px;
     line-height: 1.35;
     color: var(--accent-secondary);
@@ -420,9 +432,10 @@ body::before {
 
 .image-container {
     position: relative;
-    width: min(100%, 500px);
-    aspect-ratio: 1 / 1;
-    margin: 0 auto 18px;
+    flex: 1 1 0;
+    min-height: clamp(150px, 27dvh, 320px);
+    width: 100%;
+    margin: 0 auto clamp(10px, 1.8dvh, 18px);
     border-radius: 26px;
     border: 1px solid var(--border-soft);
     overflow: hidden;
@@ -918,7 +931,7 @@ body::before {
 
 @media (max-width: 640px) {
     .game-container {
-        padding: 20px;
+        padding: clamp(16px, 2.6dvh, 20px);
     }
 
     .game-title {
@@ -936,10 +949,6 @@ body::before {
 
     .sample-options {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .sample-option-btn {
-        min-height: 88px;
     }
 
     #submit-btn,
@@ -981,7 +990,93 @@ body::before {
     }
 
     .build-badge {
-        margin-top: 16px;
         letter-spacing: 0.18em;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 0;
+    }
+
+    .game-container {
+        max-height: none;
+        padding-top: calc(12px + env(safe-area-inset-top));
+        padding-right: calc(12px + env(safe-area-inset-right));
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        padding-left: calc(12px + env(safe-area-inset-left));
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .game-container::after {
+        display: none;
+    }
+
+    .age-display {
+        margin-bottom: 6px;
+    }
+
+    .progress-bar-container {
+        margin-bottom: 10px;
+    }
+
+    .destiny-bar {
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        min-height: 48px;
+    }
+
+    #destiny-value {
+        margin-top: 6px;
+        font-size: 24px;
+    }
+
+    .image-container {
+        min-height: clamp(120px, 23dvh, 240px);
+        margin-bottom: 10px;
+        border-radius: 22px;
+    }
+
+    .question-container {
+        min-height: 50px;
+        margin-bottom: 10px;
+        padding: 12px 14px 14px;
+    }
+
+    #question-text {
+        font-size: 22px;
+    }
+
+    .sample-options {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .sample-option-btn {
+        min-height: 60px;
+        padding: 8px 10px;
+    }
+
+    .input-container {
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    #player-input,
+    #submit-btn {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .input-feedback {
+        min-height: 16px;
+        margin-bottom: 8px;
+    }
+
+    .build-badge {
+        margin-top: 6px;
+        font-size: 9px;
     }
 }
