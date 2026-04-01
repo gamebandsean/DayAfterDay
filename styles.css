@@ -246,7 +246,7 @@ body::before {
     width: 100%;
     margin: 0 auto;
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(12px, 1.8vw, 16px);
+    font-size: clamp(15px, 2.25vw, 20px);
     line-height: 1.1;
     text-align: center;
     text-wrap: balance;
@@ -288,7 +288,7 @@ body::before {
         color-mix(in oklab, var(--surface-card) 92%, white 8%);
     color: var(--text-secondary);
     font: inherit;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
     line-height: 1.25;
     text-align: center;
@@ -299,6 +299,7 @@ body::before {
 .sample-option-label {
     display: block;
     width: 100%;
+    opacity: 0.8;
     text-align: center;
     text-wrap: balance;
 }
@@ -1049,7 +1050,7 @@ body::before {
     }
 
     #question-text {
-        font-size: 12px;
+        font-size: 15px;
     }
 
     .sample-options {
