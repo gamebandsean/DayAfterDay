@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 35;
+const BUILD_NUMBER = 36;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -30,6 +30,7 @@ function createDefaultGameState(questionsData = null) {
 // Game State
 let gameState = createDefaultGameState();
 let newbornManifest = [];
+const newbornImagePreloads = [];
 
 const FALLBACK_ORACLE_RESPONSE = {
     destiny: 'Mysterious Soul',
@@ -147,6 +148,26 @@ async function loadNewbornManifest() {
         console.error('Error loading newborn portrait manifest:', error);
         newbornManifest = FALLBACK_NEWBORN_POOL;
     }
+}
+
+function preloadStartingPortraits() {
+    if (typeof Image !== 'function') {
+        return;
+    }
+
+    newbornImagePreloads.length = 0;
+
+    newbornManifest.forEach((option) => {
+        if (!option?.file) {
+            return;
+        }
+
+        const img = new Image();
+        img.decoding = 'async';
+        img.fetchPriority = 'high';
+        img.src = `/public/newborns/${option.file}`;
+        newbornImagePreloads.push(img);
+    });
 }
 
 function showScreen(screenName) {
@@ -674,6 +695,7 @@ async function initGame() {
         ]);
 
         gameState.questionsData = await questionsResponse.json();
+        preloadStartingPortraits();
         renderProgressSegments();
         resetGameUi();
         showScreen('title');

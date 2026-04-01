@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const {
     callOracle,
     callOracleWithPortrait,
@@ -11,9 +12,22 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const NEWBORNS_DIR = path.join(__dirname, 'public', 'newborns');
+const LONG_CACHE = 'public, max-age=31536000, immutable';
+const SHORT_CACHE = 'public, max-age=300, must-revalidate';
 
 app.use(cors());
 app.use(express.json());
+app.use('/public/newborns', express.static(NEWBORNS_DIR, {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('manifest.json')) {
+            res.setHeader('Cache-Control', SHORT_CACHE);
+            return;
+        }
+
+        res.setHeader('Cache-Control', LONG_CACHE);
+    }
+}));
 app.use(express.static('.'));
 
 try {
