@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 69;
+const BUILD_NUMBER = 70;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -44,9 +44,9 @@ const FALLBACK_DESTINY_RESPONSE = {
     moral_alignment: FALLBACK_ORACLE_RESPONSE.moral_alignment,
     justification: FALLBACK_ORACLE_RESPONSE.justification
 };
-const DESTINY_REVEAL_VO_TIMEOUT_MS = 1800;
+const DEFAULT_VOICE_PLAYBACK_TIMEOUT_MS = 10000;
 const DESTINY_REVEAL_FULL_LINE_FALLBACK_MS = 3200;
-const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 5200;
+const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 14000;
 const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.8;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
@@ -122,6 +122,7 @@ let currentScreenName = null;
 let isTitleVoiceAttemptInFlight = false;
 let hasPlayedTitleVoiceForScreen = false;
 let isTitleVoiceRetryArmed = false;
+let titleVoiceAttemptToken = 0;
 
 function getPlayableAgeIndex(age) {
     return PLAYABLE_AGES.indexOf(age);
@@ -223,6 +224,8 @@ function showScreen(screenName) {
 
     if (screenName !== 'title') {
         cancelTitleVoiceRetry();
+        titleVoiceAttemptToken += 1;
+        isTitleVoiceAttemptInFlight = false;
         return;
     }
 
@@ -661,6 +664,7 @@ function resetTitleVoiceState() {
     cancelTitleVoiceRetry();
     hasPlayedTitleVoiceForScreen = false;
     isTitleVoiceAttemptInFlight = false;
+    titleVoiceAttemptToken += 1;
 }
 
 function handleTitleVoiceRetry() {
@@ -787,7 +791,7 @@ function setAudioPlaybackRate(audio, playbackRate) {
 async function playVoiceClip(voiceResult, fallbackDuration, options = {}) {
     const {
         playbackRate = 1,
-        timeoutMs = DESTINY_REVEAL_VO_TIMEOUT_MS
+        timeoutMs = DEFAULT_VOICE_PLAYBACK_TIMEOUT_MS
     } = options;
 
     if (!voiceResult?.audioBase64) {
@@ -857,8 +861,14 @@ async function playTitleScreenVoice() {
     }
 
     isTitleVoiceAttemptInFlight = true;
+    const attemptToken = ++titleVoiceAttemptToken;
 
     const { voiceResult } = await fetchVoiceAudioResult(TITLE_SCREEN_VOICE_TEXT);
+    if (attemptToken !== titleVoiceAttemptToken || currentScreenName !== 'title') {
+        isTitleVoiceAttemptInFlight = false;
+        return;
+    }
+
     if (!voiceResult) {
         cancelTitleVoiceRetry();
         isTitleVoiceAttemptInFlight = false;
@@ -866,6 +876,11 @@ async function playTitleScreenVoice() {
     }
 
     const didPlay = await playVoiceClip(voiceResult, 600);
+    if (attemptToken !== titleVoiceAttemptToken || currentScreenName !== 'title') {
+        isTitleVoiceAttemptInFlight = false;
+        return;
+    }
+
     isTitleVoiceAttemptInFlight = false;
 
     if (didPlay) {
