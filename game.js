@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 49;
+const BUILD_NUMBER = 50;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -958,6 +958,9 @@ The parent may also provide instilled VALUES as freeform tags. Treat those value
 9. Prefer destinies that feel culturally, psychologically, and socially legible. The player should immediately understand how this person became that sort of adult from the parenting choices, even when the conclusion is darkly funny or extreme.
 10. Use plain modern language. Do not make the destiny sound medieval, mythic, Old English, fantasy-coded, or Game of Thrones-ish. Avoid phrases like "of the Wastes", "of the Void", "Forsaken", "Shadow", "Blood", "Iron", "Feral", or other theatrical lore language unless the answers very specifically justify a modern real-world version of that phrasing.
 11. The destiny should sound like a real person with a job and a point of view. Favor names that imply both occupation and personality in normal contemporary wording, such as "Paranoid Survivalist Dad", "Cruel Tech Founder", "Fame-Hungry Youth Pastor", "Burned-Out Public Defender", or "Overconfident Wellness Grifter".
+12. Preserve high-salience evidence across time. If an earlier answer includes murder, cannibalism, torture, arson, kidnapping, organized crime, cult behavior, or other extreme criminal or taboo behavior, that signal must continue to shape later destinies even after several more rounds. Do not treat it as a throwaway joke that disappears just because later answers are milder.
+13. Weight all prior answers, not just recent ones. Earlier answers can fade somewhat in influence if later evidence strongly redirects the child, but they are never erased. The child carries a cumulative history. Rare, extreme, or unusually revealing answers should decay much more slowly than ordinary answers.
+14. If there is tension between a shocking earlier answer and softer later answers, do not simply forget the shocking answer. Reconcile the contradiction into a coherent destiny that still reflects the lingering darkness, obsession, deviance, or volatility introduced earlier.
 
 ### Destiny examples (for tone calibration only — do NOT reuse these):
 - "Paranoid Survivalist Dad"
@@ -973,7 +976,7 @@ The parent may also provide instilled VALUES as freeform tags. Treat those value
 
 ## Rules for Justification
 
-Write 1–2 sentences explaining WHY this destiny emerged from the answers and values. Be specific — reference the actual answers, not vague generalities. If repeated values shaped the outcome, explicitly say so. The tone should feel like a fortune teller delivering prophecy with unsettling confidence.
+Write 1–2 sentences explaining WHY this destiny emerged from the answers and values. Be specific — reference the actual answers, not vague generalities. If repeated values shaped the outcome, explicitly say so. If an older but high-salience answer is still influencing the child, explicitly mention that it lingered over time instead of being forgotten. The tone should feel like a fortune teller delivering prophecy with unsettling confidence.
 
 ## Rules for the Image Prompt
 
@@ -1024,6 +1027,11 @@ Treat them as explicit personality tags, worldview cues, and future-shaping pres
 Values that appear multiple times are more deeply ingrained and should matter more than one-off values.
 If a repeated value conflicts with a softer signal elsewhere, let the repeated value pull harder.
 Factor these values into the child's personality, worldview, behavior, destiny, and the visual tone of the portrait.
+
+MEMORY GUIDANCE:
+Every previous answer remains part of the child's history and must still be considered in later years.
+Ordinary earlier answers may soften somewhat as newer evidence accumulates, but they never disappear.
+High-salience earlier answers — especially violence, murder, cannibalism, crime, cruelty, obsession, or other extreme behavior — should remain sticky and keep influencing the reading long after they first appear.
 
 PORTRAIT AGE GUIDANCE:
 The portrait must depict the child at age ${targetPortraitAge}, not age ${gameState.currentAge}.
