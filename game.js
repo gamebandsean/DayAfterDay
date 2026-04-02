@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 51;
+const BUILD_NUMBER = 52;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -73,9 +73,15 @@ const submitBtn = document.getElementById('submit-btn');
 const inputFeedback = document.getElementById('input-feedback');
 const childImage = document.getElementById('child-image');
 const imageLoading = document.getElementById('image-loading');
-const finalScore = document.getElementById('final-score');
+const finalScreenOverlay = document.getElementById('final-screen-overlay');
 const finalDestiny = document.getElementById('final-destiny');
+const finalScreenImage = document.getElementById('final-screen-image');
+const finalScreenLoading = document.getElementById('final-screen-loading');
 const scoreDisplay = document.getElementById('score-display');
+const successDisplay = document.getElementById('success-display');
+const shareBtn = document.getElementById('share-btn');
+const saveBtn = document.getElementById('save-btn');
+const finalScreenStatus = document.getElementById('final-screen-status');
 const restartBtn = document.getElementById('restart-btn');
 const destinyRevealOverlay = document.getElementById('destiny-reveal-overlay');
 const destinyRevealText = document.getElementById('destiny-reveal-text');
@@ -105,9 +111,12 @@ let valueEntryResolver = null;
 let destinyRevealResolver = null;
 let activeImageRequestId = 0;
 let activeImageAbortController = null;
+let activeFinalImageRequestId = 0;
+let activeFinalImageAbortController = null;
 let destinyRevealButtonTimer = null;
 let sharedAudioContext = null;
 let activeVoiceAudio = null;
+let html2CanvasPromise = null;
 
 function getPlayableAgeIndex(age) {
     return PLAYABLE_AGES.indexOf(age);
@@ -262,7 +271,8 @@ function applyStartingPortrait(option) {
 
 function resetGameUi() {
     destinyValue.textContent = 'UNKNOWN';
-    finalScore.classList.add('hidden');
+    cancelPendingFinalImageRequest();
+    hideFinalScreenOverlay();
     valueEntryResolver = null;
     destinyRevealResolver = null;
     hideValuesOverlay();
@@ -284,10 +294,15 @@ function resetGameUi() {
     updateProgressBar(0);
     playerInput.value = '';
     setInputFeedback('');
+    showFinalScreenStatus('');
 
-    const finalMessage = finalScore.querySelector('.final-message');
-    if (finalMessage) {
-        finalMessage.remove();
+    if (finalScreenImage) {
+        finalScreenImage.removeAttribute('src');
+        finalScreenImage.classList.remove('loaded');
+    }
+
+    if (finalScreenLoading) {
+        finalScreenLoading.classList.add('hidden');
     }
 }
 
@@ -381,6 +396,13 @@ function cancelPendingImageRequest() {
     }
 }
 
+function cancelPendingFinalImageRequest() {
+    if (activeFinalImageAbortController) {
+        activeFinalImageAbortController.abort();
+        activeFinalImageAbortController = null;
+    }
+}
+
 function startImageRequest(options = {}) {
     const {
         showLoadingOverlay = true,
@@ -419,8 +441,18 @@ function clearImageAbortController(controller) {
     }
 }
 
+function clearFinalImageAbortController(controller) {
+    if (controller && activeFinalImageAbortController === controller) {
+        activeFinalImageAbortController = null;
+    }
+}
+
 function isLatestImageRequest(requestId) {
     return requestId === activeImageRequestId;
+}
+
+function isLatestFinalImageRequest(requestId) {
+    return requestId === activeFinalImageRequestId;
 }
 
 function applyGeneratedImage(imageData, mimeType, requestId) {
@@ -441,6 +473,27 @@ function finalizeImageRequestWithoutSwap(requestId) {
 
     imageLoading.classList.add('hidden');
     return true;
+}
+
+function showFinalScreenStatus(message = '', state = 'muted') {
+    if (!finalScreenStatus) {
+        return;
+    }
+
+    finalScreenStatus.textContent = message || '';
+    finalScreenStatus.dataset.state = state;
+}
+
+function hideFinalScreenOverlay() {
+    if (finalScreenOverlay) {
+        finalScreenOverlay.classList.add('hidden');
+    }
+}
+
+function showFinalScreenOverlay() {
+    if (finalScreenOverlay) {
+        finalScreenOverlay.classList.remove('hidden');
+    }
 }
 
 function setGameMode(mode) {
@@ -924,6 +977,31 @@ async function requestGeneratedPortrait(prompt, controller) {
     return readJsonResponse(response, 'Image generation failed.');
 }
 
+function setElementImageSource(imageElement, loadingElement, source) {
+    if (!imageElement || !source) {
+        return false;
+    }
+
+    imageElement.src = source;
+    imageElement.classList.add('loaded');
+    if (loadingElement) {
+        loadingElement.classList.add('hidden');
+    }
+    return true;
+}
+
+function applyGeneratedImageToElement(imageElement, loadingElement, imageData, mimeType, requestId) {
+    if (!isLatestFinalImageRequest(requestId)) {
+        return false;
+    }
+
+    return setElementImageSource(
+        imageElement,
+        loadingElement,
+        `data:${mimeType || 'image/png'};base64,${imageData}`
+    );
+}
+
 function buildRescuePortraitPrompt(fallbackState = {}) {
     const age = fallbackState.age ?? gameState.currentAge;
     const physicalDescription = getContinuityPhysicalDescription(
@@ -933,6 +1011,203 @@ function buildRescuePortraitPrompt(fallbackState = {}) {
     const destinyHint = fallbackState.destiny ? `${fallbackState.destiny}, ` : '';
 
     return `semi-realistic portrait of a ${age} year old ${gender}child, head and shoulders, ${physicalDescription}, ${destinyHint}natural clothing, direct gaze, soft natural light, plain studio backdrop, photorealistic, detailed face`;
+}
+
+function buildFinalPortraitPrompt() {
+    const adulthoodDestiny = gameState.destiny || 'Mysterious Soul';
+    const physicalDescription = getContinuityPhysicalDescription();
+    const nameClause = gameState.childName ? `${gameState.childName}, ` : '';
+    const genderClause = gameState.childGender ? `${gameState.childGender} ` : '';
+    const raceClause = gameState.childRace ? `${gameState.childRace} ` : '';
+    const alignmentMood = gameState.moralAlignment === 'good'
+        ? 'gentle confidence, hopeful eyes, warm natural light'
+        : gameState.moralAlignment === 'bad'
+            ? 'hard confidence, unsettling poise, dramatic shadowed light'
+            : 'ambiguous confidence, introspective gaze, cinematic low light';
+    const valuesSummary = getValuesSummary();
+    const justification = gameState.justification ? `${gameState.justification} ` : '';
+
+    return `semi-realistic portrait of ${nameClause}a 30 year old ${raceClause}${genderClause}adult, head and shoulders, ${physicalDescription}, destiny: ${adulthoodDestiny}, ${justification}${alignmentMood}, wardrobe and background should subtly communicate this life path, mature facial structure, photorealistic, detailed skin texture, cinematic portrait photography${valuesSummary ? `, influenced by values: ${valuesSummary}` : ''}`;
+}
+
+function calculateFinalPercentile(score, maxScore) {
+    const percentage = Math.round((score / maxScore) * 100);
+    const percentile = Math.min(99, Math.max(1, Math.round((percentage * 0.85) + 8)));
+
+    return {
+        percentage,
+        percentile
+    };
+}
+
+function getFinalShareText(score, percentile) {
+    const childName = gameState.childName || 'My child';
+    return `${childName} grew up to become ${gameState.destiny} in Day After Day. They scored ${score} points and were ${percentile}% more successful in life than the average child.`;
+}
+
+async function copyTextToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+    }
+
+    const helper = document.createElement('textarea');
+    helper.value = text;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'fixed';
+    helper.style.opacity = '0';
+    document.body.appendChild(helper);
+    helper.focus();
+    helper.select();
+
+    try {
+        const copied = document.execCommand('copy');
+        document.body.removeChild(helper);
+        return copied;
+    } catch (error) {
+        document.body.removeChild(helper);
+        throw error;
+    }
+}
+
+function ensureHtml2Canvas() {
+    if (window.html2canvas) {
+        return Promise.resolve(window.html2canvas);
+    }
+
+    if (html2CanvasPromise) {
+        return html2CanvasPromise;
+    }
+
+    html2CanvasPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+        script.async = true;
+        script.onload = () => resolve(window.html2canvas);
+        script.onerror = () => reject(new Error('Screenshot tools failed to load.'));
+        document.head.appendChild(script);
+    });
+
+    return html2CanvasPromise;
+}
+
+async function loadFinalPortrait() {
+    if (!finalScreenImage || !finalScreenLoading) {
+        return;
+    }
+
+    const requestId = activeFinalImageRequestId + 1;
+    activeFinalImageRequestId = requestId;
+    cancelPendingFinalImageRequest();
+    finalScreenLoading.classList.remove('hidden');
+    finalScreenImage.classList.remove('loaded');
+
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    if (controller) {
+        activeFinalImageAbortController = controller;
+    }
+
+    try {
+        let data = await requestGeneratedPortrait(buildFinalPortraitPrompt(), controller);
+
+        if (data?.usePlaceholder) {
+            const rescuePrompt = buildRescuePortraitPrompt({
+                age: 30,
+                destiny: gameState.destiny,
+                moralAlignment: gameState.moralAlignment,
+                physicalDescription: gameState.physicalDescription
+            });
+            data = await requestGeneratedPortrait(rescuePrompt, controller);
+        }
+
+        if (data?.imageData) {
+            applyGeneratedImageToElement(finalScreenImage, finalScreenLoading, data.imageData, data.mimeType, requestId);
+            showFinalScreenStatus('');
+            return;
+        }
+
+        throw new Error('Final portrait data was missing.');
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            return;
+        }
+
+        console.error('Error generating final portrait:', error);
+        if (!isLatestFinalImageRequest(requestId)) {
+            return;
+        }
+
+        const fallbackPortrait = childImage?.currentSrc || childImage?.src;
+        if (fallbackPortrait) {
+            setElementImageSource(finalScreenImage, finalScreenLoading, fallbackPortrait);
+            showFinalScreenStatus('Adult portrait generation missed. Showing the latest portrait instead.', 'error');
+            return;
+        }
+
+        finalScreenLoading.classList.add('hidden');
+        showFinalScreenStatus('The Oracle could not paint the final portrait this time.', 'error');
+    } finally {
+        clearFinalImageAbortController(controller);
+    }
+}
+
+async function handleFinalShare() {
+    const score = gameState.score;
+    const maxScore = PLAYABLE_AGES.length * 25;
+    const { percentile } = calculateFinalPercentile(score, maxScore);
+    const shareText = getFinalShareText(score, percentile);
+
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                text: shareText,
+                url: window.location.href
+            });
+            showFinalScreenStatus('Shared.', 'success');
+            return;
+        }
+
+        await copyTextToClipboard(`${shareText} ${window.location.href}`);
+        showFinalScreenStatus('Summary copied to clipboard.', 'success');
+    } catch (error) {
+        if (error?.name === 'AbortError') {
+            return;
+        }
+
+        console.error('Error sharing final screen:', error);
+        showFinalScreenStatus('Sharing failed on this device.', 'error');
+    }
+}
+
+async function handleFinalSave() {
+    if (!finalScreenOverlay) {
+        return;
+    }
+
+    try {
+        showFinalScreenStatus('Preparing screenshot...', 'muted');
+        const html2canvas = await ensureHtml2Canvas();
+        const canvas = await html2canvas(finalScreenOverlay, {
+            backgroundColor: null,
+            scale: Math.max(2, window.devicePixelRatio || 1),
+            useCORS: true
+        });
+
+        const link = document.createElement('a');
+        const safeName = (gameState.childName || 'day-after-day')
+            .replace(/[^a-z0-9]+/gi, '-')
+            .replace(/^-+|-+$/g, '')
+            .toLowerCase();
+        link.href = canvas.toDataURL('image/png');
+        link.download = `${safeName || 'day-after-day'}-final-reading.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showFinalScreenStatus('Screenshot saved to your browser download location.', 'success');
+    } catch (error) {
+        console.error('Error saving final screen:', error);
+        showFinalScreenStatus('Screenshot capture failed.', 'error');
+    }
 }
 
 function showValuesOverlay() {
@@ -1518,9 +1793,8 @@ function showPlaceholderImage(prompt, requestId = activeImageRequestId, fallback
 
 // End game and show results
 function endGame() {
-    // Calculate final score
     const maxScore = PLAYABLE_AGES.length * 25;
-    const percentage = Math.round((gameState.score / maxScore) * 100);
+    const { percentile } = calculateFinalPercentile(gameState.score, maxScore);
 
     hideValuesOverlay();
     hideDestinyRevealOverlay();
@@ -1536,30 +1810,23 @@ function endGame() {
     submitBtn.disabled = true;
     setInputFeedback('');
 
-    // Show final score screen
     finalDestiny.textContent = gameState.destiny;
-    scoreDisplay.textContent = `Score ${gameState.score} / ${maxScore} · ${percentage}%`;
+    scoreDisplay.textContent = `${gameState.score} Points`;
+    if (successDisplay) {
+        successDisplay.textContent = `They were ${percentile}% more successful in life than the average child.`;
+    }
+    showFinalScreenStatus('');
 
-    let message = '';
-    if (percentage >= 80) {
-        message = 'Exceptional! Your child has flourished under your guidance.';
-    } else if (percentage >= 60) {
-        message = 'Well done! Your child has grown into a capable individual.';
-    } else if (percentage >= 40) {
-        message = 'Your child has had some good experiences along the way.';
-    } else {
-        message = 'Every journey is unique. Perhaps try different choices?';
+    if (finalScreenImage) {
+        finalScreenImage.removeAttribute('src');
+        finalScreenImage.classList.remove('loaded');
+    }
+    if (finalScreenLoading) {
+        finalScreenLoading.classList.remove('hidden');
     }
 
-    let messageElement = finalScore.querySelector('.final-message');
-    if (!messageElement) {
-        messageElement = document.createElement('p');
-        messageElement.className = 'final-message';
-        restartBtn.insertAdjacentElement('beforebegin', messageElement);
-    }
-    messageElement.textContent = message;
-
-    finalScore.classList.remove('hidden');
+    showFinalScreenOverlay();
+    loadFinalPortrait();
 }
 
 // Restart game
@@ -1652,7 +1919,15 @@ if (destinyRevealContinue) {
         resolve();
     });
 }
-restartBtn.addEventListener('click', restartGame);
+if (restartBtn) {
+    restartBtn.addEventListener('click', restartGame);
+}
+if (shareBtn) {
+    shareBtn.addEventListener('click', handleFinalShare);
+}
+if (saveBtn) {
+    saveBtn.addEventListener('click', handleFinalSave);
+}
 
 // Debug Modal Functions
 function openDebugModal() {

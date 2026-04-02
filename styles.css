@@ -711,8 +711,7 @@ body::before {
     align-items: flex-start;
 }
 
-.debug-header h3,
-.final-score h2 {
+.debug-header h3 {
     font-family: 'Cormorant Garamond', serif;
     line-height: 0.95;
 }
@@ -908,8 +907,7 @@ body::before {
     }
 }
 
-.debug-modal,
-.final-score {
+.debug-modal {
     position: fixed;
     inset: 0;
     display: flex;
@@ -924,17 +922,11 @@ body::before {
     z-index: 1000;
 }
 
-.final-score {
-    z-index: 1100;
-}
-
-.debug-modal.hidden,
-.final-score.hidden {
+.debug-modal.hidden {
     display: none;
 }
 
-.debug-content,
-.final-score-panel {
+.debug-content {
     width: min(92vw, 640px);
     max-height: min(86vh, 760px);
     overflow-y: auto;
@@ -1009,45 +1001,218 @@ body::before {
     font-size: 12px;
 }
 
-.final-score-panel {
-    display: grid;
-    gap: 14px;
-    text-align: center;
-    padding: 30px 28px;
+.final-screen-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 36;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 10px;
+    background:
+        radial-gradient(circle at top, color-mix(in oklab, var(--accent-highlight) 24%, transparent) 0%, transparent 28%),
+        radial-gradient(circle at 18% 82%, color-mix(in oklab, var(--accent-secondary) 18%, transparent) 0%, transparent 28%),
+        linear-gradient(180deg, oklch(0.18 0.04 324 / 0.94), oklch(0.23 0.05 328 / 0.98));
+    backdrop-filter: blur(10px);
 }
 
-.final-score h2 {
-    font-size: clamp(38px, 5vw, 52px);
+.final-screen-overlay.hidden {
+    display: none;
+}
+
+.final-screen-shell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 2.2dvh, 18px);
+    padding: clamp(24px, 6vw, 34px) clamp(20px, 6vw, 30px);
+    border: 1px solid oklch(0.92 0.02 85 / 0.08);
+    border-radius: calc(var(--radius-lg) - 4px);
     color: var(--text-inverse);
+    text-align: center;
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 22%),
+        linear-gradient(180deg, oklch(0.31 0.06 332 / 0.42), transparent 30%);
 }
 
-.final-score p {
-    color: oklch(0.95 0.01 85 / 0.8);
-    font-size: 17px;
-    line-height: 1.45;
+.final-screen-shell > * {
+    width: 100%;
+    opacity: 0;
+    transform: translateY(14px);
+    animation: final-screen-rise 500ms ease forwards;
 }
 
-#final-destiny {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(30px, 4vw, 42px);
-    line-height: 0.95;
-    color: var(--text-brass);
+.final-screen-copy {
+    display: grid;
+    gap: 10px;
+    animation-delay: 60ms;
 }
 
-#score-display {
-    font-size: 14px;
-    letter-spacing: 0.08em;
+.final-screen-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
+    color: oklch(0.9 0.02 82 / 0.76);
 }
 
-#restart-btn {
-    justify-self: center;
-    margin-top: 8px;
-    padding: 15px 28px;
+.final-screen-copy h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(24px, 6vw, 34px);
+    line-height: 0.95;
+    color: oklch(0.93 0.02 85 / 0.94);
+}
+
+.final-destiny {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(42px, 10vw, 64px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    color: var(--text-brass);
+    text-shadow: 0 10px 28px oklch(0.14 0.03 320 / 0.22);
+    text-wrap: balance;
+}
+
+.final-screen-portrait {
+    position: relative;
+    width: min(100%, 250px);
+    aspect-ratio: 1 / 1.16;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid oklch(0.92 0.02 85 / 0.12);
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 100%),
+        linear-gradient(160deg, oklch(0.33 0.06 330 / 0.76), oklch(0.21 0.04 322 / 0.96));
+    box-shadow: 0 24px 50px oklch(0.12 0.03 320 / 0.28);
+    animation-delay: 120ms;
+}
+
+.final-screen-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transform: scale(1.02);
+    transition: opacity 320ms ease, transform 420ms ease;
+}
+
+.final-screen-portrait img.loaded {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.final-screen-loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 12px;
+    padding: 22px;
+    background: linear-gradient(180deg, oklch(0.2 0.04 322 / 0.44), oklch(0.2 0.04 322 / 0.74));
+}
+
+.final-screen-loading.hidden {
+    display: none;
+}
+
+.final-screen-loading p {
+    font-size: 12px;
+    line-height: 1.45;
+    color: oklch(0.93 0.01 85 / 0.76);
+}
+
+.final-screen-summary {
+    display: grid;
+    gap: 8px;
+    max-width: 28ch;
+    animation-delay: 180ms;
+}
+
+.final-score-value {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: oklch(0.92 0.02 85 / 0.82);
+}
+
+.final-success-line {
+    font-size: 15px;
+    line-height: 1.45;
+    color: oklch(0.92 0.01 85 / 0.74);
+    text-wrap: balance;
+}
+
+.final-screen-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    animation-delay: 240ms;
+}
+
+.final-action-btn,
+.final-restart-btn {
+    min-height: 52px;
     border-radius: 16px;
-    background: linear-gradient(125deg, color-mix(in oklab, var(--accent-highlight) 78%, white 22%), color-mix(in oklab, var(--accent-secondary) 22%, var(--accent-primary) 78%));
+    border: 1px solid transparent;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.final-action-btn {
+    background: linear-gradient(125deg, color-mix(in oklab, var(--accent-highlight) 76%, white 24%), color-mix(in oklab, var(--accent-secondary) 20%, var(--accent-primary) 80%));
     color: var(--text-primary);
-    box-shadow: 0 18px 32px oklch(0.31 0.08 330 / 0.28);
+    box-shadow: 0 18px 32px oklch(0.31 0.08 330 / 0.22);
+}
+
+.final-action-btn-secondary {
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.12), transparent 100%),
+        color-mix(in oklab, var(--surface-dark-soft) 74%, var(--surface-dark) 26%);
+    color: var(--text-inverse);
+    border-color: oklch(0.92 0.02 85 / 0.12);
+    box-shadow: none;
+}
+
+.final-screen-status {
+    min-height: 18px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: oklch(0.92 0.01 85 / 0.62);
+    animation-delay: 300ms;
+}
+
+.final-screen-status[data-state="success"] {
+    color: color-mix(in oklab, var(--accent-highlight) 72%, white 28%);
+}
+
+.final-screen-status[data-state="error"] {
+    color: color-mix(in oklab, var(--accent-secondary) 72%, white 28%);
+}
+
+.final-restart-btn {
+    width: min(100%, 220px);
+    justify-self: center;
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.16), transparent 100%),
+        color-mix(in oklab, var(--surface-card) 74%, white 26%);
+    color: var(--text-primary);
+    border-color: oklch(0.92 0.02 85 / 0.12);
+    animation-delay: 360ms;
+}
+
+@keyframes final-screen-rise {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .mode-question .destiny-bar,
@@ -1152,8 +1317,7 @@ body::before {
         grid-template-columns: 1fr;
     }
 
-    .debug-content,
-    .final-score-panel {
+    .debug-content {
         width: 100%;
     }
 

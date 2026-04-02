@@ -95,14 +95,30 @@
             </div>
             <p id="input-feedback" class="input-feedback" aria-live="polite"></p>
 
-            <!-- Score Display (hidden until end) -->
-            <div id="final-score" class="final-score hidden">
-                <div class="final-score-panel" role="dialog" aria-modal="true" aria-labelledby="final-score-title">
-                    <p class="stats-eyebrow">Final Reading</p>
-                    <h2 id="final-score-title">Your Child Comes Into Focus</h2>
-                    <p id="final-destiny"></p>
-                    <p id="score-display"></p>
-                    <button id="restart-btn">Begin Again</button>
+            <div id="final-screen-overlay" class="final-screen-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="final-screen-title">
+                <div class="final-screen-shell">
+                    <p class="final-screen-eyebrow">The Oracle's Final Word</p>
+                    <div class="final-screen-copy">
+                        <h2 id="final-screen-title">Your Child Comes Into Focus</h2>
+                        <p id="final-destiny" class="final-destiny"></p>
+                    </div>
+                    <div class="final-screen-portrait">
+                        <img id="final-screen-image" src="" alt="Adult portrait at age 30" />
+                        <div id="final-screen-loading" class="final-screen-loading">
+                            <div class="spinner"></div>
+                            <p>The Oracle is imagining adulthood...</p>
+                        </div>
+                    </div>
+                    <div class="final-screen-summary">
+                        <p id="score-display" class="final-score-value"></p>
+                        <p id="success-display" class="final-success-line"></p>
+                    </div>
+                    <div class="final-screen-actions">
+                        <button id="share-btn" class="final-action-btn" type="button">Share</button>
+                        <button id="save-btn" class="final-action-btn final-action-btn-secondary" type="button">Save to Desktop</button>
+                    </div>
+                    <p id="final-screen-status" class="final-screen-status" aria-live="polite"></p>
+                    <button id="restart-btn" class="final-restart-btn" type="button">Begin Again</button>
                 </div>
             </div>
 
