@@ -1,4 +1,4 @@
-# DayAfterDay
+# Minor Decisions
 
 A life-sim game where you guide a child from birth to age 18, one year at a time. Your decisions shape their appearance, personality, and ultimate destiny.
 
@@ -143,7 +143,7 @@ The Oracle creates unique destinies (1-5 words) that fuse career with character 
 ## Project Structure
 
 ```
-DayAfterDay/
+MinorDecisions/
 ├── index.html          # Main HTML structure
 ├── styles.css          # Game styling
 ├── game.js            # Frontend game logic

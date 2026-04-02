@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 53;
+const BUILD_NUMBER = 54;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -49,7 +49,7 @@ const DESTINY_REVEAL_LEAD_FALLBACK_MS = 1200;
 const DESTINY_REVEAL_ENDING_FALLBACK_MS = 1400;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
-const TITLE_SCREEN_VOICE_TEXT = 'Day after Day. A strange little life simulator.';
+const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions. A strange little life simulator.';
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
@@ -1090,7 +1090,7 @@ function calculateFinalPercentile(score, maxScore) {
 
 function getFinalShareText(score, percentile) {
     const childName = gameState.childName || 'My child';
-    return `${childName} grew up to become ${gameState.destiny} in Day After Day. They scored ${score} points and were ${percentile}% more successful in life than the average child.`;
+    return `${childName} grew up to become ${gameState.destiny} in Minor Decisions. They scored ${score} points and were ${percentile}% more successful in life than the average child.`;
 }
 
 async function copyTextToClipboard(text) {
@@ -1242,12 +1242,12 @@ async function handleFinalSave() {
         });
 
         const link = document.createElement('a');
-        const safeName = (gameState.childName || 'day-after-day')
+        const safeName = (gameState.childName || 'minor-decisions')
             .replace(/[^a-z0-9]+/gi, '-')
             .replace(/^-+|-+$/g, '')
             .toLowerCase();
         link.href = canvas.toDataURL('image/png');
-        link.download = `${safeName || 'day-after-day'}-final-reading.png`;
+        link.download = `${safeName || 'minor-decisions'}-final-reading.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

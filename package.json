@@ -1,5 +1,5 @@
 {
-  "name": "dayafterday",
+  "name": "minor-decisions",
   "version": "1.0.0",
   "description": "A life-sim game with AI-powered destiny system",
   "main": "server.js",

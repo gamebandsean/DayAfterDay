@@ -116,7 +116,7 @@ app.post('/api/voice', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🎮 DayAfterDay server running!`);
+    console.log(`\n🎮 Minor Decisions server running!`);
     console.log(`\n🌐 Open your browser to: http://localhost:${PORT}`);
     console.log(`\n🔮 Oracle API proxy ready`);
     console.log(`\n🖼️  Gemini Image generation ready\n`);
