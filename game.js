@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 61;
+const BUILD_NUMBER = 62;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -47,7 +47,7 @@ const FALLBACK_DESTINY_RESPONSE = {
 const DESTINY_REVEAL_VO_TIMEOUT_MS = 1800;
 const DESTINY_REVEAL_FULL_LINE_FALLBACK_MS = 3200;
 const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 5200;
-const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.7;
+const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.8;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
@@ -1000,8 +1000,10 @@ function waitForDestinyRevealContinue() {
 }
 
 function buildFullRevealVoiceText(destiny) {
-    const segments = getDestinyRevealSegments(destiny);
-    return `${segments.lead} ${segments.destiny} ${segments.tail}`;
+    const safeName = gameState.childName || 'your child';
+    const safeDestiny = destiny || FALLBACK_DESTINY_RESPONSE.destiny;
+    const article = getIndefiniteArticle(safeDestiny);
+    return `The oracle sees that ${safeName} is currently destined to become ${article} ${safeDestiny} as an adult.`;
 }
 
 function applyOracleReveal(oracleResponse) {
