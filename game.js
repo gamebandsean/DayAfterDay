@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 39;
+const BUILD_NUMBER = 41;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -315,6 +315,28 @@ function getValuesSummary() {
         .join(', ');
 }
 
+function getContinuityPhysicalDescription() {
+    const description = (gameState.physicalDescription || DEFAULT_PHYSICAL_DESCRIPTION)
+        .replace(/\bnewborn baby\b/gi, '')
+        .replace(/\bnewborn\b/gi, '')
+        .replace(/\bbaby\b/gi, '')
+        .replace(/\binfant\b/gi, '')
+        .replace(/\btoddler\b/gi, '')
+        .replace(/\bchild\b/gi, '')
+        .replace(/\bkid\b/gi, '')
+        .replace(/\bteenager\b/gi, '')
+        .replace(/\bteen\b/gi, '')
+        .replace(/\byoung adult\b/gi, '')
+        .replace(/\badult\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+,/g, ',')
+        .trim()
+        .replace(/^,\s*/, '')
+        .replace(/,\s*$/, '');
+
+    return description || DEFAULT_PHYSICAL_DESCRIPTION;
+}
+
 function setValuesFeedback(message) {
     setInputFeedback(message || '');
 }
@@ -579,9 +601,10 @@ After determining the Destiny and Justification, generate an image prompt for im
 
 1. Describe a semi-realistic portrait/headshot of this person at the age specified in the input.
 2. Translate the Destiny, Justification, and strongest instilled values into VISUAL storytelling — their expression, clothing, setting, lighting, and small details should all hint at who they are and what they've become.
-3. Preserve physical continuity: use the provided current physical description as a base. Core features (eye color, skin tone, hair color, face shape, distinguishing marks) should carry through, adapted appropriately for the target age.
+3. Preserve physical continuity: use the provided core physical features as a base. Core features (eye color, skin tone, hair color, face shape, distinguishing marks) should carry through, adapted appropriately for the target age.
 4. Include age-appropriate details. A 5-year-old "Future Dictator" might have an eerily composed expression and a too-neat outfit. A 35-year-old version would look very different.
 5. Keep it as a headshot/portrait — head and shoulders, direct or 3/4 angle, with enough background to set a mood but not a full scene.
+6. Follow the TARGET PORTRAIT AGE exactly. If the current physical description sounds younger, age the same person up to the target portrait age rather than keeping them as a baby or toddler.
 
 ## Response Format
 
@@ -595,7 +618,7 @@ You MUST respond with valid JSON and nothing else. No markdown, no commentary ou
   "physical_description": "string — updated physical description of the child for continuity"
 }`;
 
-function buildOracleUserPrompt(currentQuestion, currentAnswer) {
+function buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge) {
     // Build previous Q&A history
     let previousRounds = '';
     gameState.answers.forEach((qa, index) => {
@@ -610,7 +633,8 @@ CHILD'S NAME: ${gameState.childName || 'Unknown'}
 CHILD'S GENDER: ${gameState.childGender || 'Unknown'}
 CHILD'S RACE: ${gameState.childRace || 'Unknown'}
 CHILD'S CURRENT AGE: ${gameState.currentAge}
-CHILD'S CURRENT PHYSICAL DESCRIPTION: ${gameState.physicalDescription}
+TARGET PORTRAIT AGE: ${targetPortraitAge}
+CHILD'S CORE PHYSICAL FEATURES FOR CONTINUITY: ${getContinuityPhysicalDescription()}
 CHILD'S INSTILLED VALUES:
 ${getValuesSummary()}
 
@@ -620,6 +644,10 @@ Treat them as explicit personality tags, worldview cues, and future-shaping pres
 Values that appear multiple times are more deeply ingrained and should matter more than one-off values.
 If a repeated value conflicts with a softer signal elsewhere, let the repeated value pull harder.
 Factor these values into the child's personality, worldview, behavior, destiny, and the visual tone of the portrait.
+
+PORTRAIT AGE GUIDANCE:
+The portrait must depict the child at age ${targetPortraitAge}, not age ${gameState.currentAge}.
+If the continuity description sounds younger than that, age the same person up to ${targetPortraitAge} while preserving core features.
 
 PREVIOUS QUESTIONS AND ANSWERS (in order):
 ${previousRounds}
@@ -633,8 +661,8 @@ Based on ALL of the above — every answer, not just the latest — determine th
 }
 
 // Call the Oracle to determine destiny, then let portrait generation run in parallel.
-async function consultOracle(currentQuestion, currentAnswer) {
-    const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer);
+async function consultOracle(currentQuestion, currentAnswer, targetPortraitAge) {
+    const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge);
 
     try {
         const response = await fetch('/api/oracle', {
@@ -658,7 +686,7 @@ async function consultOracle(currentQuestion, currentAnswer) {
         console.error('Error consulting Oracle:', error);
         return {
             ...FALLBACK_ORACLE_RESPONSE,
-            image_prompt: `portrait of a ${gameState.currentAge} year old child`,
+            image_prompt: `portrait of a ${targetPortraitAge} year old child`,
             physical_description: gameState.physicalDescription
         };
     }
@@ -798,9 +826,10 @@ async function submitAnswer() {
     try {
         // Get current question
         const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
+        const targetPortraitAge = getNextPlayableAge(gameState.currentAge) ?? gameState.currentAge;
 
         // Kick off the Oracle immediately, then let the player name a value while it works in the background.
-        const oraclePromise = consultOracle(currentQuestion, answer);
+        const oraclePromise = consultOracle(currentQuestion, answer, targetPortraitAge);
 
         // Store the answer locally right away so the next round includes it in history.
         gameState.answers.push({
