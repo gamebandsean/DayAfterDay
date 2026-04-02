@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 68;
+const BUILD_NUMBER = 69;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -550,7 +550,7 @@ function configurePrimaryInput(mode) {
         playerInput.placeholder = PRIMARY_INPUT_PLACEHOLDER;
         playerInput.inputMode = 'text';
         playerInput.setAttribute('aria-label', 'Enter one value to instill in your child');
-        submitBtn.textContent = 'Instill';
+        submitBtn.textContent = 'Add Value';
         submitBtn.disabled = false;
         setInputFeedback('');
         return;
@@ -607,7 +607,7 @@ function renderCurrentValues() {
     if (groupedValues.length === 0) {
         const emptyState = document.createElement('p');
         emptyState.className = 'values-empty';
-        emptyState.textContent = 'No values yet. The child is still mostly mystery.';
+        emptyState.textContent = 'None';
         currentValuesList.appendChild(emptyState);
         return;
     }

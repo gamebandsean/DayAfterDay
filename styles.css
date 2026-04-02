@@ -704,12 +704,13 @@ body::before {
 
 .values-title {
     font-family: 'Cormorant Garamond', serif;
-    max-width: 11ch;
+    width: 100%;
+    max-width: none;
     font-size: clamp(18px, 2.9vw, 26px);
-    line-height: 0.98;
+    line-height: 1.02;
     letter-spacing: -0.02em;
     color: var(--text-inverse);
-    text-wrap: balance;
+    text-wrap: pretty;
 }
 
 .debug-header {
