@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 37;
+const BUILD_NUMBER = 38;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -67,11 +67,7 @@ const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
 const progressBar = document.getElementById('progress-bar');
 const valuesOverlay = document.getElementById('values-overlay');
-const valuesFeedback = document.getElementById('values-feedback');
 const currentValuesList = document.getElementById('current-values-list');
-const valueInput = document.getElementById('value-input');
-const valueSubmitBtn = document.getElementById('value-submit-btn');
-const valueSuggestions = document.getElementById('value-suggestions');
 const buildBadge = document.getElementById('build-badge');
 
 // Debug Modal Elements
@@ -320,11 +316,7 @@ function getValuesSummary() {
 }
 
 function setValuesFeedback(message) {
-    if (!valuesFeedback) {
-        return;
-    }
-
-    valuesFeedback.textContent = message || '';
+    setInputFeedback(message || '');
 }
 
 function setInputFeedback(message, state = 'default') {
@@ -399,22 +391,16 @@ function setQuestionPhaseVisible(isVisible) {
 
 function configurePrimaryInput(mode) {
     if (mode === 'values') {
-        playerInput.disabled = true;
-        inputContainer.classList.add('phase-hidden');
+        playerInput.classList.remove('phase-hidden');
+        playerInput.disabled = false;
+        playerInput.value = '';
+        playerInput.placeholder = 'Money, charisma, pessimism...';
+        playerInput.inputMode = 'text';
+        playerInput.setAttribute('aria-label', 'Enter one value to instill in your child');
+        submitBtn.textContent = 'Instill';
+        submitBtn.disabled = false;
+        inputContainer.classList.remove('phase-hidden');
         setInputFeedback('');
-
-        if (valueInput) {
-            valueInput.value = '';
-            valueInput.disabled = false;
-            valueInput.placeholder = 'Money, loyalty, pessimism...';
-            valueInput.inputMode = 'text';
-            valueInput.setAttribute('aria-label', 'Enter one value to instill in your child');
-        }
-
-        if (valueSubmitBtn) {
-            valueSubmitBtn.disabled = false;
-        }
-
         return;
     }
 
@@ -496,44 +482,40 @@ function renderCurrentValues() {
 function showValuesOverlay() {
     renderCurrentValues();
     setGameMode('values');
-    setQuestionPhaseVisible(false);
+    questionContainer.classList.remove('phase-hidden');
+    questionContainer.removeAttribute('aria-hidden');
+    setQuestionPhaseVisible(true);
     if (valuesOverlay) {
         valuesOverlay.classList.remove('hidden');
     }
     setValuesFeedback('');
     questionEyebrow.textContent = 'Instill A Value';
-    questionText.textContent = 'While the oracle sketches the next face, choose one value you want this child to carry forward.';
+    questionText.textContent = 'Choose one value you want this child to carry forward.';
+    renderSampleOptions(['Money', 'Charisma', 'Pessimism']);
     configurePrimaryInput('values');
-    if (valueInput) {
-        valueInput.focus();
-    }
+    playerInput.focus();
 }
 
 function hideValuesOverlay() {
     if (valuesOverlay) {
         valuesOverlay.classList.add('hidden');
     }
-    if (valueInput) {
-        valueInput.value = '';
-    }
+    renderSampleOptions([]);
     setValuesFeedback('');
 }
 
 function submitValue() {
-    if (!valueInput || !valueSubmitBtn) {
-        return;
-    }
-
-    const value = sanitizeValue(valueInput.value);
+    const value = sanitizeValue(playerInput.value);
     if (!value) {
         setValuesFeedback('Name one value before moving on.');
-        valueInput.focus();
+        playerInput.focus();
         return;
     }
 
     gameState.values.push(value);
     renderCurrentValues();
     hideValuesOverlay();
+    playerInput.value = '';
 
     if (valueEntryResolver) {
         const resolve = valueEntryResolver;
@@ -1112,56 +1094,31 @@ if (birthBtn) {
 }
 
 submitBtn.addEventListener('click', () => {
+    if (gameContainer.classList.contains('mode-values')) {
+        submitValue();
+        return;
+    }
+
     submitAnswer();
 });
 playerInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
 
+        if (gameContainer.classList.contains('mode-values')) {
+            submitValue();
+            return;
+        }
+
         submitAnswer();
     }
 });
 playerInput.addEventListener('input', () => {
-    if (gameContainer.classList.contains('mode-values')) {
-        return;
-    }
-
     if (playerInput.value.trim()) {
         setInputFeedback('', 'muted');
     }
 });
 restartBtn.addEventListener('click', restartGame);
-if (valueSubmitBtn) {
-    valueSubmitBtn.addEventListener('click', submitValue);
-}
-if (valueInput) {
-    valueInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            submitValue();
-        }
-    });
-}
-if (valueInput) {
-    valueInput.addEventListener('input', () => {
-        if (valueInput.value.trim()) {
-            setValuesFeedback('');
-        }
-    });
-}
-if (valueSuggestions) {
-    valueSuggestions.addEventListener('click', (e) => {
-        const button = e.target.closest('[data-value]');
-        if (!button || !valueInput) {
-            return;
-        }
-
-        valueInput.value = button.dataset.value || '';
-        valueInput.focus();
-        valueInput.setSelectionRange(valueInput.value.length, valueInput.value.length);
-        setValuesFeedback('');
-    });
-}
 
 // Debug Modal Functions
 function openDebugModal() {
