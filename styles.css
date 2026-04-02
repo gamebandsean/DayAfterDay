@@ -1300,6 +1300,16 @@ body::before {
     text-wrap: pretty;
 }
 
+.mode-values #question-text .question-text-secondary {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.67em;
+    line-height: 1.2;
+    letter-spacing: 0;
+    color: color-mix(in oklab, var(--text-secondary) 82%, var(--accent-primary-deep) 18%);
+    white-space: nowrap;
+}
+
 @media (max-width: 640px) {
     .game-container {
         padding: clamp(16px, 2.6dvh, 20px);

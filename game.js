@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 64;
+const BUILD_NUMBER = 65;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -1302,7 +1302,7 @@ function showValuesOverlay() {
     }
     setValuesFeedback('');
     questionEyebrow.textContent = 'Instill A Value';
-    questionText.textContent = 'Write one value that you want to instill in your child (or choose from one of the values below).';
+    questionText.innerHTML = `Write one value that you want to instill in your child.<span class="question-text-secondary">(or choose from one of the values below)</span>`;
     renderSampleOptions(['Money', 'Charisma', 'Pessimism']);
     configurePrimaryInput('values');
     playerInput.focus();
