@@ -524,7 +524,7 @@ body::before {
 
 #player-input::placeholder,
 #child-name-input::placeholder {
-    color: color-mix(in oklab, var(--text-secondary) 68%, transparent);
+    color: color-mix(in oklab, var(--text-secondary) 50%, transparent);
 }
 
 #player-input:focus,

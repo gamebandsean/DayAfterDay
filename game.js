@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 63;
+const BUILD_NUMBER = 64;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -51,6 +51,7 @@ const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.8;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
+const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
@@ -546,7 +547,7 @@ function configurePrimaryInput(mode) {
         setPrimaryInputVisible(true);
         playerInput.disabled = false;
         playerInput.value = '';
-        playerInput.placeholder = 'Money, charisma, pessimism...';
+        playerInput.placeholder = PRIMARY_INPUT_PLACEHOLDER;
         playerInput.inputMode = 'text';
         playerInput.setAttribute('aria-label', 'Enter one value to instill in your child');
         submitBtn.textContent = 'Instill';
@@ -557,7 +558,7 @@ function configurePrimaryInput(mode) {
 
     setPrimaryInputVisible(true);
     playerInput.disabled = false;
-    playerInput.placeholder = 'Write your answer or borrow one above...';
+    playerInput.placeholder = PRIMARY_INPUT_PLACEHOLDER;
     playerInput.inputMode = 'text';
     playerInput.setAttribute('aria-label', 'Write your answer');
     submitBtn.textContent = 'Submit';
