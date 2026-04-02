@@ -316,11 +316,12 @@ body::before {
 }
 
 .progress-segment-label {
-    font-size: 10px;
+    font-size: clamp(8px, 1.2vw, 10px);
     font-weight: 700;
     line-height: 1;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
     color: color-mix(in oklab, var(--text-secondary) 82%, white 18%);
     opacity: 0.36;
     transition: color 0.35s ease, opacity 0.35s ease;

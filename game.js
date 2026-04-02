@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 60;
+const BUILD_NUMBER = 61;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -50,7 +50,7 @@ const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 5200;
 const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.7;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
-const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions. A strange little life simulator.';
+const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
@@ -149,7 +149,7 @@ function renderProgressSegments() {
 
         const label = document.createElement('span');
         label.className = 'progress-segment-label';
-        label.textContent = String(age);
+        label.textContent = `Age ${age}`;
         segment.appendChild(label);
 
         progressBar.appendChild(segment);
