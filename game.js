@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 54;
+const BUILD_NUMBER = 55;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -141,9 +141,16 @@ function renderProgressSegments() {
 
     progressBar.innerHTML = '';
 
-    return PLAYABLE_AGES.map(() => {
+    return PLAYABLE_AGES.map((age) => {
         const segment = document.createElement('div');
         segment.className = 'progress-segment';
+        segment.setAttribute('aria-label', `Age ${age}`);
+
+        const label = document.createElement('span');
+        label.className = 'progress-segment-label';
+        label.textContent = String(age);
+        segment.appendChild(label);
+
         progressBar.appendChild(segment);
         return segment;
     });
@@ -1561,11 +1568,8 @@ function updateProgressBar(age) {
     const currentIndex = getPlayableAgeIndex(age);
 
     progressSegments.forEach((segment, index) => {
-        if (index <= currentIndex) {
-            segment.classList.add('filled');
-        } else {
-            segment.classList.remove('filled');
-        }
+        segment.classList.toggle('filled', index <= currentIndex);
+        segment.classList.toggle('current', index === currentIndex);
     });
 }
 
