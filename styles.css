@@ -131,8 +131,8 @@ body::before {
     justify-content: center;
     align-items: center;
     text-align: center;
-    gap: 18px;
-    padding-inline: clamp(8px, 2vw, 18px);
+    gap: clamp(14px, 2.4dvh, 22px);
+    padding-inline: clamp(4px, 1.4vw, 12px);
 }
 
 .title-eyebrow,
@@ -158,6 +158,17 @@ body::before {
     font-size: 14px;
     line-height: 1.5;
     color: color-mix(in oklab, var(--text-secondary) 88%, white 12%);
+}
+
+.title-hero-image {
+    display: block;
+    width: min(100%, 840px);
+    height: auto;
+    object-fit: contain;
+    border-radius: clamp(18px, 3vw, 28px);
+    box-shadow:
+        0 28px 56px oklch(0.24 0.05 320 / 0.16),
+        0 8px 20px oklch(0.2 0.04 320 / 0.1);
 }
 
 .play-btn,
@@ -1309,6 +1320,11 @@ body::before {
         font-size: clamp(48px, 13vw, 62px);
     }
 
+    .title-hero-image {
+        width: 100%;
+        border-radius: 22px;
+    }
+
     .create-title {
         font-size: clamp(30px, 9vw, 42px);
     }
@@ -1408,6 +1424,10 @@ body::before {
     .title-screen,
     .create-screen {
         gap: 10px;
+    }
+
+    .title-hero-image {
+        border-radius: 18px;
     }
 
     .title-tagline,
