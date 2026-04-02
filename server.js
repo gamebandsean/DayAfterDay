@@ -8,7 +8,8 @@ const {
     callOracleWithPortrait,
     ensureImageEnv,
     ensureOracleEnv,
-    generateImage
+    generateImage,
+    generateSpeech
 } = require('./lib/ai');
 
 const app = express();
@@ -94,6 +95,20 @@ app.post('/api/generate-image', async (req, res) => {
         console.error('Image generation fallback:', error);
         res.status(200).json({
             usePlaceholder: true,
+            error: error.message,
+            ...(error.detail ? { detail: error.detail } : {}),
+        });
+    }
+});
+
+app.post('/api/voice', async (req, res) => {
+    try {
+        const result = await generateSpeech(req.body?.text);
+        res.json(result);
+    } catch (error) {
+        console.error('Voice generation fallback:', error);
+        res.status(200).json({
+            useFallback: true,
             error: error.message,
             ...(error.detail ? { detail: error.detail } : {}),
         });

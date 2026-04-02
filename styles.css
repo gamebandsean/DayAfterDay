@@ -765,7 +765,7 @@ body::before {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 18px;
+    gap: 20px;
     padding: clamp(26px, 8vw, 40px);
     border: 1px solid oklch(0.92 0.02 85 / 0.08);
     border-radius: calc(var(--radius-lg) - 4px);
@@ -783,6 +783,7 @@ body::before {
     text-align: center;
     text-transform: uppercase;
     color: oklch(0.9 0.02 82 / 0.76);
+    opacity: 0.92;
 }
 
 .destiny-reveal-text {
@@ -790,22 +791,23 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    max-width: 10ch;
+    gap: 8px;
+    width: min(100%, 13ch);
+    min-height: 320px;
     font-size: clamp(17px, 3.8vw, 26px);
     line-height: 1.02;
     letter-spacing: -0.01em;
     text-wrap: balance;
     text-align: center;
     color: oklch(0.92 0.02 82 / 0.86);
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity 420ms ease, transform 420ms ease;
 }
 
 .destiny-reveal-lead,
 .destiny-reveal-tail {
     display: block;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 420ms ease, transform 420ms ease;
 }
 
 .destiny-reveal-destiny {
@@ -815,16 +817,25 @@ body::before {
     letter-spacing: -0.03em;
     color: color-mix(in oklab, var(--accent-highlight) 74%, white 26%);
     text-shadow: 0 8px 24px oklch(0.15 0.04 325 / 0.18);
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    transition: opacity 520ms ease, transform 520ms ease;
 }
 
-.destiny-reveal-overlay.is-ready .destiny-reveal-text {
+.destiny-reveal-overlay.phase-lead-visible .destiny-reveal-lead,
+.destiny-reveal-overlay.phase-destiny-visible .destiny-reveal-destiny,
+.destiny-reveal-overlay.phase-tail-visible .destiny-reveal-tail {
     opacity: 1;
     transform: translateY(0);
 }
 
+.destiny-reveal-overlay.phase-destiny-visible .destiny-reveal-destiny {
+    transform: translateY(0) scale(1);
+}
+
 .destiny-reveal-continue {
     align-self: center;
-    margin-top: 6px;
+    margin-top: 2px;
     padding: 14px 26px;
     border-radius: 16px;
     border: 1px solid transparent;
@@ -850,6 +861,15 @@ body::before {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .destiny-reveal-lead,
+    .destiny-reveal-destiny,
+    .destiny-reveal-tail,
+    .destiny-reveal-continue {
+        transition: none;
+    }
 }
 
 .debug-modal,

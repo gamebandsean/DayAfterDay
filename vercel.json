@@ -68,6 +68,10 @@
       "dest": "/api/generate-image.js"
     },
     {
+      "src": "^/api/voice$",
+      "dest": "/api/voice.js"
+    },
+    {
       "src": "^/game.js$",
       "dest": "/game.js"
     },
