@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 48;
+const BUILD_NUMBER = 49;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -432,6 +432,15 @@ function applyGeneratedImage(imageData, mimeType, requestId) {
     return true;
 }
 
+function finalizeImageRequestWithoutSwap(requestId) {
+    if (!isLatestImageRequest(requestId)) {
+        return false;
+    }
+
+    imageLoading.classList.add('hidden');
+    return true;
+}
+
 function setGameMode(mode) {
     gameContainer.classList.toggle('mode-question', mode === 'question');
     gameContainer.classList.toggle('mode-values', mode === 'values');
@@ -842,6 +851,32 @@ async function runDestinyRevealSequence({
     await playVoiceClip(endingVoiceResult, DESTINY_REVEAL_ENDING_FALLBACK_MS);
 }
 
+async function requestGeneratedPortrait(prompt, controller) {
+    const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        ...(controller ? { signal: controller.signal } : {}),
+        body: JSON.stringify({
+            prompt
+        })
+    });
+
+    return readJsonResponse(response, 'Image generation failed.');
+}
+
+function buildRescuePortraitPrompt(fallbackState = {}) {
+    const age = fallbackState.age ?? gameState.currentAge;
+    const physicalDescription = getContinuityPhysicalDescription(
+        fallbackState.physicalDescription || gameState.physicalDescription
+    );
+    const gender = gameState.childGender ? `${gameState.childGender} ` : '';
+    const destinyHint = fallbackState.destiny ? `${fallbackState.destiny}, ` : '';
+
+    return `semi-realistic portrait of a ${age} year old ${gender}child, head and shoulders, ${physicalDescription}, ${destinyHint}natural clothing, direct gaze, soft natural light, plain studio backdrop, photorealistic, detailed face`;
+}
+
 function showValuesOverlay() {
     renderCurrentValues();
     setGameMode('values');
@@ -1195,7 +1230,8 @@ async function submitAnswer() {
                 fallbackState: {
                     destiny: oracleResponse.destiny,
                     moralAlignment: oracleResponse.moral_alignment,
-                    age: targetPortraitAge
+                    age: targetPortraitAge,
+                    physicalDescription: oracleResponse.physical_description
                 }
             });
 
@@ -1283,21 +1319,21 @@ async function generateChildImage(imagePrompt, options = {}) {
     const { fallbackState } = options;
 
     try {
-        // Call backend to generate image with Gemini
-        const response = await fetch('/api/generate-image', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            ...(controller ? { signal: controller.signal } : {}),
-            body: JSON.stringify({
-                prompt: imagePrompt
-            })
-        });
+        let data = await requestGeneratedPortrait(imagePrompt, controller);
 
-        const data = await readJsonResponse(response, 'Image generation failed.');
+        if (data?.usePlaceholder && fallbackState) {
+            const rescuePrompt = buildRescuePortraitPrompt(fallbackState);
+            console.warn('Primary portrait prompt fell back, retrying with rescue prompt.');
+            data = await requestGeneratedPortrait(rescuePrompt, controller);
+        }
 
         if (data?.usePlaceholder) {
+            if (fallbackState) {
+                console.warn('Portrait generation failed after retry, keeping previous portrait.');
+                finalizeImageRequestWithoutSwap(requestId);
+                return;
+            }
+
             showPlaceholderImage(imagePrompt, requestId, fallbackState);
             return;
         }
@@ -1314,6 +1350,12 @@ async function generateChildImage(imagePrompt, options = {}) {
         }
 
         console.error('Error generating image:', error);
+        if (fallbackState) {
+            console.warn('Portrait generation errored, keeping previous portrait.', error);
+            finalizeImageRequestWithoutSwap(requestId);
+            return;
+        }
+
         showPlaceholderImage(imagePrompt, requestId, fallbackState);
     } finally {
         clearImageAbortController(controller);
