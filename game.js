@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 46;
+const BUILD_NUMBER = 47;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -555,7 +555,7 @@ function buildDestinyRevealMarkup(destiny) {
     const safeName = gameState.childName || 'your child';
     const safeDestiny = destiny || FALLBACK_DESTINY_RESPONSE.destiny;
     const article = getIndefiniteArticle(safeDestiny);
-    return `<span class="destiny-reveal-lead">The Oracle sees that ${escapeHtml(safeName)} is on track to become ${article}</span><span class="destiny-reveal-destiny">${escapeHtml(safeDestiny)}</span><span class="destiny-reveal-tail">as an adult.</span>`;
+    return `<span class="destiny-reveal-lead">${escapeHtml(safeName)} is currently destined to become ${article}</span><span class="destiny-reveal-destiny">${escapeHtml(safeDestiny)}</span><span class="destiny-reveal-tail">as an Adult.</span>`;
 }
 
 function showDestinyRevealOverlay() {
