@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 42;
+const BUILD_NUMBER = 43;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -558,6 +558,7 @@ function submitValue() {
     playerInput.value = '';
     setPrimaryInputVisible(false);
     setQuestionPhaseVisible(false);
+    questionText.textContent = 'The Oracle is deciding what the future holds...';
     setInputFeedback('');
 
     if (valueEntryResolver) {
