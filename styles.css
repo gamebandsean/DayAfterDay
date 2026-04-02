@@ -160,6 +160,42 @@ body::before {
     color: color-mix(in oklab, var(--text-secondary) 88%, white 12%);
 }
 
+.title-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(100%, 240px);
+}
+
+.title-voice-btn {
+    background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.18), transparent 100%),
+        color-mix(in oklab, var(--surface-card) 72%, white 28%);
+    color: var(--text-primary);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 12px 26px oklch(0.24 0.05 320 / 0.08);
+}
+
+.title-voice-btn:hover {
+    border-color: var(--border-strong);
+}
+
+.title-voice-status {
+    min-height: 18px;
+    margin: -2px 0 0;
+    font-size: 12px;
+    line-height: 1.35;
+    color: color-mix(in oklab, var(--text-secondary) 84%, white 16%);
+}
+
+.title-voice-status[data-state="error"] {
+    color: color-mix(in oklab, var(--accent-primary-deep) 72%, #7a2038 28%);
+}
+
+.title-voice-status[data-state="success"] {
+    color: color-mix(in oklab, var(--accent-secondary) 86%, white 14%);
+}
+
 .play-btn,
 .birth-btn {
     width: min(100%, 240px);
@@ -1174,6 +1210,10 @@ body::before {
     .title-screen,
     .create-screen {
         gap: 10px;
+    }
+
+    .title-actions {
+        width: 100%;
     }
 
     .title-tagline,

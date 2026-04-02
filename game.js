@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 50;
+const BUILD_NUMBER = 51;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -56,6 +56,8 @@ const titleScreen = document.getElementById('title-screen');
 const createScreen = document.getElementById('create-screen');
 const gameScreen = document.getElementById('game-screen');
 const playBtn = document.getElementById('play-btn');
+const testVoiceBtn = document.getElementById('test-voice-btn');
+const titleVoiceStatus = document.getElementById('title-voice-status');
 const childNameInput = document.getElementById('child-name-input');
 const genderOptions = document.getElementById('gender-options');
 const birthBtn = document.getElementById('birth-btn');
@@ -567,6 +569,15 @@ function sleep(ms) {
     });
 }
 
+function setTitleVoiceStatus(message, state = 'default') {
+    if (!titleVoiceStatus) {
+        return;
+    }
+
+    titleVoiceStatus.textContent = message || '';
+    titleVoiceStatus.dataset.state = state;
+}
+
 function getDestinyRevealSegments(destiny) {
     const safeName = gameState.childName || 'your child';
     const safeDestiny = destiny || FALLBACK_DESTINY_RESPONSE.destiny;
@@ -616,9 +627,12 @@ async function ensureAudioContextResumed() {
     return audioContext;
 }
 
-async function requestVoiceAudio(text) {
+async function fetchVoiceAudioResult(text) {
     if (!text) {
-        return null;
+        return {
+            voiceResult: null,
+            errorMessage: 'Speech text is required.'
+        };
     }
 
     try {
@@ -631,20 +645,34 @@ async function requestVoiceAudio(text) {
         });
         const data = await readJsonResponse(response, 'Voice generation failed.');
         if (data?.useFallback || !data?.audioBase64) {
-            return null;
+            return {
+                voiceResult: null,
+                errorMessage: data?.error || data?.detail || 'Voice generation failed.'
+            };
         }
 
-        return data;
+        return {
+            voiceResult: data,
+            errorMessage: ''
+        };
     } catch (error) {
         console.error('Error requesting voice audio:', error);
-        return null;
+        return {
+            voiceResult: null,
+            errorMessage: error?.data?.error || error.message || 'Voice generation failed.'
+        };
     }
+}
+
+async function requestVoiceAudio(text) {
+    const { voiceResult } = await fetchVoiceAudioResult(text);
+    return voiceResult;
 }
 
 async function playVoiceClip(voiceResult, fallbackDuration) {
     if (!voiceResult?.audioBase64) {
         await sleep(fallbackDuration);
-        return;
+        return false;
     }
 
     const audio = new Audio(`data:${voiceResult.mimeType || 'audio/mpeg'};base64,${voiceResult.audioBase64}`);
@@ -660,10 +688,11 @@ async function playVoiceClip(voiceResult, fallbackDuration) {
             activeVoiceAudio = null;
         }
         await sleep(fallbackDuration);
-        return;
+        return false;
     }
 
     let didTimeout = false;
+    let didError = false;
     await Promise.race([
         new Promise((resolve) => {
             const finalize = () => {
@@ -676,7 +705,10 @@ async function playVoiceClip(voiceResult, fallbackDuration) {
             };
 
             audio.addEventListener('ended', finalize, { once: true });
-            audio.addEventListener('error', finalize, { once: true });
+            audio.addEventListener('error', () => {
+                didError = true;
+                finalize();
+            }, { once: true });
         }),
         sleep(DESTINY_REVEAL_VO_TIMEOUT_MS).then(() => {
             didTimeout = true;
@@ -690,6 +722,32 @@ async function playVoiceClip(voiceResult, fallbackDuration) {
     if (activeVoiceAudio === audio) {
         activeVoiceAudio = null;
     }
+
+    return !didError;
+}
+
+async function testTitleVoice() {
+    if (!testVoiceBtn) {
+        return;
+    }
+
+    setTitleVoiceStatus('Summoning the oracle...', 'default');
+    testVoiceBtn.disabled = true;
+
+    const { voiceResult, errorMessage } = await fetchVoiceAudioResult('Day after Day');
+    if (!voiceResult) {
+        setTitleVoiceStatus(errorMessage || 'Voice unavailable.', 'error');
+        testVoiceBtn.disabled = false;
+        return;
+    }
+
+    setTitleVoiceStatus('Playing "Day after Day"...', 'default');
+    const didPlay = await playVoiceClip(voiceResult, 600);
+    setTitleVoiceStatus(
+        didPlay ? 'Voice playback worked.' : 'Voice playback was blocked or failed.',
+        didPlay ? 'success' : 'error'
+    );
+    testVoiceBtn.disabled = false;
 }
 
 async function playStardustFx() {
@@ -1519,6 +1577,12 @@ if (playBtn) {
         if (childNameInput) {
             childNameInput.focus();
         }
+    });
+}
+
+if (testVoiceBtn) {
+    testVoiceBtn.addEventListener('click', () => {
+        testTitleVoice();
     });
 }
 
