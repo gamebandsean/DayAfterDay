@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 52;
+const BUILD_NUMBER = 53;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -49,6 +49,7 @@ const DESTINY_REVEAL_LEAD_FALLBACK_MS = 1200;
 const DESTINY_REVEAL_ENDING_FALLBACK_MS = 1400;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
+const TITLE_SCREEN_VOICE_TEXT = 'Day after Day. A strange little life simulator.';
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
@@ -56,8 +57,6 @@ const titleScreen = document.getElementById('title-screen');
 const createScreen = document.getElementById('create-screen');
 const gameScreen = document.getElementById('game-screen');
 const playBtn = document.getElementById('play-btn');
-const testVoiceBtn = document.getElementById('test-voice-btn');
-const titleVoiceStatus = document.getElementById('title-voice-status');
 const childNameInput = document.getElementById('child-name-input');
 const genderOptions = document.getElementById('gender-options');
 const birthBtn = document.getElementById('birth-btn');
@@ -117,6 +116,10 @@ let destinyRevealButtonTimer = null;
 let sharedAudioContext = null;
 let activeVoiceAudio = null;
 let html2CanvasPromise = null;
+let currentScreenName = null;
+let isTitleVoiceAttemptInFlight = false;
+let hasPlayedTitleVoiceForScreen = false;
+let isTitleVoiceRetryArmed = false;
 
 function getPlayableAgeIndex(age) {
     return PLAYABLE_AGES.indexOf(age);
@@ -205,6 +208,19 @@ function showScreen(screenName) {
 
         screen.classList.toggle('hidden', key !== screenName);
     });
+
+    const isEnteringTitle = screenName === 'title' && currentScreenName !== 'title';
+    currentScreenName = screenName;
+
+    if (screenName !== 'title') {
+        cancelTitleVoiceRetry();
+        return;
+    }
+
+    if (isEnteringTitle) {
+        resetTitleVoiceState();
+        void playTitleScreenVoice();
+    }
 }
 
 function updateBirthButtonState() {
@@ -622,13 +638,39 @@ function sleep(ms) {
     });
 }
 
-function setTitleVoiceStatus(message, state = 'default') {
-    if (!titleVoiceStatus) {
+function cancelTitleVoiceRetry() {
+    if (!isTitleVoiceRetryArmed) {
         return;
     }
 
-    titleVoiceStatus.textContent = message || '';
-    titleVoiceStatus.dataset.state = state;
+    document.removeEventListener('pointerdown', handleTitleVoiceRetry, true);
+    document.removeEventListener('keydown', handleTitleVoiceRetry, true);
+    isTitleVoiceRetryArmed = false;
+}
+
+function resetTitleVoiceState() {
+    cancelTitleVoiceRetry();
+    hasPlayedTitleVoiceForScreen = false;
+    isTitleVoiceAttemptInFlight = false;
+}
+
+function handleTitleVoiceRetry() {
+    cancelTitleVoiceRetry();
+    if (currentScreenName !== 'title') {
+        return;
+    }
+
+    void playTitleScreenVoice();
+}
+
+function armTitleVoiceRetry() {
+    if (isTitleVoiceRetryArmed) {
+        return;
+    }
+
+    isTitleVoiceRetryArmed = true;
+    document.addEventListener('pointerdown', handleTitleVoiceRetry, true);
+    document.addEventListener('keydown', handleTitleVoiceRetry, true);
 }
 
 function getDestinyRevealSegments(destiny) {
@@ -779,28 +821,34 @@ async function playVoiceClip(voiceResult, fallbackDuration) {
     return !didError;
 }
 
-async function testTitleVoice() {
-    if (!testVoiceBtn) {
+async function playTitleScreenVoice() {
+    if (
+        currentScreenName !== 'title' ||
+        hasPlayedTitleVoiceForScreen ||
+        isTitleVoiceAttemptInFlight
+    ) {
         return;
     }
 
-    setTitleVoiceStatus('Summoning the oracle...', 'default');
-    testVoiceBtn.disabled = true;
+    isTitleVoiceAttemptInFlight = true;
 
-    const { voiceResult, errorMessage } = await fetchVoiceAudioResult('Day after Day');
+    const { voiceResult } = await fetchVoiceAudioResult(TITLE_SCREEN_VOICE_TEXT);
     if (!voiceResult) {
-        setTitleVoiceStatus(errorMessage || 'Voice unavailable.', 'error');
-        testVoiceBtn.disabled = false;
+        cancelTitleVoiceRetry();
+        isTitleVoiceAttemptInFlight = false;
         return;
     }
 
-    setTitleVoiceStatus('Playing "Day after Day"...', 'default');
     const didPlay = await playVoiceClip(voiceResult, 600);
-    setTitleVoiceStatus(
-        didPlay ? 'Voice playback worked.' : 'Voice playback was blocked or failed.',
-        didPlay ? 'success' : 'error'
-    );
-    testVoiceBtn.disabled = false;
+    isTitleVoiceAttemptInFlight = false;
+
+    if (didPlay) {
+        hasPlayedTitleVoiceForScreen = true;
+        cancelTitleVoiceRetry();
+        return;
+    }
+
+    armTitleVoiceRetry();
 }
 
 async function playStardustFx() {
@@ -1840,16 +1888,12 @@ function restartGame() {
 // Event Listeners
 if (playBtn) {
     playBtn.addEventListener('click', () => {
+        cancelTitleVoiceRetry();
+        stopActiveVoiceAudio();
         showScreen('create');
         if (childNameInput) {
             childNameInput.focus();
         }
-    });
-}
-
-if (testVoiceBtn) {
-    testVoiceBtn.addEventListener('click', () => {
-        testTitleVoice();
     });
 }
 
