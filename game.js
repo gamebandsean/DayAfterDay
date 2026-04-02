@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 44;
+const BUILD_NUMBER = 45;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -39,6 +39,11 @@ const FALLBACK_ORACLE_RESPONSE = {
     image_prompt: 'semi-realistic portrait of a child, head and shoulders',
     physical_description: DEFAULT_PHYSICAL_DESCRIPTION
 };
+const FALLBACK_DESTINY_RESPONSE = {
+    destiny: FALLBACK_ORACLE_RESPONSE.destiny,
+    moral_alignment: FALLBACK_ORACLE_RESPONSE.moral_alignment,
+    justification: FALLBACK_ORACLE_RESPONSE.justification
+};
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
@@ -65,6 +70,9 @@ const finalScore = document.getElementById('final-score');
 const finalDestiny = document.getElementById('final-destiny');
 const scoreDisplay = document.getElementById('score-display');
 const restartBtn = document.getElementById('restart-btn');
+const destinyRevealOverlay = document.getElementById('destiny-reveal-overlay');
+const destinyRevealText = document.getElementById('destiny-reveal-text');
+const destinyRevealContinue = document.getElementById('destiny-reveal-continue');
 const progressBar = document.getElementById('progress-bar');
 const valuesOverlay = document.getElementById('values-overlay');
 const currentValuesList = document.getElementById('current-values-list');
@@ -84,8 +92,10 @@ const screenMap = {
 };
 const genderButtons = Array.from(document.querySelectorAll('.gender-btn'));
 let valueEntryResolver = null;
+let destinyRevealResolver = null;
 let activeImageRequestId = 0;
 let activeImageAbortController = null;
+let destinyRevealButtonTimer = null;
 
 function getPlayableAgeIndex(age) {
     return PLAYABLE_AGES.indexOf(age);
@@ -242,7 +252,9 @@ function resetGameUi() {
     destinyValue.textContent = 'UNKNOWN';
     finalScore.classList.add('hidden');
     valueEntryResolver = null;
+    destinyRevealResolver = null;
     hideValuesOverlay();
+    hideDestinyRevealOverlay();
     closeDebugModal();
     setGameMode('question');
     setQuestionPhaseVisible(false);
@@ -279,10 +291,10 @@ function sanitizeValue(value) {
     return value.replace(/\s+/g, ' ').trim();
 }
 
-function getGroupedValues() {
+function getGroupedValues(values = gameState.values) {
     const groupedValues = new Map();
 
-    gameState.values.forEach((rawValue) => {
+    values.forEach((rawValue) => {
         const value = sanitizeValue(rawValue);
         if (!value) {
             return;
@@ -304,8 +316,8 @@ function getGroupedValues() {
     return Array.from(groupedValues.values());
 }
 
-function getValuesSummary() {
-    const groupedValues = getGroupedValues();
+function getValuesSummary(values = gameState.values) {
+    const groupedValues = getGroupedValues(values);
     if (groupedValues.length === 0) {
         return 'None yet.';
     }
@@ -315,8 +327,8 @@ function getValuesSummary() {
         .join(', ');
 }
 
-function getContinuityPhysicalDescription() {
-    const description = (gameState.physicalDescription || DEFAULT_PHYSICAL_DESCRIPTION)
+function getContinuityPhysicalDescription(physicalDescription = gameState.physicalDescription) {
+    const description = (physicalDescription || DEFAULT_PHYSICAL_DESCRIPTION)
         .replace(/\bnewborn baby\b/gi, '')
         .replace(/\bnewborn\b/gi, '')
         .replace(/\bbaby\b/gi, '')
@@ -519,6 +531,76 @@ function renderCurrentValues() {
     });
 }
 
+function clearDestinyRevealTimer() {
+    if (destinyRevealButtonTimer) {
+        clearTimeout(destinyRevealButtonTimer);
+        destinyRevealButtonTimer = null;
+    }
+}
+
+function getIndefiniteArticle(phrase) {
+    return /^[aeiou]/i.test((phrase || '').trim()) ? 'an' : 'a';
+}
+
+function buildDestinyRevealCopy(destiny) {
+    const safeName = gameState.childName || 'your child';
+    const safeDestiny = destiny || FALLBACK_DESTINY_RESPONSE.destiny;
+    const article = getIndefiniteArticle(safeDestiny);
+    return `The Oracle sees that ${safeName} is on track to become ${article} ${safeDestiny} as an adult.`;
+}
+
+function showDestinyRevealOverlay() {
+    if (!destinyRevealOverlay || !destinyRevealText || !destinyRevealContinue) {
+        return;
+    }
+
+    clearDestinyRevealTimer();
+    destinyRevealOverlay.classList.remove('hidden', 'is-ready', 'show-continue');
+    destinyRevealText.textContent = 'The Oracle is deciding what the future holds...';
+    destinyRevealContinue.classList.add('hidden');
+}
+
+function setDestinyRevealReading(destiny) {
+    if (!destinyRevealOverlay || !destinyRevealText) {
+        return;
+    }
+
+    destinyRevealText.textContent = buildDestinyRevealCopy(destiny);
+    destinyRevealOverlay.classList.add('is-ready');
+}
+
+function showDestinyRevealContinue() {
+    if (!destinyRevealOverlay || !destinyRevealContinue) {
+        return;
+    }
+
+    clearDestinyRevealTimer();
+    destinyRevealContinue.classList.remove('hidden');
+    destinyRevealButtonTimer = setTimeout(() => {
+        destinyRevealOverlay.classList.add('show-continue');
+        destinyRevealButtonTimer = null;
+    }, 20);
+}
+
+function hideDestinyRevealOverlay() {
+    if (!destinyRevealOverlay || !destinyRevealText || !destinyRevealContinue) {
+        return;
+    }
+
+    clearDestinyRevealTimer();
+    destinyRevealOverlay.classList.add('hidden');
+    destinyRevealOverlay.classList.remove('is-ready', 'show-continue');
+    destinyRevealText.textContent = '';
+    destinyRevealContinue.classList.add('hidden');
+    destinyRevealResolver = null;
+}
+
+function waitForDestinyRevealContinue() {
+    return new Promise((resolve) => {
+        destinyRevealResolver = resolve;
+    });
+}
+
 function showValuesOverlay() {
     renderCurrentValues();
     setGameMode('values');
@@ -575,6 +657,29 @@ function waitForValueEntry() {
         valueEntryResolver = resolve;
     });
 }
+
+const FAST_DESTINY_SYSTEM_PROMPT = `You are The Oracle of Fates — a darkly funny, decisive fortune teller who can read a child's adult trajectory from the choices their parent makes.
+
+Your job: read the parenting history quickly and declare the single strongest Destiny this child is on track toward.
+
+## Rules
+
+1. A Destiny is 1-5 words describing both WHAT they become and WHO they are.
+2. Pick a clear moral lane: good, bad, or grey.
+3. Be specific, funny, and grounded in the actual answers and repeated values.
+4. Repeated values matter more than one-off values.
+5. Use plain modern language and real-world archetypes only.
+6. Write a short justification sentence that mentions the strongest signals from the parenting choices.
+
+## Response Format
+
+You MUST respond with valid JSON and nothing else.
+
+{
+  "destiny": "string",
+  "moral_alignment": "good" | "bad" | "grey",
+  "justification": "string"
+}`;
 
 // Oracle System Prompt (from destiny_prompt.md)
 const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, darkly comedic soothsayer who can read a child's destiny from the choices their parent makes. You speak with absolute conviction. You do not hedge. You do not say "it depends." You see the thread of fate clearly, and you call it like it is.
@@ -640,7 +745,7 @@ You MUST respond with valid JSON and nothing else. No markdown, no commentary ou
   "physical_description": "string — updated physical description of the child for continuity"
 }`;
 
-function buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge) {
+function buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge, valuesSnapshot = gameState.values) {
     // Build previous Q&A history
     let previousRounds = '';
     gameState.answers.forEach((qa, index) => {
@@ -658,7 +763,7 @@ CHILD'S CURRENT AGE: ${gameState.currentAge}
 TARGET PORTRAIT AGE: ${targetPortraitAge}
 CHILD'S CORE PHYSICAL FEATURES FOR CONTINUITY: ${getContinuityPhysicalDescription()}
 CHILD'S INSTILLED VALUES:
-${getValuesSummary()}
+${getValuesSummary(valuesSnapshot)}
 
 VALUE GUIDANCE:
 These are the values the parent has chosen to instill in this child over time.
@@ -682,9 +787,71 @@ A${gameState.answers.length + 1}: "${currentAnswer}"
 Based on ALL of the above — every answer, not just the latest — determine this child's evolving Destiny. Respond with the JSON object only.`;
 }
 
+function buildDestinyUserPrompt(currentQuestion, currentAnswer, valuesSnapshot = gameState.values) {
+    let previousRounds = '';
+    gameState.answers.forEach((qa, index) => {
+        previousRounds += `Q${index + 1}: "${qa.question}"\n`;
+        previousRounds += `A${index + 1}: "${qa.answer}"\n\n`;
+    });
+
+    return `Here is the current state of the game:
+
+CHILD'S NAME: ${gameState.childName || 'Unknown'}
+CHILD'S GENDER: ${gameState.childGender || 'Unknown'}
+CHILD'S RACE: ${gameState.childRace || 'Unknown'}
+CHILD'S CURRENT AGE: ${gameState.currentAge}
+CHILD'S INSTILLED VALUES:
+${getValuesSummary(valuesSnapshot)}
+
+VALUE GUIDANCE:
+These values are recurring moral and psychological signals.
+Repeated values should pull harder than one-off values.
+
+PREVIOUS QUESTIONS AND ANSWERS (in order):
+${previousRounds}
+NEW QUESTION JUST ASKED:
+Q${gameState.answers.length + 1}: "${currentQuestion}"
+
+PLAYER'S NEW ANSWER:
+A${gameState.answers.length + 1}: "${currentAnswer}"
+
+Based on ALL of the above, determine the clearest adult destiny this child is now headed toward. Respond with the JSON object only.`;
+}
+
+async function consultFastDestiny(currentQuestion, currentAnswer, valuesSnapshot = gameState.values) {
+    const userPrompt = buildDestinyUserPrompt(currentQuestion, currentAnswer, valuesSnapshot);
+
+    try {
+        const response = await fetch('/api/oracle-destiny', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                system: FAST_DESTINY_SYSTEM_PROMPT,
+                userPrompt
+            })
+        });
+
+        const data = await readJsonResponse(response, 'Fast destiny API failed.');
+        if (!data?.oracle) {
+            throw new Error('Fast destiny response was missing normalized data.');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error consulting fast destiny:', error);
+        return {
+            oracle: {
+                ...FALLBACK_DESTINY_RESPONSE
+            }
+        };
+    }
+}
+
 // Ask the Oracle and have the server start portrait generation immediately after it responds.
-async function consultOracleWithPortrait(currentQuestion, currentAnswer, targetPortraitAge) {
-    const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge);
+async function consultOracleWithPortrait(currentQuestion, currentAnswer, targetPortraitAge, valuesSnapshot = gameState.values) {
+    const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge, valuesSnapshot);
 
     try {
         const response = await fetch('/api/oracle-portrait', {
@@ -850,11 +1017,18 @@ async function submitAnswer() {
         // Get current question
         const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
         const targetPortraitAge = getNextPlayableAge(gameState.currentAge) ?? gameState.currentAge;
+        const valuesSnapshot = [...gameState.values];
 
         const valuePromise = waitForValueEntry();
+        const fastDestinyPromise = consultFastDestiny(currentQuestion, answer, valuesSnapshot);
 
-        // Kick off the Oracle and portrait work as soon as the values screen is visible.
-        const oraclePortraitPromise = consultOracleWithPortrait(currentQuestion, answer, targetPortraitAge);
+        // Kick off the fast destiny read and the richer portrait pipeline in parallel.
+        const oraclePortraitPromise = consultOracleWithPortrait(
+            currentQuestion,
+            answer,
+            targetPortraitAge,
+            valuesSnapshot
+        );
 
         // Store the answer locally right away so the next round includes it in history.
         gameState.answers.push({
@@ -865,8 +1039,21 @@ async function submitAnswer() {
 
         // Score can update immediately; the Destiny and portrait will catch up once the Oracle returns.
         calculateAnswerScore(answer);
+        let latestRevealReading = null;
+        const fastDestinyWorkPromise = fastDestinyPromise.then((destinyResult) => {
+            const destinyReading = destinyResult.oracle;
+            latestRevealReading = destinyReading;
+            updateDestiny(destinyReading.destiny, destinyReading.justification);
+
+            if (destinyRevealOverlay && !destinyRevealOverlay.classList.contains('hidden')) {
+                setDestinyRevealReading(destinyReading.destiny);
+            }
+
+            return destinyReading;
+        });
         const portraitWorkPromise = oraclePortraitPromise.then(async (portraitResult) => {
             const oracleResponse = portraitResult.oracle;
+            latestRevealReading = oracleResponse;
 
             // Update game state from Oracle
             gameState.destiny = oracleResponse.destiny;
@@ -876,6 +1063,9 @@ async function submitAnswer() {
 
             // Update destiny display while the value screen is still up.
             updateDestiny(oracleResponse.destiny, oracleResponse.justification);
+            if (destinyRevealOverlay && !destinyRevealOverlay.classList.contains('hidden')) {
+                setDestinyRevealReading(oracleResponse.destiny);
+            }
 
             const requestId = startImageRequest({
                 showLoadingOverlay: false,
@@ -896,7 +1086,25 @@ async function submitAnswer() {
         });
 
         await valuePromise;
-        await portraitWorkPromise;
+        showDestinyRevealOverlay();
+        if (latestRevealReading?.destiny) {
+            setDestinyRevealReading(latestRevealReading.destiny);
+        }
+
+        const continuePromise = waitForDestinyRevealContinue();
+        await Promise.all([
+            fastDestinyWorkPromise,
+            portraitWorkPromise,
+            new Promise((resolve) => {
+                destinyRevealButtonTimer = setTimeout(() => {
+                    destinyRevealButtonTimer = null;
+                    resolve();
+                }, 1600);
+            })
+        ]);
+        showDestinyRevealContinue();
+        await continuePromise;
+        hideDestinyRevealOverlay();
 
         // Move to next year or end game
         const nextAge = getNextPlayableAge(gameState.currentAge);
@@ -1078,6 +1286,7 @@ function endGame() {
     const percentage = Math.round((gameState.score / maxScore) * 100);
 
     hideValuesOverlay();
+    hideDestinyRevealOverlay();
     closeDebugModal();
     questionContainer.classList.add('phase-hidden');
     questionContainer.setAttribute('aria-hidden', 'true');
@@ -1189,6 +1398,17 @@ playerInput.addEventListener('input', () => {
         setInputFeedback('', 'muted');
     }
 });
+if (destinyRevealContinue) {
+    destinyRevealContinue.addEventListener('click', () => {
+        if (!destinyRevealResolver) {
+            return;
+        }
+
+        const resolve = destinyRevealResolver;
+        destinyRevealResolver = null;
+        resolve();
+    });
+}
 restartBtn.addEventListener('click', restartGame);
 
 // Debug Modal Functions

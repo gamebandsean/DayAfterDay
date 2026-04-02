@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const {
+    callDestinyOracle,
     callOracle,
     callOracleWithPortrait,
     ensureImageEnv,
@@ -47,6 +48,20 @@ app.post('/api/oracle', async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error in oracle endpoint:', error);
+        res.status(error.statusCode || 500).json({
+            error: error.message,
+            ...(error.detail ? { detail: error.detail } : {}),
+            ...(error.rawText ? { rawText: error.rawText } : {}),
+        });
+    }
+});
+
+app.post('/api/oracle-destiny', async (req, res) => {
+    try {
+        const result = await callDestinyOracle(req.body?.system, req.body?.userPrompt);
+        res.json(result);
+    } catch (error) {
+        console.error('Error in oracle destiny endpoint:', error);
         res.status(error.statusCode || 500).json({
             error: error.message,
             ...(error.detail ? { detail: error.detail } : {}),
