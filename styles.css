@@ -154,10 +154,11 @@ body::before {
 }
 
 .title-tagline {
-    max-width: 26ch;
-    font-size: 14px;
-    line-height: 1.5;
-    color: color-mix(in oklab, var(--text-secondary) 88%, white 12%);
+    max-width: 34ch;
+    margin: -2px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: color-mix(in oklab, var(--text-secondary) 90%, white 10%);
 }
 
 .title-hero-image {
