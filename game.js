@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 45;
+const BUILD_NUMBER = 46;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -542,11 +542,20 @@ function getIndefiniteArticle(phrase) {
     return /^[aeiou]/i.test((phrase || '').trim()) ? 'an' : 'a';
 }
 
-function buildDestinyRevealCopy(destiny) {
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function buildDestinyRevealMarkup(destiny) {
     const safeName = gameState.childName || 'your child';
     const safeDestiny = destiny || FALLBACK_DESTINY_RESPONSE.destiny;
     const article = getIndefiniteArticle(safeDestiny);
-    return `The Oracle sees that ${safeName} is on track to become ${article} ${safeDestiny} as an adult.`;
+    return `<span class="destiny-reveal-lead">The Oracle sees that ${escapeHtml(safeName)} is on track to become ${article}</span><span class="destiny-reveal-destiny">${escapeHtml(safeDestiny)}</span><span class="destiny-reveal-tail">as an adult.</span>`;
 }
 
 function showDestinyRevealOverlay() {
@@ -565,7 +574,7 @@ function setDestinyRevealReading(destiny) {
         return;
     }
 
-    destinyRevealText.textContent = buildDestinyRevealCopy(destiny);
+    destinyRevealText.innerHTML = buildDestinyRevealMarkup(destiny);
     destinyRevealOverlay.classList.add('is-ready');
 }
 
@@ -1099,7 +1108,7 @@ async function submitAnswer() {
                 destinyRevealButtonTimer = setTimeout(() => {
                     destinyRevealButtonTimer = null;
                     resolve();
-                }, 1600);
+                }, 800);
             })
         ]);
         showDestinyRevealContinue();
