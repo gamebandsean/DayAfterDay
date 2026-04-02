@@ -681,23 +681,25 @@ body::before {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 14px;
-    padding: clamp(18px, 4vw, 28px);
+    gap: 10px;
+    padding: clamp(14px, 3.2vw, 22px);
     color: var(--text-inverse);
 }
 
 .values-eyebrow {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: oklch(0.9 0.02 82 / 0.78);
 }
 
 .values-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(26px, 4.2vw, 38px);
-    line-height: 0.95;
+    max-width: 11ch;
+    font-size: clamp(18px, 2.9vw, 26px);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
     color: var(--text-inverse);
     text-wrap: balance;
 }
@@ -727,27 +729,29 @@ body::before {
 .current-values-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
+    gap: 8px;
 }
 
 .values-empty {
     grid-column: 1 / -1;
-    padding: 16px 18px;
-    border-radius: 18px;
+    padding: 12px 14px;
+    border-radius: 16px;
     border: 1px solid oklch(0.92 0.02 85 / 0.08);
     background: oklch(1 0 0 / 0.05);
     color: oklch(0.95 0.01 85 / 0.74);
     text-align: center;
     text-wrap: balance;
+    font-size: 12px;
+    line-height: 1.35;
 }
 
 .value-pill {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 18px;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
     border: 1px solid oklch(0.92 0.02 85 / 0.08);
     background:
         linear-gradient(180deg, oklch(1 0 0 / 0.09), transparent 100%),
@@ -756,7 +760,7 @@ body::before {
 }
 
 .value-pill-label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
     color: var(--text-inverse);
@@ -764,13 +768,13 @@ body::before {
 
 .value-pill-count {
     flex-shrink: 0;
-    padding: 6px 10px;
+    padding: 5px 8px;
     border-radius: 999px;
     background: color-mix(in oklab, var(--accent-highlight) 26%, transparent);
     color: var(--text-brass);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
@@ -1362,7 +1366,7 @@ body::before {
 
     .values-title,
     .debug-header h3 {
-        font-size: 24px;
+        font-size: 18px;
     }
 
     .current-values-list {
