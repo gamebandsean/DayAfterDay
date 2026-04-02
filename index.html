@@ -19,6 +19,7 @@
             />
             <p class="title-tagline">Raise your child to become a success... or at least better than your friends'!</p>
             <button id="play-btn" class="play-btn" type="button">Play Game</button>
+            <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
         </div>
 
         <div id="create-screen" class="screen create-screen hidden">
@@ -79,8 +80,6 @@
                 <p id="question-text">Loading...</p>
             </div>
 
-            <div id="sample-options" class="sample-options" aria-label="Sample answers"></div>
-
             <!-- Input Area -->
             <div class="input-container">
                 <input
@@ -92,6 +91,7 @@
                 <button id="submit-btn">Submit</button>
             </div>
             <p id="input-feedback" class="input-feedback" aria-live="polite"></p>
+            <div id="sample-options" class="sample-options" aria-label="Sample answers"></div>
 
             <div id="final-screen-overlay" class="final-screen-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="final-screen-title">
                 <div class="final-screen-shell">
@@ -165,8 +165,6 @@
                     </div>
                 </div>
             </div>
-
-            <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
         </div>
     </div>
 

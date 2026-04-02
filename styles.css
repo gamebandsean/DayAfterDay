@@ -276,6 +276,10 @@ body::before {
     color: color-mix(in oklab, var(--text-secondary) 78%, white 22%);
 }
 
+.title-screen .build-badge {
+    margin-top: 2px;
+}
+
 .game-title {
     max-width: none;
     margin: 0;
