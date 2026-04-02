@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 41;
+const BUILD_NUMBER = 42;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -357,11 +357,25 @@ function cancelPendingImageRequest() {
     }
 }
 
-function startImageRequest() {
+function startImageRequest(options = {}) {
+    const {
+        showLoadingOverlay = true,
+        preserveExistingImage = false
+    } = options;
+
     cancelPendingImageRequest();
     activeImageRequestId += 1;
-    imageLoading.classList.remove('hidden');
-    childImage.classList.remove('loaded');
+
+    if (showLoadingOverlay) {
+        imageLoading.classList.remove('hidden');
+    } else {
+        imageLoading.classList.add('hidden');
+    }
+
+    if (!preserveExistingImage) {
+        childImage.classList.remove('loaded');
+    }
+
     return activeImageRequestId;
 }
 
@@ -411,9 +425,15 @@ function setQuestionPhaseVisible(isVisible) {
     sampleOptions.classList.toggle('phase-hidden', !isVisible);
 }
 
+function setPrimaryInputVisible(isVisible) {
+    inputContainer.classList.toggle('phase-hidden', !isVisible);
+    playerInput.classList.toggle('phase-hidden', !isVisible);
+    submitBtn.classList.toggle('phase-hidden', !isVisible);
+}
+
 function configurePrimaryInput(mode) {
     if (mode === 'values') {
-        playerInput.classList.remove('phase-hidden');
+        setPrimaryInputVisible(true);
         playerInput.disabled = false;
         playerInput.value = '';
         playerInput.placeholder = 'Money, charisma, pessimism...';
@@ -421,19 +441,17 @@ function configurePrimaryInput(mode) {
         playerInput.setAttribute('aria-label', 'Enter one value to instill in your child');
         submitBtn.textContent = 'Instill';
         submitBtn.disabled = false;
-        inputContainer.classList.remove('phase-hidden');
         setInputFeedback('');
         return;
     }
 
-    playerInput.classList.remove('phase-hidden');
+    setPrimaryInputVisible(true);
     playerInput.disabled = false;
     playerInput.placeholder = 'Write your answer or borrow one above...';
     playerInput.inputMode = 'text';
     playerInput.setAttribute('aria-label', 'Write your answer');
     submitBtn.textContent = 'Submit';
     submitBtn.disabled = false;
-    inputContainer.classList.remove('phase-hidden');
     setInputFeedback('Answer in your own words or start with one of the prompts above.', 'muted');
 }
 
@@ -538,6 +556,9 @@ function submitValue() {
     renderCurrentValues();
     hideValuesOverlay();
     playerInput.value = '';
+    setPrimaryInputVisible(false);
+    setQuestionPhaseVisible(false);
+    setInputFeedback('');
 
     if (valueEntryResolver) {
         const resolve = valueEntryResolver;
@@ -767,10 +788,8 @@ function loadYear(age, options = {}) {
     questionContainer.removeAttribute('aria-hidden');
     setQuestionPhaseVisible(true);
     configurePrimaryInput('question');
-    inputContainer.classList.remove('phase-hidden');
     inputContainer.removeAttribute('aria-hidden');
-    playerInput.classList.remove('phase-hidden');
-    submitBtn.classList.remove('phase-hidden');
+    setPrimaryInputVisible(true);
     questionEyebrow.textContent = `Age: ${age}`;
     questionText.textContent = yearData.question;
     renderSampleOptions(yearData.samples);
@@ -828,7 +847,9 @@ async function submitAnswer() {
         const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
         const targetPortraitAge = getNextPlayableAge(gameState.currentAge) ?? gameState.currentAge;
 
-        // Kick off the Oracle immediately, then let the player name a value while it works in the background.
+        const valuePromise = waitForValueEntry();
+
+        // Kick off the Oracle as soon as the values screen is visible.
         const oraclePromise = consultOracle(currentQuestion, answer, targetPortraitAge);
 
         // Store the answer locally right away so the next round includes it in history.
@@ -840,21 +861,24 @@ async function submitAnswer() {
 
         // Score can update immediately; the Destiny and portrait will catch up once the Oracle returns.
         calculateAnswerScore(answer);
-        const valuePromise = waitForValueEntry();
-        const oracleResponse = await oraclePromise;
+        const portraitWorkPromise = oraclePromise.then(async (oracleResponse) => {
+            // Update game state from Oracle
+            gameState.destiny = oracleResponse.destiny;
+            gameState.moralAlignment = oracleResponse.moral_alignment;
+            gameState.justification = oracleResponse.justification;
+            gameState.physicalDescription = oracleResponse.physical_description;
 
-        // Update game state from Oracle
-        gameState.destiny = oracleResponse.destiny;
-        gameState.moralAlignment = oracleResponse.moral_alignment;
-        gameState.justification = oracleResponse.justification;
-        gameState.physicalDescription = oracleResponse.physical_description;
+            // Update destiny display while the value screen is still up.
+            updateDestiny(oracleResponse.destiny, oracleResponse.justification);
 
-        // Update destiny display
-        updateDestiny(oracleResponse.destiny, oracleResponse.justification);
+            await generateChildImage(oracleResponse.image_prompt, {
+                showLoadingOverlay: false,
+                preserveExistingImage: true
+            });
+        });
 
-        const imagePromise = generateChildImage(oracleResponse.image_prompt);
         await valuePromise;
-        await imagePromise;
+        await portraitWorkPromise;
 
         // Move to next year or end game
         const nextAge = getNextPlayableAge(gameState.currentAge);
@@ -905,8 +929,8 @@ function calculateAnswerScore(answer) {
 }
 
 // Generate child image using AI
-async function generateChildImage(imagePrompt) {
-    const requestId = startImageRequest();
+async function generateChildImage(imagePrompt, options = {}) {
+    const requestId = startImageRequest(options);
     const controller = createImageAbortController();
 
     try {
