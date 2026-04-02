@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 55;
+const BUILD_NUMBER = 56;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -45,8 +45,9 @@ const FALLBACK_DESTINY_RESPONSE = {
     justification: FALLBACK_ORACLE_RESPONSE.justification
 };
 const DESTINY_REVEAL_VO_TIMEOUT_MS = 1800;
-const DESTINY_REVEAL_LEAD_FALLBACK_MS = 1200;
-const DESTINY_REVEAL_ENDING_FALLBACK_MS = 1400;
+const DESTINY_REVEAL_FULL_LINE_FALLBACK_MS = 3200;
+const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 5200;
+const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.7;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions. A strange little life simulator.';
@@ -771,7 +772,23 @@ async function requestVoiceAudio(text) {
     return voiceResult;
 }
 
-async function playVoiceClip(voiceResult, fallbackDuration) {
+function setAudioPlaybackRate(audio, playbackRate) {
+    if (!audio || typeof playbackRate !== 'number' || !Number.isFinite(playbackRate)) {
+        return;
+    }
+
+    audio.playbackRate = playbackRate;
+    if ('preservesPitch' in audio) {
+        audio.preservesPitch = true;
+    }
+}
+
+async function playVoiceClip(voiceResult, fallbackDuration, options = {}) {
+    const {
+        playbackRate = 1,
+        timeoutMs = DESTINY_REVEAL_VO_TIMEOUT_MS
+    } = options;
+
     if (!voiceResult?.audioBase64) {
         await sleep(fallbackDuration);
         return false;
@@ -779,6 +796,7 @@ async function playVoiceClip(voiceResult, fallbackDuration) {
 
     const audio = new Audio(`data:${voiceResult.mimeType || 'audio/mpeg'};base64,${voiceResult.audioBase64}`);
     activeVoiceAudio = audio;
+    setAudioPlaybackRate(audio, playbackRate);
 
     await ensureAudioContextResumed();
 
@@ -812,7 +830,7 @@ async function playVoiceClip(voiceResult, fallbackDuration) {
                 finalize();
             }, { once: true });
         }),
-        sleep(DESTINY_REVEAL_VO_TIMEOUT_MS).then(() => {
+        sleep(timeoutMs).then(() => {
             didTimeout = true;
         })
     ]);
@@ -903,11 +921,13 @@ function showDestinyRevealOverlay() {
     clearDestinyRevealTimer();
     destinyRevealOverlay.classList.remove(
         'hidden',
+        'is-loading',
         'phase-lead-visible',
         'phase-destiny-visible',
         'phase-tail-visible',
         'show-continue'
     );
+    destinyRevealOverlay.classList.add('is-loading');
     if (destinyRevealLead) {
         destinyRevealLead.textContent = '';
     }
@@ -925,6 +945,7 @@ function prepareDestinyReveal(oracleResponse) {
         return;
     }
 
+    destinyRevealOverlay.classList.remove('is-loading');
     const segments = getDestinyRevealSegments(oracleResponse?.destiny);
     destinyRevealLead.textContent = segments.lead;
     destinyRevealDestiny.textContent = segments.destiny;
@@ -953,6 +974,7 @@ function hideDestinyRevealOverlay() {
     clearDestinyRevealTimer();
     destinyRevealOverlay.classList.add('hidden');
     destinyRevealOverlay.classList.remove(
+        'is-loading',
         'phase-lead-visible',
         'phase-destiny-visible',
         'phase-tail-visible',
@@ -977,13 +999,9 @@ function waitForDestinyRevealContinue() {
     });
 }
 
-function buildLeadVoiceText(destiny) {
-    return getDestinyRevealSegments(destiny).lead;
-}
-
-function buildEndingVoiceText(destiny) {
+function buildFullRevealVoiceText(destiny) {
     const segments = getDestinyRevealSegments(destiny);
-    return `${segments.destiny} ${segments.tail}`;
+    return `${segments.lead} ${segments.destiny} ${segments.tail}`;
 }
 
 function applyOracleReveal(oracleResponse) {
@@ -996,14 +1014,20 @@ function applyOracleReveal(oracleResponse) {
 
 async function runDestinyRevealSequence({
     oracleResponse,
-    leadVoicePromise,
-    endingVoicePromise
+    revealVoiceResult
 }) {
     prepareDestinyReveal(oracleResponse);
 
-    const leadVoiceResult = await leadVoicePromise;
     destinyRevealOverlay.classList.add('phase-lead-visible');
-    await playVoiceClip(leadVoiceResult, DESTINY_REVEAL_LEAD_FALLBACK_MS);
+
+    const voicePlaybackPromise = playVoiceClip(
+        revealVoiceResult,
+        DESTINY_REVEAL_FULL_LINE_FALLBACK_MS,
+        {
+            playbackRate: DESTINY_REVEAL_VO_PLAYBACK_RATE,
+            timeoutMs: DESTINY_REVEAL_FULL_VO_TIMEOUT_MS
+        }
+    );
 
     await sleep(DESTINY_REVEAL_STARDUST_PAUSE_MS);
     await playStardustFx();
@@ -1011,10 +1035,9 @@ async function runDestinyRevealSequence({
     destinyRevealOverlay.classList.add('phase-destiny-visible');
     applyOracleReveal(oracleResponse);
 
-    const endingVoiceResult = await endingVoicePromise;
     await sleep(DESTINY_REVEAL_TAIL_DELAY_MS);
     destinyRevealOverlay.classList.add('phase-tail-visible');
-    await playVoiceClip(endingVoiceResult, DESTINY_REVEAL_ENDING_FALLBACK_MS);
+    await voicePlaybackPromise;
 }
 
 async function requestGeneratedPortrait(prompt, controller) {
@@ -1615,8 +1638,7 @@ async function submitAnswer() {
 
         calculateAnswerScore(answer);
         const backgroundWorkPromise = oraclePromise.then(async (oracleResponse) => {
-            const leadVoicePromise = requestVoiceAudio(buildLeadVoiceText(oracleResponse.destiny));
-            const endingVoicePromise = requestVoiceAudio(buildEndingVoiceText(oracleResponse.destiny));
+            const revealVoicePromise = requestVoiceAudio(buildFullRevealVoiceText(oracleResponse.destiny));
             const portraitWorkPromise = generateChildImage(oracleResponse.image_prompt, {
                 showLoadingOverlay: false,
                 preserveExistingImage: true,
@@ -1627,11 +1649,11 @@ async function submitAnswer() {
                     physicalDescription: oracleResponse.physical_description
                 }
             });
+            const revealVoiceResult = await revealVoicePromise;
 
             return {
                 oracleResponse,
-                leadVoicePromise,
-                endingVoicePromise,
+                revealVoiceResult,
                 portraitWorkPromise
             };
         });
@@ -1640,15 +1662,13 @@ async function submitAnswer() {
         showDestinyRevealOverlay();
         const {
             oracleResponse,
-            leadVoicePromise,
-            endingVoicePromise,
+            revealVoiceResult,
             portraitWorkPromise
         } = await backgroundWorkPromise;
 
         await runDestinyRevealSequence({
             oracleResponse,
-            leadVoicePromise,
-            endingVoicePromise
+            revealVoiceResult
         });
 
         const continuePromise = waitForDestinyRevealContinue();
