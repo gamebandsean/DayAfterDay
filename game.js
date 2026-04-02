@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 36;
+const BUILD_NUMBER = 37;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -817,15 +817,20 @@ async function submitAnswer() {
         // Get current question
         const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
 
-        // Resolve the Oracle first, then let the next portrait render while the player names a value.
-        const oracleResponse = await consultOracle(currentQuestion, answer);
+        // Kick off the Oracle immediately, then let the player name a value while it works in the background.
+        const oraclePromise = consultOracle(currentQuestion, answer);
 
-        // Store the answer with question
+        // Store the answer locally right away so the next round includes it in history.
         gameState.answers.push({
             age: gameState.currentAge,
             question: currentQuestion,
             answer: answer
         });
+
+        // Score can update immediately; the Destiny and portrait will catch up once the Oracle returns.
+        calculateAnswerScore(answer);
+        const valuePromise = waitForValueEntry();
+        const oracleResponse = await oraclePromise;
 
         // Update game state from Oracle
         gameState.destiny = oracleResponse.destiny;
@@ -836,12 +841,9 @@ async function submitAnswer() {
         // Update destiny display
         updateDestiny(oracleResponse.destiny, oracleResponse.justification);
 
-        // Calculate score for this answer
-        calculateAnswerScore(answer);
-
-        generateChildImage(oracleResponse.image_prompt);
-
-        await waitForValueEntry();
+        const imagePromise = generateChildImage(oracleResponse.image_prompt);
+        await valuePromise;
+        await imagePromise;
 
         // Move to next year or end game
         const nextAge = getNextPlayableAge(gameState.currentAge);
