@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 43;
+const BUILD_NUMBER = 44;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -682,12 +682,12 @@ A${gameState.answers.length + 1}: "${currentAnswer}"
 Based on ALL of the above — every answer, not just the latest — determine this child's evolving Destiny. Respond with the JSON object only.`;
 }
 
-// Call the Oracle to determine destiny, then let portrait generation run in parallel.
-async function consultOracle(currentQuestion, currentAnswer, targetPortraitAge) {
+// Ask the Oracle and have the server start portrait generation immediately after it responds.
+async function consultOracleWithPortrait(currentQuestion, currentAnswer, targetPortraitAge) {
     const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge);
 
     try {
-        const response = await fetch('/api/oracle', {
+        const response = await fetch('/api/oracle-portrait', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -698,18 +698,21 @@ async function consultOracle(currentQuestion, currentAnswer, targetPortraitAge) 
             })
         });
 
-        const data = await readJsonResponse(response, 'Oracle API failed.');
+        const data = await readJsonResponse(response, 'Oracle portrait API failed.');
         if (!data?.oracle) {
             throw new Error('Oracle response was missing normalized data.');
         }
 
-        return data.oracle;
+        return data;
     } catch (error) {
-        console.error('Error consulting Oracle:', error);
+        console.error('Error consulting Oracle portrait:', error);
         return {
-            ...FALLBACK_ORACLE_RESPONSE,
-            image_prompt: `portrait of a ${targetPortraitAge} year old child`,
-            physical_description: gameState.physicalDescription
+            oracle: {
+                ...FALLBACK_ORACLE_RESPONSE,
+                image_prompt: `portrait of a ${targetPortraitAge} year old child`,
+                physical_description: gameState.physicalDescription
+            },
+            usePlaceholder: true
         };
     }
 }
@@ -850,8 +853,8 @@ async function submitAnswer() {
 
         const valuePromise = waitForValueEntry();
 
-        // Kick off the Oracle as soon as the values screen is visible.
-        const oraclePromise = consultOracle(currentQuestion, answer, targetPortraitAge);
+        // Kick off the Oracle and portrait work as soon as the values screen is visible.
+        const oraclePortraitPromise = consultOracleWithPortrait(currentQuestion, answer, targetPortraitAge);
 
         // Store the answer locally right away so the next round includes it in history.
         gameState.answers.push({
@@ -862,7 +865,9 @@ async function submitAnswer() {
 
         // Score can update immediately; the Destiny and portrait will catch up once the Oracle returns.
         calculateAnswerScore(answer);
-        const portraitWorkPromise = oraclePromise.then(async (oracleResponse) => {
+        const portraitWorkPromise = oraclePortraitPromise.then(async (portraitResult) => {
+            const oracleResponse = portraitResult.oracle;
+
             // Update game state from Oracle
             gameState.destiny = oracleResponse.destiny;
             gameState.moralAlignment = oracleResponse.moral_alignment;
@@ -872,10 +877,22 @@ async function submitAnswer() {
             // Update destiny display while the value screen is still up.
             updateDestiny(oracleResponse.destiny, oracleResponse.justification);
 
-            await generateChildImage(oracleResponse.image_prompt, {
+            const requestId = startImageRequest({
                 showLoadingOverlay: false,
                 preserveExistingImage: true
             });
+
+            if (portraitResult?.usePlaceholder) {
+                showPlaceholderImage(oracleResponse.image_prompt, requestId);
+                return;
+            }
+
+            if (portraitResult?.imageData) {
+                applyGeneratedImage(portraitResult.imageData, portraitResult.mimeType, requestId);
+                return;
+            }
+
+            showPlaceholderImage(oracleResponse.image_prompt, requestId);
         });
 
         await valuePromise;
