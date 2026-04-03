@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 82;
+const BUILD_NUMBER = 83;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -1100,7 +1100,21 @@ function prepareAttributeReveal(attributes) {
         item.className = isWildcard
             ? 'destiny-reveal-attribute destiny-reveal-attribute--wildcard'
             : 'destiny-reveal-attribute';
-        item.textContent = isWildcard ? `Wildcard: ${attributeText}` : attributeText;
+
+        if (isWildcard) {
+            const badge = document.createElement('span');
+            badge.className = 'destiny-reveal-attribute-badge';
+            badge.textContent = 'Wildcard';
+
+            const text = document.createElement('span');
+            text.className = 'destiny-reveal-attribute-text';
+            text.textContent = attributeText;
+
+            item.append(badge, text);
+        } else {
+            item.textContent = attributeText;
+        }
+
         destinyRevealAttributes.appendChild(item);
     });
     if (destinyRevealDestiny) {
