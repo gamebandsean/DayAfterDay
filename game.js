@@ -53,6 +53,7 @@ const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
 const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
+const DEFAULT_IMAGE_LOADING_MESSAGE = 'The oracle is sketching a face...';
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
@@ -72,6 +73,7 @@ const submitBtn = document.getElementById('submit-btn');
 const inputFeedback = document.getElementById('input-feedback');
 const childImage = document.getElementById('child-image');
 const imageLoading = document.getElementById('image-loading');
+const imageLoadingText = document.getElementById('image-loading-text');
 const finalScreenOverlay = document.getElementById('final-screen-overlay');
 const finalDestiny = document.getElementById('final-destiny');
 const finalScreenImage = document.getElementById('final-screen-image');
@@ -263,6 +265,30 @@ function updateBirthButtonState() {
     playBtn.disabled = !hasName;
 }
 
+function getPossessiveName(name) {
+    if (!name) {
+        return 'your child\'s';
+    }
+
+    return name.endsWith('s') ? `${name}'` : `${name}'s`;
+}
+
+function setImageLoadingMessage(message = DEFAULT_IMAGE_LOADING_MESSAGE) {
+    if (imageLoadingText) {
+        imageLoadingText.textContent = message;
+    }
+}
+
+function showPendingPortraitLoading() {
+    if (!imageLoading) {
+        return;
+    }
+
+    const possessiveName = getPossessiveName(gameState.childName || 'your child');
+    setImageLoadingMessage(`The Oracle is sketching ${possessiveName} future.`);
+    imageLoading.classList.remove('hidden');
+}
+
 function resetCreateScreen() {
     if (childNameInput) {
         childNameInput.value = '';
@@ -286,6 +312,7 @@ function applyStartingPortrait(option) {
     cancelPendingImageRequest();
     activeImageRequestId += 1;
     childImage.classList.remove('loaded');
+    setImageLoadingMessage();
     imageLoading.classList.remove('hidden');
 
     if (option.file) {
@@ -343,6 +370,8 @@ function resetGameUi() {
     if (finalScreenLoading) {
         finalScreenLoading.classList.add('hidden');
     }
+
+    setImageLoadingMessage();
 }
 
 function isTypingTarget(target) {
@@ -450,6 +479,7 @@ function startImageRequest(options = {}) {
 
     cancelPendingImageRequest();
     activeImageRequestId += 1;
+    setImageLoadingMessage();
 
     if (showLoadingOverlay) {
         imageLoading.classList.remove('hidden');
@@ -499,6 +529,7 @@ function applyGeneratedImage(imageData, mimeType, requestId) {
         return false;
     }
 
+    setImageLoadingMessage();
     childImage.src = `data:${mimeType || 'image/png'};base64,${imageData}`;
     childImage.classList.add('loaded');
     imageLoading.classList.add('hidden');
@@ -510,6 +541,7 @@ function finalizeImageRequestWithoutSwap(requestId) {
         return false;
     }
 
+    setImageLoadingMessage();
     imageLoading.classList.add('hidden');
     return true;
 }
@@ -1688,6 +1720,9 @@ async function submitAnswer() {
         calculateAnswerScore(answer);
         const backgroundWorkPromise = oraclePromise.then(async (oracleResponse) => {
             const revealVoicePromise = requestVoiceAudio(buildFullRevealVoiceText(oracleResponse.destiny));
+            const portraitState = {
+                isReady: false
+            };
             const portraitWorkPromise = generateChildImage(oracleResponse.image_prompt, {
                 showLoadingOverlay: false,
                 preserveExistingImage: true,
@@ -1697,13 +1732,16 @@ async function submitAnswer() {
                     age: targetPortraitAge,
                     physicalDescription: oracleResponse.physical_description
                 }
+            }).finally(() => {
+                portraitState.isReady = true;
             });
             const revealVoiceResult = await revealVoicePromise;
 
             return {
                 oracleResponse,
                 revealVoiceResult,
-                portraitWorkPromise
+                portraitWorkPromise,
+                portraitState
             };
         });
 
@@ -1711,7 +1749,8 @@ async function submitAnswer() {
         const {
             oracleResponse,
             revealVoiceResult,
-            portraitWorkPromise
+            portraitWorkPromise,
+            portraitState
         } = await backgroundWorkPromise;
 
         await runDestinyRevealSequence({
@@ -1720,9 +1759,11 @@ async function submitAnswer() {
         });
 
         const continuePromise = waitForDestinyRevealContinue();
-        await portraitWorkPromise;
         showDestinyRevealContinue();
         await continuePromise;
+        if (!portraitState.isReady) {
+            showPendingPortraitLoading();
+        }
         hideDestinyRevealOverlay();
 
         // Move to next year or end game
@@ -1732,6 +1773,7 @@ async function submitAnswer() {
         } else {
             endGame();
         }
+        void portraitWorkPromise;
     } catch (error) {
         console.error('Error submitting answer:', error);
         setInputFeedback(error.message || 'The Oracle could not process that answer.');
@@ -1906,6 +1948,7 @@ function showPlaceholderImage(prompt, requestId = activeImageRequestId, fallback
     ctx.stroke();
 
     // Set the image
+    setImageLoadingMessage();
     childImage.src = canvas.toDataURL();
     childImage.classList.add('loaded');
     imageLoading.classList.add('hidden');
