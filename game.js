@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 84;
+const BUILD_NUMBER = 85;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -52,6 +52,7 @@ const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 14000;
 const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.65;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
+const VALUES_SUMMARY_DISPLAY_MS = 1800;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
 const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 const DEFAULT_IMAGE_LOADING_MESSAGE = 'The oracle is sketching a face...';
@@ -107,6 +108,7 @@ const destinyRevealTail = document.getElementById('destiny-reveal-tail');
 const destinyRevealContinue = document.getElementById('destiny-reveal-continue');
 const progressBar = document.getElementById('progress-bar');
 const valuesOverlay = document.getElementById('values-overlay');
+const valuesEyebrow = document.querySelector('.values-eyebrow');
 const valuesTitle = document.querySelector('.values-title');
 const currentValuesList = document.getElementById('current-values-list');
 const buildBadge = document.getElementById('build-badge');
@@ -1584,7 +1586,11 @@ function showValuesOverlay() {
     questionContainer.removeAttribute('aria-hidden');
     setQuestionPhaseVisible(true);
     if (valuesOverlay) {
+        valuesOverlay.classList.remove('values-overlay--summary');
         valuesOverlay.classList.remove('hidden');
+    }
+    if (valuesEyebrow) {
+        valuesEyebrow.textContent = 'Instill A Value';
     }
     if (valuesTitle) {
         const safeName = (gameState.childName || 'Your Child').trim() || 'Your Child';
@@ -1600,10 +1606,38 @@ function showValuesOverlay() {
 
 function hideValuesOverlay() {
     if (valuesOverlay) {
+        valuesOverlay.classList.remove('values-overlay--summary');
         valuesOverlay.classList.add('hidden');
     }
     renderSampleOptions([]);
     setValuesFeedback('');
+}
+
+async function showValuesSummaryOverlay() {
+    renderCurrentValues();
+    setGameMode('values');
+    questionContainer.classList.add('phase-hidden');
+    questionContainer.setAttribute('aria-hidden', 'true');
+    setQuestionPhaseVisible(false);
+    setPrimaryInputVisible(false);
+    setInputFeedback('');
+
+    if (valuesOverlay) {
+        valuesOverlay.classList.add('values-overlay--summary');
+        valuesOverlay.classList.remove('hidden');
+    }
+
+    if (valuesEyebrow) {
+        valuesEyebrow.textContent = 'Current Values';
+    }
+
+    if (valuesTitle) {
+        const safeName = (gameState.childName || 'Your Child').trim() || 'Your Child';
+        valuesTitle.textContent = `${getPossessiveName(safeName)} Values`;
+    }
+
+    await sleep(VALUES_SUMMARY_DISPLAY_MS);
+    hideValuesOverlay();
 }
 
 function submitValue() {
@@ -2157,12 +2191,17 @@ async function finishRoundAfterReveal(portraitState, portraitWorkPromise) {
     const continuePromise = waitForDestinyRevealContinue();
     showDestinyRevealContinue();
     await continuePromise;
+
+    const nextAge = getNextPlayableAge(gameState.currentAge);
     if (!portraitState.isReady) {
         showPendingPortraitLoading();
     }
     hideDestinyRevealOverlay();
 
-    const nextAge = getNextPlayableAge(gameState.currentAge);
+    if (gameState.mode === 'birth' && nextAge !== null) {
+        await showValuesSummaryOverlay();
+    }
+
     if (nextAge !== null) {
         loadYear(nextAge);
     } else {

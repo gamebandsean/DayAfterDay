@@ -649,6 +649,11 @@ body::before {
     color: var(--text-inverse);
 }
 
+.values-overlay--summary .values-overlay-shell {
+    gap: 8px;
+    padding: 12px;
+}
+
 .values-eyebrow {
     font-size: 9px;
     font-weight: 700;
@@ -696,6 +701,11 @@ body::before {
     gap: 8px;
 }
 
+.values-overlay--summary .current-values-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
 .values-empty {
     grid-column: 1 / -1;
     padding: 12px 14px;
@@ -725,11 +735,26 @@ body::before {
     box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.04);
 }
 
+.values-overlay--summary .value-pill {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    padding: 8px 9px;
+    border-radius: 14px;
+    gap: 6px;
+}
+
 .value-pill-label {
     font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
     color: var(--text-inverse);
+}
+
+.values-overlay--summary .value-pill-label {
+    font-size: 10px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
 }
 
 .value-pill-count {
@@ -742,6 +767,19 @@ body::before {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+}
+
+.values-overlay--summary .value-pill-count {
+    padding: 3px 6px;
+    font-size: 9px;
+}
+
+.values-overlay--summary .values-title {
+    font-size: clamp(16px, 2.6vw, 22px);
+}
+
+.values-overlay--summary .values-empty {
+    font-size: 11px;
 }
 
 .destiny-reveal-overlay {
@@ -1488,6 +1526,10 @@ body::before {
         min-height: clamp(120px, 23dvh, 240px);
         margin-bottom: 10px;
         border-radius: 22px;
+    }
+
+    .values-overlay--summary .current-values-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .title-screen {
