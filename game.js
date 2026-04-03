@@ -14,6 +14,7 @@ function createDefaultGameState(questionsData = null) {
     return {
         currentAge: 0,
         answers: [],
+        currentQuestionText: '',
         questionsData,
         childName: '',
         childGender: '',
@@ -135,6 +136,23 @@ function getNextPlayableAge(age) {
     }
 
     return PLAYABLE_AGES[currentIndex + 1];
+}
+
+function replaceChildNamePlaceholder(text) {
+    const safeName = (gameState.childName || 'your child').trim() || 'your child';
+    return String(text || '').replace(/<Name>/g, safeName);
+}
+
+function getYearPromptConfig(yearData) {
+    const variants = Array.isArray(yearData?.questionVariants) ? yearData.questionVariants : [];
+    const selectedVariant = variants.length > 0
+        ? variants[Math.floor(Math.random() * variants.length)]
+        : yearData;
+
+    return {
+        question: replaceChildNamePlaceholder(selectedVariant?.question || yearData?.question || ''),
+        samples: Array.isArray(selectedVariant?.samples) ? selectedVariant.samples : []
+    };
 }
 
 function renderProgressSegments() {
@@ -299,6 +317,7 @@ function applyStartingPortrait(option) {
 
 function resetGameUi() {
     destinyValue.textContent = 'UNKNOWN';
+    gameState.currentQuestionText = '';
     cancelPendingFinalImageRequest();
     hideFinalScreenOverlay();
     valueEntryResolver = null;
@@ -1600,8 +1619,10 @@ function loadYear(age, options = {}) {
     inputContainer.removeAttribute('aria-hidden');
     setPrimaryInputVisible(true);
     questionEyebrow.textContent = `Age: ${age}`;
-    questionText.textContent = yearData.question;
-    renderSampleOptions(yearData.samples);
+    const promptConfig = getYearPromptConfig(yearData);
+    gameState.currentQuestionText = promptConfig.question;
+    questionText.textContent = promptConfig.question;
+    renderSampleOptions(promptConfig.samples);
     playerInput.value = '';
     setInputFeedback('Answer in your own words or borrow one of the sample responses.', 'muted');
     playerInput.focus();
@@ -1649,7 +1670,7 @@ async function submitAnswer() {
     playerInput.disabled = true;
 
     try {
-        const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
+        const currentQuestion = gameState.currentQuestionText || questionText.textContent || '';
         const targetPortraitAge = getNextPlayableAge(gameState.currentAge) ?? gameState.currentAge;
 
         await waitForValueEntry();

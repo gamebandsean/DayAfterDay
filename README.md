@@ -105,10 +105,12 @@ After the project is imported into Vercel, redeploy once the env vars are saved.
 
 ## Customizing Questions
 
-Edit `questions.json` to customize the questions for each year. Each year has:
+Edit `questions.json` to customize the questions for each playable age. Each year has:
 
 - `age`: The child's age (0-18)
-- `question`: The question or prompt shown to the player
+- `questionVariants`: An array of alternate prompts for that age
+- `questionVariants[].question`: The question or prompt shown to the player
+- `questionVariants[].samples`: Three starter suggestions for that prompt
 - `imagePrompt`: Base description for AI image generation
 
 ## How Scoring Works

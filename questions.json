@@ -2,192 +2,212 @@
   "years": [
     {
       "age": 0,
-      "question": "Your child has been born! They are crying with hunger. What will you give them to eat?",
       "imagePrompt": "A newborn baby, just born, peaceful and innocent",
-      "samples": [
-        "Warm milk and a careful feeding schedule",
-        "Whatever the doctor says, plus a little extra",
-        "Bone broth and a family tonic that builds character"
-      ]
-    },
-    {
-      "age": 1,
-      "question": "Your child is learning to walk. They keep falling down. How do you encourage them?",
-      "imagePrompt": "A 1-year-old toddler",
-      "samples": [
-        "I clap, cheer, and help them try again",
-        "I step back and let them get stubborn about it",
-        "I put the toy just out of reach and let spite do the rest"
-      ]
-    },
-    {
-      "age": 2,
-      "question": "Your child wants a toy that another kid is playing with. What do you teach them?",
-      "imagePrompt": "A 2-year-old child",
-      "samples": [
-        "Ask nicely and wait your turn",
-        "Offer a trade and make it sound generous",
-        "Teach them that possession is ninety percent confidence"
-      ]
-    },
-    {
-      "age": 3,
-      "question": "It's time for preschool. Your child is nervous about meeting new kids. What do you say?",
-      "imagePrompt": "A 3-year-old child",
-      "samples": [
-        "Go be kind and you'll make friends",
-        "Find the funniest kid and sit next to them",
-        "Walk in like you already run the place"
-      ]
-    },
-    {
-      "age": 4,
-      "question": "Your child asks you about their biggest fear. How do you help them face it?",
-      "imagePrompt": "A 4-year-old child",
-      "samples": [
-        "We face it together one tiny step at a time",
-        "I tell them fear shrinks once you stare it down",
-        "I tell them to name the fear so they can bully it back"
+      "questionVariants": [
+        {
+          "question": "<Name> won't stop crying. What do you do?",
+          "samples": [
+            "I check every possible need and hold them until they settle",
+            "I pace the room, hum softly, and stay patient",
+            "I swaddle them, turn on white noise, and go into survival mode"
+          ]
+        },
+        {
+          "question": "<Name> is sick for the first time. What do you do?",
+          "samples": [
+            "Call the doctor, monitor everything, and stay close",
+            "Keep them comfortable, hydrated, and watched all night",
+            "Panic internally, act calm externally, and follow the pediatrician"
+          ]
+        },
+        {
+          "question": "You're exhausted. <Name> needs you. What do you do?",
+          "samples": [
+            "Pick them up anyway and do what needs doing",
+            "Cry a little, make coffee, and keep going",
+            "Become weirdly efficient and power through the fog"
+          ]
+        }
       ]
     },
     {
       "age": 5,
-      "question": "Your child shows interest in a new hobby. What activity do you introduce them to?",
       "imagePrompt": "A 5-year-old child",
-      "samples": [
-        "Painting and creative play",
-        "Piano lessons so they learn taste and discipline",
-        "Beginner kickboxing because focus should have consequences"
-      ]
-    },
-    {
-      "age": 6,
-      "question": "First day of elementary school! Your child wants to bring something special. What do they bring?",
-      "imagePrompt": "A 6-year-old child starting elementary school",
-      "samples": [
-        "A lucky charm from home",
-        "A sketchbook so they look interesting and busy",
-        "Sunglasses and a notebook like a tiny detective"
-      ]
-    },
-    {
-      "age": 7,
-      "question": "Your child got into a disagreement with a friend. How do you guide them?",
-      "imagePrompt": "A 7-year-old child",
-      "samples": [
-        "Talk it out honestly and calmly",
-        "Make your case clearly, then know when to walk away",
-        "Never apologize first if you're technically winning"
-      ]
-    },
-    {
-      "age": 8,
-      "question": "Your child wants to learn something new. What skill do they start developing?",
-      "imagePrompt": "An 8-year-old child",
-      "samples": [
-        "Coding little games on a tablet",
-        "Cooking something impressive for their age",
-        "Stand-up style joke writing so they can work a room"
-      ]
-    },
-    {
-      "age": 9,
-      "question": "Your child faces a challenging situation at school. How do they handle it?",
-      "imagePrompt": "A 9-year-old child",
-      "samples": [
-        "Ask for help and keep trying",
-        "Break the problem into steps and outlast everyone",
-        "Turn competence into a spectator sport"
+      "questionVariants": [
+        {
+          "question": "<Name> comes home and asks where babies come from. What do you tell them?",
+          "samples": [
+            "The simple honest version they can handle",
+            "Love first, biology second, and no weird panic",
+            "A careful answer that is truthful but age-appropriate"
+          ]
+        },
+        {
+          "question": "<Name> tells you they hate you for the first time. What do you do?",
+          "samples": [
+            "Stay calm and tell them I love them anyway",
+            "Let the storm pass, then talk once we're both steady",
+            "Refuse to escalate and wait for the real feeling underneath"
+          ]
+        },
+        {
+          "question": "<Name> breaks something important to you. What do you do?",
+          "samples": [
+            "Take a breath and remind myself they're more important",
+            "Make them help clean it up and talk about honesty",
+            "Choose grace, but make sure they understand why it mattered"
+          ]
+        }
       ]
     },
     {
       "age": 10,
-      "question": "Double digits! Your child wants to celebrate this milestone. How do they celebrate?",
       "imagePrompt": "A 10-year-old child",
-      "samples": [
-        "A fun day with close friends and family",
-        "A big themed party with a guest list",
-        "A birthday roast where everyone has to do a speech"
-      ]
-    },
-    {
-      "age": 11,
-      "question": "Your child is discovering their identity. What makes them feel most like themselves?",
-      "imagePrompt": "An 11-year-old child",
-      "samples": [
-        "Helping others and feeling trusted",
-        "Dressing like they mean something before they do",
-        "Being the person everyone watches when they enter a room"
+      "questionVariants": [
+        {
+          "question": "It's time to teach <Name> to ride a bike. How do you do it?",
+          "samples": [
+            "Run beside them until they believe they can do it",
+            "Teach balance first, then let go before they notice",
+            "Give clear instructions, one push of confidence, and no speech"
+          ]
+        },
+        {
+          "question": "<Name> wants to quit school. What do you say?",
+          "samples": [
+            "School is hard, but we're not quitting on hard things",
+            "Tell me what's really going on before we decide anything",
+            "No, but we are going to figure out why you feel this way"
+          ]
+        },
+        {
+          "question": "<Name> asks if you've ever done something you're ashamed of. What do you say?",
+          "samples": [
+            "Yes, and I tell them what it taught me",
+            "Answer honestly without making it all about me",
+            "Tell the truth carefully so they learn something real"
+          ]
+        }
       ]
     },
     {
       "age": 12,
-      "question": "Middle school begins. Your child wants to join a group or club. Which one?",
       "imagePrompt": "A 12-year-old child starting middle school",
-      "samples": [
-        "Debate club",
-        "Student council — influence with a hall pass",
-        "Film club so they can document everyone's downfall"
-      ]
-    },
-    {
-      "age": 13,
-      "question": "Your teen is going through changes. What positive habit do they develop?",
-      "imagePrompt": "A 13-year-old teenager",
-      "samples": [
-        "Journaling every night",
-        "Waking up early to train before school",
-        "Tracking every dollar and every grudge in the same notebook"
-      ]
-    },
-    {
-      "age": 14,
-      "question": "Your teen faces peer pressure. How do they respond?",
-      "imagePrompt": "A 14-year-old teenager",
-      "samples": [
-        "Politely say no and stick to their values",
-        "Play along just enough to stay in control",
-        "Make the other kids feel weird for even asking"
+      "questionVariants": [
+        {
+          "question": "<Name> comes home with a black eye and won't say a word. What do you do?",
+          "samples": [
+            "Sit beside them quietly until they're ready to talk",
+            "Check if they're safe first, then ask direct questions",
+            "Document everything and make it clear this won't be ignored"
+          ]
+        },
+        {
+          "question": "<Name> asks if they can stop doing the thing you've always made them do. What do you say?",
+          "samples": [
+            "Ask why this matters so much to them",
+            "Tell them maybe, if they can argue their case honestly",
+            "Push back first, then actually listen"
+          ]
+        },
+        {
+          "question": "<Name>'s teacher says they've been acting out. What do you do?",
+          "samples": [
+            "Ask for specifics before I judge my child",
+            "Talk to them privately and look for what's underneath it",
+            "Assume there's a reason and refuse to treat this as random"
+          ]
+        }
       ]
     },
     {
       "age": 15,
-      "question": "High school life is busy. What does your teen prioritize?",
       "imagePrompt": "A 15-year-old teenager in high school",
-      "samples": [
-        "Close relationships",
-        "Academic achievement with a side of reputation",
-        "Popularity, leverage, and knowing everybody's business"
+      "questionVariants": [
+        {
+          "question": "<Name> was caught shoplifting. What's the punishment?",
+          "samples": [
+            "They return it, apologize, and earn back trust slowly",
+            "Grounded, job added, and every cent accounted for",
+            "A consequence harsh enough that they won't romanticize this"
+          ]
+        },
+        {
+          "question": "<Name> comes home drunk for the first time. What do you do?",
+          "samples": [
+            "Make sure they're safe first and lecture second",
+            "Water, bucket, honesty, then consequences in the morning",
+            "Stay calm enough to scare them more than yelling would"
+          ]
+        },
+        {
+          "question": "You find something in <Name>'s room you weren't supposed to see. What do you do?",
+          "samples": [
+            "Put it back and wait for them to bring it up",
+            "Confront them directly, but not in a rage",
+            "Take a beat so I don't turn one bad discovery into a worse conversation"
+          ]
+        }
       ]
     },
     {
       "age": 16,
-      "question": "Your teen is thinking about their future. What path interests them most?",
       "imagePrompt": "A 16-year-old teenager",
-      "samples": [
-        "A creative life doing meaningful work",
-        "A stable career that still feels a little impressive",
-        "A job with access, status, and intimidation"
+      "questionVariants": [
+        {
+          "question": "<Name>'s first relationship just ended. They're devastated. What do you tell them?",
+          "samples": [
+            "Heartbreak doesn't mean you were foolish to love",
+            "This pain passes, but what you learn from it stays",
+            "Grieve it fully and don't perform being fine for me"
+          ]
+        },
+        {
+          "question": "<Name> totals the car. Nobody's hurt. What do you do?",
+          "samples": [
+            "Thank God they're alive, then deal with the consequences",
+            "Stay calm, call insurance, and make them own every part of it",
+            "No screaming at the scene, but this year is about accountability"
+          ]
+        },
+        {
+          "question": "<Name> asks you if you've ever had your heart broken. What do you say?",
+          "samples": [
+            "Yes, and I tell them what it made me do wrong",
+            "Yes, and surviving it mattered more than winning it",
+            "Yes, and I admit I handled it badly at first"
+          ]
+        }
       ]
     },
     {
       "age": 17,
-      "question": "College applications and big decisions loom. What values guide your teen?",
       "imagePrompt": "A 17-year-old teenager",
-      "samples": [
-        "Integrity over shortcuts",
-        "Ambition with a clear plan",
-        "Winning, then rewriting the story so it sounds noble"
-      ]
-    },
-    {
-      "age": 18,
-      "question": "Graduation day! Your young adult reflects on their journey. What are they most proud of?",
-      "imagePrompt": "An 18-year-old young adult, graduating",
-      "samples": [
-        "The people they helped along the way",
-        "Everything they built without asking permission",
-        "How often they won by staying three moves ahead"
+      "questionVariants": [
+        {
+          "question": "<Name> got into college but not the one you were hoping for. They're watching your face. What do you say?",
+          "samples": [
+            "I'm proud of you before my face says anything stupid",
+            "The school matters less than what you do there",
+            "Take one breath, kill my ego, and choose their future over mine"
+          ]
+        },
+        {
+          "question": "<Name> wants to take a gap year to chase a high school love. What do you say?",
+          "samples": [
+            "Show me a real plan, not just a feeling",
+            "Love is not a plan unless you can defend it like one",
+            "Maybe, if you can prove this is bigger than panic and fantasy"
+          ]
+        },
+        {
+          "question": "<Name> asks what you wish you'd done differently. What do you say?",
+          "samples": [
+            "Taken more risks while I still had time",
+            "Been kinder sooner and less proud about being right",
+            "Learned earlier that regret compounds faster than money"
+          ]
+        }
       ]
     }
   ]
