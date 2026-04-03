@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 76;
+const BUILD_NUMBER = 77;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -90,6 +90,7 @@ const destinyRevealTail = document.getElementById('destiny-reveal-tail');
 const destinyRevealContinue = document.getElementById('destiny-reveal-continue');
 const progressBar = document.getElementById('progress-bar');
 const valuesOverlay = document.getElementById('values-overlay');
+const valuesTitle = document.querySelector('.values-title');
 const currentValuesList = document.getElementById('current-values-list');
 const buildBadge = document.getElementById('build-badge');
 
@@ -1324,6 +1325,10 @@ function showValuesOverlay() {
     setQuestionPhaseVisible(true);
     if (valuesOverlay) {
         valuesOverlay.classList.remove('hidden');
+    }
+    if (valuesTitle) {
+        const safeName = (gameState.childName || 'Your Child').trim() || 'Your Child';
+        valuesTitle.textContent = `${safeName}'s Values`;
     }
     setValuesFeedback('');
     questionEyebrow.textContent = 'Instill A Value';
