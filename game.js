@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 77;
+const BUILD_NUMBER = 78;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -116,7 +116,7 @@ let activeFinalImageAbortController = null;
 let destinyRevealButtonTimer = null;
 let sharedAudioContext = null;
 let activeVoiceAudio = null;
-let html2CanvasPromise = null;
+let screenshotLibraryPromise = null;
 let currentScreenName = null;
 let isTitleVoiceAttemptInFlight = false;
 let hasPlayedTitleVoiceForScreen = false;
@@ -1209,25 +1209,68 @@ async function copyTextToClipboard(text) {
     }
 }
 
-function ensureHtml2Canvas() {
-    if (window.html2canvas) {
-        return Promise.resolve(window.html2canvas);
+function ensureScreenshotLibrary() {
+    if (window.htmlToImage?.toPng) {
+        return Promise.resolve(window.htmlToImage);
     }
 
-    if (html2CanvasPromise) {
-        return html2CanvasPromise;
+    if (screenshotLibraryPromise) {
+        return screenshotLibraryPromise;
     }
 
-    html2CanvasPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
-        script.async = true;
-        script.onload = () => resolve(window.html2canvas);
-        script.onerror = () => reject(new Error('Screenshot tools failed to load.'));
-        document.head.appendChild(script);
+    screenshotLibraryPromise = import('https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm')
+        .then((module) => {
+            window.htmlToImage = module;
+            return module;
+        })
+        .catch((error) => {
+            screenshotLibraryPromise = null;
+            throw new Error(error?.message || 'Screenshot tools failed to load.');
+        });
+
+    return screenshotLibraryPromise;
+}
+
+function buildFinalScreenScreenshotClone(sourceNode) {
+    if (!sourceNode) {
+        return null;
+    }
+
+    const rect = sourceNode.getBoundingClientRect();
+    const clone = sourceNode.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.setAttribute('aria-hidden', 'true');
+    clone.classList.remove('hidden');
+    clone.style.position = 'fixed';
+    clone.style.left = '-10000px';
+    clone.style.top = '0';
+    clone.style.width = `${Math.ceil(rect.width)}px`;
+    clone.style.height = `${Math.ceil(rect.height)}px`;
+    clone.style.zIndex = '-1';
+    clone.style.pointerEvents = 'none';
+    clone.style.opacity = '1';
+
+    clone.querySelectorAll('*').forEach((element) => {
+        element.style.animation = 'none';
+        element.style.transition = 'none';
+        element.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
     });
 
-    return html2CanvasPromise;
+    clone.querySelectorAll('.final-screen-shell > *').forEach((element) => {
+        element.style.opacity = '1';
+        element.style.transform = 'none';
+    });
+
+    clone.querySelectorAll('.final-destiny, .final-screen-copy h2').forEach((element) => {
+        element.style.fontFamily = 'Georgia, serif';
+    });
+
+    clone.querySelectorAll('.final-screen-portrait img').forEach((element) => {
+        element.style.opacity = '1';
+        element.style.transform = 'none';
+    });
+
+    return clone;
 }
 
 async function loadFinalPortrait() {
@@ -1323,13 +1366,22 @@ async function handleFinalSave() {
         return;
     }
 
+    let screenshotNode = null;
+
     try {
         showFinalScreenStatus('Preparing screenshot...', 'muted');
-        const html2canvas = await ensureHtml2Canvas();
-        const canvas = await html2canvas(finalScreenOverlay, {
-            backgroundColor: null,
-            scale: Math.max(2, window.devicePixelRatio || 1),
-            useCORS: true
+        const { toPng } = await ensureScreenshotLibrary();
+        screenshotNode = buildFinalScreenScreenshotClone(finalScreenOverlay);
+        if (!screenshotNode) {
+            throw new Error('Screenshot node was unavailable.');
+        }
+
+        document.body.appendChild(screenshotNode);
+        await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+        const imageUrl = await toPng(screenshotNode, {
+            cacheBust: true,
+            pixelRatio: Math.max(2, window.devicePixelRatio || 1)
         });
 
         const link = document.createElement('a');
@@ -1337,7 +1389,7 @@ async function handleFinalSave() {
             .replace(/[^a-z0-9]+/gi, '-')
             .replace(/^-+|-+$/g, '')
             .toLowerCase();
-        link.href = canvas.toDataURL('image/png');
+        link.href = imageUrl;
         link.download = `${safeName || 'minor-decisions'}-final-reading.png`;
         document.body.appendChild(link);
         link.click();
@@ -1345,7 +1397,11 @@ async function handleFinalSave() {
         showFinalScreenStatus('Screenshot saved to your browser download location.', 'success');
     } catch (error) {
         console.error('Error saving final screen:', error);
-        showFinalScreenStatus('Screenshot capture failed.', 'error');
+        showFinalScreenStatus('Screenshot capture failed. Please try again.', 'error');
+    } finally {
+        if (screenshotNode?.parentNode) {
+            screenshotNode.parentNode.removeChild(screenshotNode);
+        }
     }
 }
 
