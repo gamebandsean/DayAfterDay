@@ -1276,16 +1276,17 @@ body::before {
 .final-screen-summary {
     display: grid;
     gap: 6px;
-    max-width: 30ch;
+    max-width: 34ch;
     animation-delay: 180ms;
 }
 
 .final-score-value {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: oklch(0.92 0.02 85 / 0.82);
+    font-size: clamp(14px, 2.4vw, 17px);
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    color: oklch(0.94 0.02 85 / 0.9);
+    text-wrap: balance;
 }
 
 .final-success-line {

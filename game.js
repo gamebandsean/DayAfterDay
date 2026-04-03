@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 85;
+const BUILD_NUMBER = 86;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -24,6 +24,7 @@ function createDefaultGameState(questionsData = null) {
         destiny: 'UNKNOWN',
         moralAlignment: null,
         justification: '',
+        adultQuote: '',
         score: 0,
         values: []
     };
@@ -38,6 +39,7 @@ const FALLBACK_ORACLE_RESPONSE = {
     destiny: 'Mysterious Soul',
     moral_alignment: 'grey',
     justification: "The Oracle's vision is clouded...",
+    adult_quote: '"My parent sure kept things interesting."',
     image_prompt: 'semi-realistic portrait of a child, head and shoulders',
     physical_description: DEFAULT_PHYSICAL_DESCRIPTION
 };
@@ -1353,9 +1355,17 @@ function calculateFinalPercentile(score, maxScore) {
     };
 }
 
-function getFinalShareText(score, percentile) {
+function formatAdultQuote(quote) {
+    const normalizedQuote = String(quote || FALLBACK_ORACLE_RESPONSE.adult_quote)
+        .trim()
+        .replace(/^["']+|["']+$/g, '');
+    return `"${normalizedQuote}"`;
+}
+
+function getFinalShareText(percentile) {
     const childName = gameState.childName || 'My child';
-    return `${childName} grew up to become ${gameState.destiny} in Minor Decisions. They scored ${score} points and were ${percentile}% more successful in life than the average child.`;
+    const adultQuote = formatAdultQuote(gameState.adultQuote || FALLBACK_ORACLE_RESPONSE.adult_quote);
+    return `${childName} grew up to become ${gameState.destiny} in Minor Decisions. ${adultQuote} They were ${percentile}% more successful in life than the average child.`;
 }
 
 async function copyTextToClipboard(text) {
@@ -1508,10 +1518,9 @@ async function loadFinalPortrait() {
 }
 
 async function handleFinalShare() {
-    const score = gameState.score;
     const maxScore = PLAYABLE_AGES.length * 25;
-    const { percentile } = calculateFinalPercentile(score, maxScore);
-    const shareText = getFinalShareText(score, percentile);
+    const { percentile } = calculateFinalPercentile(gameState.score, maxScore);
+    const shareText = getFinalShareText(percentile);
 
     try {
         if (navigator.share) {
@@ -1746,16 +1755,19 @@ Your job: determine what this person became as an adult.
 Rules:
 1. The result must be 1 to 5 words.
 2. It should sound like a real adult role or life path, with personality baked in.
-3. Use all answers and all accumulated characteristics.
+3. Use all answers and all accumulated characteristics as a full-life record. Do not overweight the latest answer just because it happened most recently.
 4. Be specific, surprising, darkly funny, and human. Do not use fantasy language.
-5. Also return a concise justification, moral alignment, an adult portrait prompt, and updated physical description.
-6. Return valid JSON only.
+5. The ending can be happy, sad, hollow, or disturbing, but it should always carry at least a slight comedic twist. "Missing Person Cold Case" is a good example of the right funny-sad tone.
+6. Also return a short quote from the child at age 30. The quote must be conversational, under 280 characters, and should summarize the main thing or things they learned from their parent. It should combine themes into an interesting phrase, not just restate the values list, and it should pass subtle judgment on the parent.
+7. Also return a concise justification, moral alignment, an adult portrait prompt, and updated physical description.
+8. Return valid JSON only.
 
 Response JSON:
 {
   "destiny": "string",
   "moral_alignment": "good" | "bad" | "grey",
   "justification": "string",
+  "adult_quote": "string",
   "image_prompt": "string",
   "physical_description": "string"
 }`;
@@ -2010,7 +2022,8 @@ ALL QUESTIONS AND ANSWERS:
 ${allRounds}
 
 Determine what this person became as an adult.
-Return destiny, moral_alignment, justification, image_prompt, and physical_description.`;
+Synthesize the full life evenly: all answers matter, repeated values matter, and the latest answer should not be treated as more important just because it is last.
+Return destiny, moral_alignment, justification, adult_quote, image_prompt, and physical_description.`;
 }
 
 async function consultFinalDestiny() {
@@ -2540,14 +2553,13 @@ async function endGame() {
     const maxScore = PLAYABLE_AGES.length * 25;
     const { percentile } = calculateFinalPercentile(gameState.score, maxScore);
 
-    if (gameState.mode === 'birth') {
-        const finalOutcome = await consultFinalDestiny();
-        gameState.destiny = finalOutcome.destiny;
-        gameState.moralAlignment = finalOutcome.moral_alignment;
-        gameState.justification = finalOutcome.justification;
-        gameState.physicalDescription = finalOutcome.physical_description;
-        updateDestiny(finalOutcome.destiny, finalOutcome.justification);
-    }
+    const finalOutcome = await consultFinalDestiny();
+    gameState.destiny = finalOutcome.destiny;
+    gameState.moralAlignment = finalOutcome.moral_alignment;
+    gameState.justification = finalOutcome.justification;
+    gameState.adultQuote = finalOutcome.adult_quote || FALLBACK_ORACLE_RESPONSE.adult_quote;
+    gameState.physicalDescription = finalOutcome.physical_description;
+    updateDestiny(finalOutcome.destiny, finalOutcome.justification);
 
     hideValuesOverlay();
     hideDestinyRevealOverlay();
@@ -2568,7 +2580,7 @@ async function endGame() {
         finalScreenLead.textContent = `${safeName} became a`;
     }
     finalDestiny.textContent = gameState.destiny;
-    scoreDisplay.textContent = `${gameState.score} Points`;
+    scoreDisplay.textContent = formatAdultQuote(gameState.adultQuote || FALLBACK_ORACLE_RESPONSE.adult_quote);
     if (successDisplay) {
         successDisplay.textContent = `They were ${percentile}% more successful in life than the average child.`;
     }
