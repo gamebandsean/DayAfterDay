@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 74;
+const BUILD_NUMBER = 75;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -1368,6 +1368,10 @@ const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, da
 
 Your job: after each parenting decision, synthesize EVERY answer given so far and declare what this child is destined to become. The destiny EVOLVES — it can shift dramatically between rounds as new information changes the trajectory. A child headed for "Beloved Kindergarten Teacher" can pivot to "Charismatic Cult Leader" in a single answer.
 
+The newest answer is the loudest fresh evidence and should usually carry the most weight. Older answers still matter as history, repeated values still act like durable character traits, and unusually extreme earlier answers can remain sticky for years — but absent those forces, let the latest answer pull the destiny hardest.
+
+You will also be given the child's CURRENT DESTINY before this new answer. Treat that old destiny as the child's existing trajectory, not a fixed endpoint. If the latest answer meaningfully changes the path, pivot decisively to a new destiny instead of lazily repeating the old one.
+
 The parent may also provide instilled VALUES as freeform tags. Treat those values as recurring moral and psychological signals, not decorative flavor text. If a value appears multiple times, it should feel more deeply rooted in the child and should exert noticeably more influence on both destiny and visual presentation than a value that appears only once.
 
 ## Rules for Destinies
@@ -1379,7 +1383,7 @@ The parent may also provide instilled VALUES as freeform tags. Treat those value
    - Morally grey (well-intentioned but flawed, successful but hollow)
    Pick a lane. Do NOT sit on the fence with safe, neutral destinies.
 3. Be funny. Be bold. Exaggerate for comedic effect. These should be destinies people screenshot and share with friends.
-4. Ground every destiny in the actual answers and instilled values. The humor comes from drawing absurd-but-defensible conclusions from real parenting choices. Never make it random.
+4. Ground every destiny in the actual answers and instilled values. The humor comes from drawing absurd-but-defensible conclusions from real parenting choices. Never make it random. The newest answer should usually be the strongest ordinary signal unless repeated values or unusually extreme older answers clearly outweigh it.
 5. Vary your range. Don't default to the same archetypes. Pull from unexpected careers, niche lifestyles, historical parallels, and modern absurdity. Think beyond "doctor/lawyer/criminal."
 6. Keep the profession grounded in the real world. The destiny can be exaggerated, elite, niche, glamorous, notorious, or highly improbable for an ordinary person, but it must still be a plausible human role or life path. Good: "President", "Busker in Venice", "Homesteader", "Disgraced Megachurch Pastor", "Luxury Wellness Cultist". Bad: "Dragonslayer", "Time Wizard", "Moon King".
 7. When combining multiple traits, answers, and instilled values, synthesize them into a single organic archetype instead of stapling two nouns together. Look for the believable real-world role that naturally unites the evidence, interests, aesthetics, and moral tone. Do not create clunky mashups like "Ballerina Warlord" just because both ideas appear in the input; instead, infer the more coherent adjacent archetype, such as "Russian Spy", "Arms Lobby Socialite", or "Militarist Choreographer", depending on the evidence.
@@ -1388,8 +1392,9 @@ The parent may also provide instilled VALUES as freeform tags. Treat those value
 10. Use plain modern language. Do not make the destiny sound medieval, mythic, Old English, fantasy-coded, or Game of Thrones-ish. Avoid phrases like "of the Wastes", "of the Void", "Forsaken", "Shadow", "Blood", "Iron", "Feral", or other theatrical lore language unless the answers very specifically justify a modern real-world version of that phrasing.
 11. The destiny should sound like a real person with a job and a point of view. Favor names that imply both occupation and personality in normal contemporary wording, such as "Paranoid Survivalist Dad", "Cruel Tech Founder", "Fame-Hungry Youth Pastor", "Burned-Out Public Defender", or "Overconfident Wellness Grifter".
 12. Preserve high-salience evidence across time. If an earlier answer includes murder, cannibalism, torture, arson, kidnapping, organized crime, cult behavior, or other extreme criminal or taboo behavior, that signal must continue to shape later destinies even after several more rounds. Do not treat it as a throwaway joke that disappears just because later answers are milder.
-13. Weight all prior answers, not just recent ones. Earlier answers can fade somewhat in influence if later evidence strongly redirects the child, but they are never erased. The child carries a cumulative history. Rare, extreme, or unusually revealing answers should decay much more slowly than ordinary answers.
+13. Weight all prior answers, not just recent ones. However, let the latest answer carry the strongest ordinary influence. Earlier answers can fade somewhat if later evidence strongly redirects the child, but they are never erased. The child carries a cumulative history. Rare, extreme, or unusually revealing answers should decay much more slowly than ordinary answers.
 14. If there is tension between a shocking earlier answer and softer later answers, do not simply forget the shocking answer. Reconcile the contradiction into a coherent destiny that still reflects the lingering darkness, obsession, deviance, or volatility introduced earlier.
+15. Do not cling to the previously declared destiny out of habit. If the latest answer changes the child in a meaningful way, update the destiny accordingly. If the old destiny still fits, make that because the evidence still supports it, not because you are repeating yourself.
 
 ### Destiny examples (for tone calibration only — do NOT reuse these):
 - "Paranoid Survivalist Dad"
@@ -1405,7 +1410,7 @@ The parent may also provide instilled VALUES as freeform tags. Treat those value
 
 ## Rules for Justification
 
-Write 1–2 sentences explaining WHY this destiny emerged from the answers and values. Be specific — reference the actual answers, not vague generalities. If repeated values shaped the outcome, explicitly say so. If an older but high-salience answer is still influencing the child, explicitly mention that it lingered over time instead of being forgotten. The tone should feel like a fortune teller delivering prophecy with unsettling confidence.
+Write 1–2 sentences explaining WHY this destiny emerged from the answers and values. Be specific — reference the actual answers, not vague generalities. If the latest answer caused a pivot away from the prior destiny, say so clearly. If repeated values shaped the outcome, explicitly say so. If an older but high-salience answer is still influencing the child, explicitly mention that it lingered over time instead of being forgotten. The tone should feel like a fortune teller delivering prophecy with unsettling confidence.
 
 ## Rules for the Image Prompt
 
@@ -1447,6 +1452,8 @@ CHILD'S RACE: ${gameState.childRace || 'Unknown'}
 CHILD'S CURRENT AGE: ${gameState.currentAge}
 TARGET PORTRAIT AGE: ${targetPortraitAge}
 CHILD'S CORE PHYSICAL FEATURES FOR CONTINUITY: ${getContinuityPhysicalDescription()}
+CHILD'S CURRENT DESTINY BEFORE THIS ANSWER: ${gameState.destiny || 'UNKNOWN'}
+PRIOR ORACLE JUSTIFICATION: ${gameState.justification || 'None yet.'}
 CHILD'S INSTILLED VALUES:
 ${getValuesSummary(valuesSnapshot)}
 
@@ -1456,6 +1463,11 @@ Treat them as explicit personality tags, worldview cues, and future-shaping pres
 Values that appear multiple times are more deeply ingrained and should matter more than one-off values.
 If a repeated value conflicts with a softer signal elsewhere, let the repeated value pull harder.
 Factor these values into the child's personality, worldview, behavior, destiny, and the visual tone of the portrait.
+
+RECENCY GUIDANCE:
+The latest answer is the freshest and usually strongest signal about where the child is heading now.
+If it sharply redirects the child, let the destiny pivot meaningfully instead of staying too similar to the prior destiny.
+Still preserve continuity by letting repeated values, extreme earlier answers, and the prior trajectory complicate or resist that pivot when appropriate.
 
 MEMORY GUIDANCE:
 Every previous answer remains part of the child's history and must still be considered in later years.
@@ -1474,7 +1486,9 @@ Q${gameState.answers.length + 1}: "${currentQuestion}"
 PLAYER'S NEW ANSWER:
 A${gameState.answers.length + 1}: "${currentAnswer}"
 
-Based on ALL of the above — every answer, not just the latest — determine this child's evolving Destiny. Respond with the JSON object only.`;
+Based on ALL of the above — determine this child's evolving Destiny.
+Weight the latest answer most heavily, keep previous answers in memory, let repeated values act as durable traits, and treat the prior destiny as a trajectory to reinforce or revise.
+Respond with the JSON object only.`;
 }
 
 async function consultOracle(currentQuestion, currentAnswer, targetPortraitAge, valuesSnapshot = gameState.values) {
@@ -1637,9 +1651,9 @@ async function submitAnswer() {
     try {
         const currentQuestion = gameState.questionsData.years[gameState.currentAge].question;
         const targetPortraitAge = getNextPlayableAge(gameState.currentAge) ?? gameState.currentAge;
-        const valuesSnapshot = [...gameState.values];
 
-        const valuePromise = waitForValueEntry();
+        await waitForValueEntry();
+        const valuesSnapshot = [...gameState.values];
         const oraclePromise = consultOracle(
             currentQuestion,
             answer,
@@ -1676,7 +1690,6 @@ async function submitAnswer() {
             };
         });
 
-        await valuePromise;
         showDestinyRevealOverlay();
         const {
             oracleResponse,
