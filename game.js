@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 80;
+const BUILD_NUMBER = 81;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -56,7 +56,10 @@ const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulato
 const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 const DEFAULT_IMAGE_LOADING_MESSAGE = 'The oracle is sketching a face...';
 const FALLBACK_ATTRIBUTE_RESPONSE = {
-    attributes: ['Private Worry', 'Defensive Instinct'],
+    attributes: [
+        { text: 'Private Worry', isWildcard: false },
+        { text: 'Defensive Instinct', isWildcard: false }
+    ],
     moral_alignment: 'grey',
     image_prompt: 'semi-realistic portrait of a child, head and shoulders, guarded expression, natural clothing',
     physical_description: DEFAULT_PHYSICAL_DESCRIPTION
@@ -1086,9 +1089,18 @@ function prepareAttributeReveal(attributes) {
     destinyRevealLead.textContent = 'You have instilled in your child the following characteristics:';
     destinyRevealAttributes.innerHTML = '';
     attributes.forEach((attribute) => {
+        const attributeText =
+            typeof attribute === 'string' ? attribute : sanitizeValue(String(attribute?.text || ''));
+        if (!attributeText) {
+            return;
+        }
+
         const item = document.createElement('div');
-        item.className = 'destiny-reveal-attribute';
-        item.textContent = attribute;
+        const isWildcard = typeof attribute === 'object' && attribute?.isWildcard === true;
+        item.className = isWildcard
+            ? 'destiny-reveal-attribute destiny-reveal-attribute--wildcard'
+            : 'destiny-reveal-attribute';
+        item.textContent = isWildcard ? `Wildcard: ${attributeText}` : attributeText;
         destinyRevealAttributes.appendChild(item);
     });
     if (destinyRevealDestiny) {
@@ -1157,7 +1169,19 @@ function buildFullRevealVoiceText(destiny) {
 }
 
 function buildAttributeRevealVoiceText(attributes = []) {
-    return `You have instilled in your child the following characteristics: ${attributes.join('. ')}.`;
+    const spokenAttributes = attributes
+        .map((attribute) => {
+            const attributeText =
+                typeof attribute === 'string' ? attribute : sanitizeValue(String(attribute?.text || ''));
+            if (!attributeText) {
+                return '';
+            }
+            return typeof attribute === 'object' && attribute?.isWildcard === true
+                ? `Wildcard. ${attributeText}`
+                : attributeText;
+        })
+        .filter(Boolean);
+    return `You have instilled in your child the following characteristics: ${spokenAttributes.join('. ')}.`;
 }
 
 function applyOracleReveal(oracleResponse) {
@@ -1197,7 +1221,7 @@ async function runDestinyRevealSequence({
 }
 
 function applyAttributeResponse(attributeResponse) {
-    gameState.values.push(...attributeResponse.attributes);
+    gameState.values.push(...attributeResponse.attributes.map((attribute) => attribute.text));
     gameState.moralAlignment = attributeResponse.moral_alignment;
     gameState.physicalDescription = attributeResponse.physical_description;
     renderCurrentValues();
@@ -1275,7 +1299,12 @@ function buildRescuePortraitPrompt(fallbackState = {}) {
     const storyHint = fallbackState.destiny
         ? `${fallbackState.destiny}, `
         : fallbackState.attributes?.length
-            ? `traits: ${fallbackState.attributes.join(', ')}, `
+            ? `traits: ${fallbackState.attributes
+                .map((attribute) =>
+                    typeof attribute === 'string' ? attribute : sanitizeValue(String(attribute?.text || ''))
+                )
+                .filter(Boolean)
+                .join(', ')}, `
             : '';
 
     return `semi-realistic portrait of a ${age} year old ${gender}child, head and shoulders, ${physicalDescription}, ${storyHint}natural clothing, direct gaze, soft natural light, plain studio backdrop, photorealistic, detailed face`;
@@ -1600,19 +1629,23 @@ const ATTRIBUTE_SYSTEM_PROMPT = `You are a sharp, darkly funny childhood-develop
 Your job: after each parenting decision, infer 2 or 3 concise CHARACTERISTICS that the child absorbs from that moment.
 
 Rules:
-1. Each characteristic must be under 5 words.
+1. Each characteristic must be under 5 words and should feel like a broad life-value, worldview, or guiding belief rather than a narrow clinical label. Good examples: "Fear of Authority", "Love of Money", "Be Kind to Others", "Greed is Good", "Public Service is Key".
 2. They should feel psychologically plausible, but heightened, memorable, and a little theatrical.
 3. Use the newest answer as the strongest signal, while still considering all earlier answers and existing characteristics.
 4. Existing characteristics should persist and compound over time. Repeated themes should become stronger.
-5. Roughly 30% of the time, include one wild-card characteristic that is unusually unhinged, taboo, or absurdly specific, while still being traceable to the answer.
-6. Do not output bland therapy language. Prefer sharp, screenshot-worthy phrases.
-7. Also return a portrait prompt for the child's NEXT age that uses the new and existing characteristics to shape their expression, styling, posture, and atmosphere.
-8. Preserve physical continuity with the supplied physical description. The child must look like the same person, just older.
-9. Return valid JSON only.
+5. Roughly 10% of the time, include one wild-card characteristic that is unusually unhinged, taboo, or absurdly specific while still being traceable to the answer.
+6. If you include a wild-card characteristic, explicitly flag it in the JSON with "is_wildcard": true.
+7. Do not output bland therapy language. Prefer sharp, screenshot-worthy phrases.
+8. Also return a portrait prompt for the child's NEXT age that uses the new and existing characteristics to shape their expression, styling, posture, and atmosphere.
+9. Preserve physical continuity with the supplied physical description. The child must look like the same person, just older.
+10. Return valid JSON only.
 
 Response JSON:
 {
-  "attributes": ["string", "string", "string"],
+  "attributes": [
+    { "text": "string", "is_wildcard": false },
+    { "text": "string", "is_wildcard": false }
+  ],
   "moral_alignment": "good" | "bad" | "grey",
   "image_prompt": "string",
   "physical_description": "string"
@@ -1794,13 +1827,32 @@ NEW ANSWER:
 "${currentAnswer}"
 
 Infer what this answer newly instills in the child.
-Return 2 or 3 new characteristics only, plus moral_alignment, image_prompt, and physical_description.`;
+Return 2 or 3 new characteristics only in the requested JSON shape, plus moral_alignment, image_prompt, and physical_description.`;
 }
 
 function normalizeAttributePayload(payload) {
     const attributes = Array.isArray(payload?.attributes)
         ? payload.attributes
-            .map((attribute) => sanitizeValue(String(attribute || '')))
+            .map((attribute) => {
+                if (typeof attribute === 'string') {
+                    const text = sanitizeValue(attribute);
+                    return text ? { text, isWildcard: false } : null;
+                }
+
+                if (!attribute || typeof attribute !== 'object') {
+                    return null;
+                }
+
+                const text = sanitizeValue(String(attribute.text || ''));
+                if (!text) {
+                    return null;
+                }
+
+                return {
+                    text,
+                    isWildcard: attribute.is_wildcard === true || attribute.isWildcard === true
+                };
+            })
             .filter(Boolean)
             .slice(0, 3)
         : [];
@@ -2150,7 +2202,7 @@ async function runBirthRound(currentQuestion, answer, targetPortraitAge) {
             showLoadingOverlay: false,
             preserveExistingImage: true,
             fallbackState: {
-                attributes: attributeResponse.attributes,
+                attributes: attributeResponse.attributes.map((attribute) => attribute.text),
                 moralAlignment: attributeResponse.moral_alignment,
                 age: targetPortraitAge,
                 physicalDescription: attributeResponse.physical_description
