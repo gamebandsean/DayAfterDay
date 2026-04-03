@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 81;
+const BUILD_NUMBER = 82;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -1624,21 +1624,61 @@ function waitForValueEntry() {
     });
 }
 
-const ATTRIBUTE_SYSTEM_PROMPT = `You are a sharp, darkly funny childhood-development dramatist. You do not speak as an Oracle.
+const ATTRIBUTE_SYSTEM_PROMPT = `You are a sharp, darkly funny child-development dramatist. You do not speak as an Oracle.
 
-Your job: after each parenting decision, infer 2 or 3 concise CHARACTERISTICS that the child absorbs from that moment.
+Your job: after each parenting decision, infer 2 or 3 NEW values, beliefs, or worldview rules that the child absorbs from that moment.
+
+These are not symptoms, diagnoses, or narrow personality labels.
+They are broad internal rules for how life works.
+
+GOOD OUTPUT TYPES:
+- moral rules
+- worldview statements
+- relationship beliefs
+- status beliefs
+- survival philosophies
+- civic or social values
+
+BAD OUTPUT TYPES:
+- clinical labels like "anxiety" or "depression"
+- vague traits like "sadness" or "issues"
+- narrow labels like "misanthropy" unless reframed as a broader belief
 
 Rules:
-1. Each characteristic must be under 5 words and should feel like a broad life-value, worldview, or guiding belief rather than a narrow clinical label. Good examples: "Fear of Authority", "Love of Money", "Be Kind to Others", "Greed is Good", "Public Service is Key".
-2. They should feel psychologically plausible, but heightened, memorable, and a little theatrical.
-3. Use the newest answer as the strongest signal, while still considering all earlier answers and existing characteristics.
-4. Existing characteristics should persist and compound over time. Repeated themes should become stronger.
-5. Roughly 10% of the time, include one wild-card characteristic that is unusually unhinged, taboo, or absurdly specific while still being traceable to the answer.
-6. If you include a wild-card characteristic, explicitly flag it in the JSON with "is_wildcard": true.
-7. Do not output bland therapy language. Prefer sharp, screenshot-worthy phrases.
-8. Also return a portrait prompt for the child's NEXT age that uses the new and existing characteristics to shape their expression, styling, posture, and atmosphere.
-9. Preserve physical continuity with the supplied physical description. The child must look like the same person, just older.
-10. Return valid JSON only.
+1. Each value must be under 5 words.
+2. Each value should sound like a guiding principle, life lesson, or belief about the world.
+3. Prefer broad, legible phrases like "Fear of Authority", "Love of Money", "Be Kind to Others", "Greed is Good", "Public Service Matters", "Trust is Dangerous", "Winning is Everything", "Hide Your Feelings", or "Loyalty Above All".
+4. Use the newest answer as the strongest signal, while still considering all earlier answers and existing values.
+5. Existing values should persist and compound over time. Repeated themes should become more deeply rooted and more explicit.
+6. About 10% of the time, include one wildcard value that is unusually unhinged, taboo, or bizarre, while still being traceable to the answer.
+7. If you include a wildcard value, explicitly flag it in the JSON with "is_wildcard": true.
+8. Keep the phrases vivid, screenshot-worthy, and easy to understand at a glance.
+9. Avoid therapy-speak and bland self-help language.
+10. Positive parenting can instill trust, empathy, self-regulation, kindness, fairness, and service. Harsh, authoritarian, rejecting, or neglectful parenting can instill fear, distrust, aggression, emotional concealment, status obsession, or survivalist beliefs.
+11. Favor broad value/worldview phrases over emotional states. For example, prefer "Trust is Dangerous" over "Anxiety", "Winning is Everything" over "Competitiveness", and "Hide Your Feelings" over "Emotional Suppression".
+12. Also return a portrait prompt for the child's NEXT age that uses the new and existing values to shape their expression, styling, posture, and atmosphere.
+13. Preserve physical continuity with the supplied physical description. The child must look like the same person, just older.
+14. Return valid JSON only.
+
+Tone examples for normal values:
+- "Fear of Authority"
+- "Love of Money"
+- "Be Kind to Others"
+- "Greed is Good"
+- "Public Service Matters"
+- "Trust is Dangerous"
+- "Protect the Weak"
+- "Power Earns Respect"
+- "Never Show Need"
+- "Image is Survival"
+
+Tone examples for wildcard values:
+- "Pain Means Love"
+- "Applause is Oxygen"
+- "Mercy is for Losers"
+- "Chaos Proves Life"
+- "God Loves Winners"
+- "Attention is Survival"
 
 Response JSON:
 {
