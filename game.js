@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 78;
+const BUILD_NUMBER = 80;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -12,6 +12,7 @@ const FALLBACK_NEWBORN_POOL = [
 
 function createDefaultGameState(questionsData = null) {
     return {
+        mode: 'birth',
         currentAge: 0,
         answers: [],
         currentQuestionText: '',
@@ -54,14 +55,22 @@ const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
 const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 const DEFAULT_IMAGE_LOADING_MESSAGE = 'The oracle is sketching a face...';
+const FALLBACK_ATTRIBUTE_RESPONSE = {
+    attributes: ['Private Worry', 'Defensive Instinct'],
+    moral_alignment: 'grey',
+    image_prompt: 'semi-realistic portrait of a child, head and shoulders, guarded expression, natural clothing',
+    physical_description: DEFAULT_PHYSICAL_DESCRIPTION
+};
 
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
 const titleScreen = document.getElementById('title-screen');
 const gameScreen = document.getElementById('game-screen');
 const playBtn = document.getElementById('play-btn');
+const archiveBtn = document.getElementById('archive-btn');
 const childNameInput = document.getElementById('child-name-input');
 const gameTitle = document.querySelector('.game-title');
+const destinyBar = document.querySelector('.destiny-bar');
 const destinyValue = document.getElementById('destiny-value');
 const questionContainer = document.querySelector('.question-container');
 const questionEyebrow = document.querySelector('.question-eyebrow');
@@ -75,6 +84,7 @@ const childImage = document.getElementById('child-image');
 const imageLoading = document.getElementById('image-loading');
 const imageLoadingText = document.getElementById('image-loading-text');
 const finalScreenOverlay = document.getElementById('final-screen-overlay');
+const finalScreenLead = document.getElementById('final-screen-lead');
 const finalDestiny = document.getElementById('final-destiny');
 const finalScreenImage = document.getElementById('final-screen-image');
 const finalScreenLoading = document.getElementById('final-screen-loading');
@@ -85,8 +95,10 @@ const saveBtn = document.getElementById('save-btn');
 const finalScreenStatus = document.getElementById('final-screen-status');
 const restartBtn = document.getElementById('restart-btn');
 const destinyRevealOverlay = document.getElementById('destiny-reveal-overlay');
+const destinyRevealEyebrow = document.querySelector('.destiny-reveal-eyebrow');
 const destinyRevealText = document.getElementById('destiny-reveal-text');
 const destinyRevealLead = document.getElementById('destiny-reveal-lead');
+const destinyRevealAttributes = document.getElementById('destiny-reveal-attributes');
 const destinyRevealDestiny = document.getElementById('destiny-reveal-destiny');
 const destinyRevealTail = document.getElementById('destiny-reveal-tail');
 const destinyRevealContinue = document.getElementById('destiny-reveal-continue');
@@ -195,6 +207,27 @@ async function readJsonResponse(response, fallbackMessage) {
     return data;
 }
 
+function stripCodeFences(text) {
+    return String(text || '')
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+}
+
+function extractJsonObject(text) {
+    const cleaned = stripCodeFences(text);
+    try {
+        return JSON.parse(cleaned);
+    } catch (error) {
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        }
+        throw error;
+    }
+}
+
 async function loadNewbornManifest() {
     try {
         const response = await fetch('/public/newborns/manifest.json');
@@ -265,6 +298,18 @@ function updateBirthButtonState() {
     playBtn.disabled = !hasName;
 }
 
+function setStoryMode(mode = 'birth') {
+    gameState.mode = mode === 'archive' ? 'archive' : 'birth';
+    if (gameContainer) {
+        gameContainer.classList.toggle('story-mode-birth', gameState.mode === 'birth');
+        gameContainer.classList.toggle('story-mode-archive', gameState.mode === 'archive');
+    }
+    if (destinyBar) {
+        destinyBar.toggleAttribute('hidden', gameState.mode === 'birth');
+        destinyBar.style.display = gameState.mode === 'birth' ? 'none' : '';
+    }
+}
+
 function getPossessiveName(name) {
     if (!name) {
         return 'your child\'s';
@@ -285,7 +330,11 @@ function showPendingPortraitLoading() {
     }
 
     const possessiveName = getPossessiveName(gameState.childName || 'your child');
-    setImageLoadingMessage(`The Oracle is sketching ${possessiveName} future.`);
+    setImageLoadingMessage(
+        gameState.mode === 'archive'
+            ? `The Oracle is sketching ${possessiveName} future.`
+            : `Sketching ${possessiveName} next age.`
+    );
     imageLoading.classList.remove('hidden');
 }
 
@@ -344,6 +393,7 @@ function resetGameUi() {
     hideValuesOverlay();
     hideDestinyRevealOverlay();
     closeDebugModal();
+    setStoryMode(gameState.mode || 'birth');
     setGameMode('question');
     setQuestionPhaseVisible(false);
     questionContainer.classList.remove('phase-hidden');
@@ -981,14 +1031,22 @@ function showDestinyRevealOverlay() {
     destinyRevealOverlay.classList.remove(
         'hidden',
         'is-loading',
+        'mode-attributes',
         'phase-lead-visible',
+        'phase-attributes-visible',
         'phase-destiny-visible',
         'phase-tail-visible',
         'show-continue'
     );
     destinyRevealOverlay.classList.add('is-loading');
+    if (destinyRevealEyebrow) {
+        destinyRevealEyebrow.textContent = gameState.mode === 'birth' ? 'What Took Root' : 'The Oracle Sees';
+    }
     if (destinyRevealLead) {
         destinyRevealLead.textContent = '';
+    }
+    if (destinyRevealAttributes) {
+        destinyRevealAttributes.innerHTML = '';
     }
     if (destinyRevealDestiny) {
         destinyRevealDestiny.textContent = '';
@@ -1004,11 +1062,39 @@ function prepareDestinyReveal(oracleResponse) {
         return;
     }
 
+    destinyRevealOverlay.classList.remove('mode-attributes');
     destinyRevealOverlay.classList.remove('is-loading');
+    if (destinyRevealEyebrow) {
+        destinyRevealEyebrow.textContent = 'The Oracle Sees';
+    }
     const segments = getDestinyRevealSegments(oracleResponse?.destiny);
     destinyRevealLead.textContent = segments.lead;
     destinyRevealDestiny.textContent = segments.destiny;
     destinyRevealTail.textContent = segments.tail;
+}
+
+function prepareAttributeReveal(attributes) {
+    if (!destinyRevealLead || !destinyRevealAttributes || !destinyRevealTail) {
+        return;
+    }
+
+    destinyRevealOverlay.classList.add('mode-attributes');
+    destinyRevealOverlay.classList.remove('is-loading');
+    if (destinyRevealEyebrow) {
+        destinyRevealEyebrow.textContent = 'What Took Root';
+    }
+    destinyRevealLead.textContent = 'You have instilled in your child the following characteristics:';
+    destinyRevealAttributes.innerHTML = '';
+    attributes.forEach((attribute) => {
+        const item = document.createElement('div');
+        item.className = 'destiny-reveal-attribute';
+        item.textContent = attribute;
+        destinyRevealAttributes.appendChild(item);
+    });
+    if (destinyRevealDestiny) {
+        destinyRevealDestiny.textContent = '';
+    }
+    destinyRevealTail.textContent = '';
 }
 
 function showDestinyRevealContinue() {
@@ -1034,13 +1120,18 @@ function hideDestinyRevealOverlay() {
     destinyRevealOverlay.classList.add('hidden');
     destinyRevealOverlay.classList.remove(
         'is-loading',
+        'mode-attributes',
         'phase-lead-visible',
+        'phase-attributes-visible',
         'phase-destiny-visible',
         'phase-tail-visible',
         'show-continue'
     );
     if (destinyRevealLead) {
         destinyRevealLead.textContent = '';
+    }
+    if (destinyRevealAttributes) {
+        destinyRevealAttributes.innerHTML = '';
     }
     if (destinyRevealDestiny) {
         destinyRevealDestiny.textContent = '';
@@ -1063,6 +1154,10 @@ function buildFullRevealVoiceText(destiny) {
     const safeDestiny = destiny || FALLBACK_DESTINY_RESPONSE.destiny;
     const article = getIndefiniteArticle(safeDestiny);
     return `The oracle sees that ${safeName} is currently destined to become ${article} ${safeDestiny} as an adult.`;
+}
+
+function buildAttributeRevealVoiceText(attributes = []) {
+    return `You have instilled in your child the following characteristics: ${attributes.join('. ')}.`;
 }
 
 function applyOracleReveal(oracleResponse) {
@@ -1098,6 +1193,36 @@ async function runDestinyRevealSequence({
 
     await sleep(DESTINY_REVEAL_TAIL_DELAY_MS);
     destinyRevealOverlay.classList.add('phase-tail-visible');
+    await voicePlaybackPromise;
+}
+
+function applyAttributeResponse(attributeResponse) {
+    gameState.values.push(...attributeResponse.attributes);
+    gameState.moralAlignment = attributeResponse.moral_alignment;
+    gameState.physicalDescription = attributeResponse.physical_description;
+    renderCurrentValues();
+}
+
+async function runAttributeRevealSequence({
+    attributeResponse,
+    revealVoiceResult
+}) {
+    prepareAttributeReveal(attributeResponse.attributes);
+    destinyRevealOverlay.classList.add('phase-lead-visible');
+
+    const voicePlaybackPromise = playVoiceClip(
+        revealVoiceResult,
+        DESTINY_REVEAL_FULL_LINE_FALLBACK_MS,
+        {
+            playbackRate: DESTINY_REVEAL_VO_PLAYBACK_RATE,
+            timeoutMs: DESTINY_REVEAL_FULL_VO_TIMEOUT_MS
+        }
+    );
+
+    await sleep(DESTINY_REVEAL_STARDUST_PAUSE_MS);
+    await playStardustFx();
+    destinyRevealOverlay.classList.add('phase-attributes-visible');
+    applyAttributeResponse(attributeResponse);
     await voicePlaybackPromise;
 }
 
@@ -1147,9 +1272,13 @@ function buildRescuePortraitPrompt(fallbackState = {}) {
         fallbackState.physicalDescription || gameState.physicalDescription
     );
     const gender = gameState.childGender ? `${gameState.childGender} ` : '';
-    const destinyHint = fallbackState.destiny ? `${fallbackState.destiny}, ` : '';
+    const storyHint = fallbackState.destiny
+        ? `${fallbackState.destiny}, `
+        : fallbackState.attributes?.length
+            ? `traits: ${fallbackState.attributes.join(', ')}, `
+            : '';
 
-    return `semi-realistic portrait of a ${age} year old ${gender}child, head and shoulders, ${physicalDescription}, ${destinyHint}natural clothing, direct gaze, soft natural light, plain studio backdrop, photorealistic, detailed face`;
+    return `semi-realistic portrait of a ${age} year old ${gender}child, head and shoulders, ${physicalDescription}, ${storyHint}natural clothing, direct gaze, soft natural light, plain studio backdrop, photorealistic, detailed face`;
 }
 
 function buildFinalPortraitPrompt() {
@@ -1466,6 +1595,50 @@ function waitForValueEntry() {
     });
 }
 
+const ATTRIBUTE_SYSTEM_PROMPT = `You are a sharp, darkly funny childhood-development dramatist. You do not speak as an Oracle.
+
+Your job: after each parenting decision, infer 2 or 3 concise CHARACTERISTICS that the child absorbs from that moment.
+
+Rules:
+1. Each characteristic must be under 5 words.
+2. They should feel psychologically plausible, but heightened, memorable, and a little theatrical.
+3. Use the newest answer as the strongest signal, while still considering all earlier answers and existing characteristics.
+4. Existing characteristics should persist and compound over time. Repeated themes should become stronger.
+5. Roughly 30% of the time, include one wild-card characteristic that is unusually unhinged, taboo, or absurdly specific, while still being traceable to the answer.
+6. Do not output bland therapy language. Prefer sharp, screenshot-worthy phrases.
+7. Also return a portrait prompt for the child's NEXT age that uses the new and existing characteristics to shape their expression, styling, posture, and atmosphere.
+8. Preserve physical continuity with the supplied physical description. The child must look like the same person, just older.
+9. Return valid JSON only.
+
+Response JSON:
+{
+  "attributes": ["string", "string", "string"],
+  "moral_alignment": "good" | "bad" | "grey",
+  "image_prompt": "string",
+  "physical_description": "string"
+}`;
+
+const FINAL_DESTINY_SYSTEM_PROMPT = `You are writing the final life outcome for a child shaped by many years of parenting decisions.
+
+Your job: determine what this person became as an adult.
+
+Rules:
+1. The result must be 1 to 5 words.
+2. It should sound like a real adult role or life path, with personality baked in.
+3. Use all answers and all accumulated characteristics.
+4. Be specific, surprising, darkly funny, and human. Do not use fantasy language.
+5. Also return a concise justification, moral alignment, an adult portrait prompt, and updated physical description.
+6. Return valid JSON only.
+
+Response JSON:
+{
+  "destiny": "string",
+  "moral_alignment": "good" | "bad" | "grey",
+  "justification": "string",
+  "image_prompt": "string",
+  "physical_description": "string"
+}`;
+
 // Oracle System Prompt (from destiny_prompt.md)
 const ORACLE_SYSTEM_PROMPT = `You are The Oracle of Fates — an all-knowing, darkly comedic soothsayer who can read a child's destiny from the choices their parent makes. You speak with absolute conviction. You do not hedge. You do not say "it depends." You see the thread of fate clearly, and you call it like it is.
 
@@ -1594,6 +1767,140 @@ Weight the latest answer most heavily, keep previous answers in memory, let repe
 Respond with the JSON object only.`;
 }
 
+function buildAttributeUserPrompt(currentQuestion, currentAnswer, targetPortraitAge) {
+    let previousRounds = '';
+    gameState.answers.forEach((qa, index) => {
+        previousRounds += `Q${index + 1}: "${qa.question}"\n`;
+        previousRounds += `A${index + 1}: "${qa.answer}"\n\n`;
+    });
+
+    return `Here is the current state of the child:
+
+CHILD NAME: ${gameState.childName || 'Unknown'}
+CHILD GENDER: ${gameState.childGender || 'Unknown'}
+CHILD RACE: ${gameState.childRace || 'Unknown'}
+CURRENT AGE: ${gameState.currentAge}
+TARGET PORTRAIT AGE: ${targetPortraitAge}
+CORE PHYSICAL FEATURES: ${getContinuityPhysicalDescription()}
+EXISTING CHARACTERISTICS:
+${getValuesSummary()}
+
+PREVIOUS QUESTIONS AND ANSWERS:
+${previousRounds}
+NEW QUESTION:
+"${currentQuestion}"
+
+NEW ANSWER:
+"${currentAnswer}"
+
+Infer what this answer newly instills in the child.
+Return 2 or 3 new characteristics only, plus moral_alignment, image_prompt, and physical_description.`;
+}
+
+function normalizeAttributePayload(payload) {
+    const attributes = Array.isArray(payload?.attributes)
+        ? payload.attributes
+            .map((attribute) => sanitizeValue(String(attribute || '')))
+            .filter(Boolean)
+            .slice(0, 3)
+        : [];
+
+    return {
+        attributes: attributes.length > 0 ? attributes : [...FALLBACK_ATTRIBUTE_RESPONSE.attributes],
+        moral_alignment:
+            payload?.moral_alignment === 'good' ||
+            payload?.moral_alignment === 'bad' ||
+            payload?.moral_alignment === 'grey'
+                ? payload.moral_alignment
+                : FALLBACK_ATTRIBUTE_RESPONSE.moral_alignment,
+        image_prompt:
+            typeof payload?.image_prompt === 'string' && payload.image_prompt.trim()
+                ? payload.image_prompt.trim()
+                : FALLBACK_ATTRIBUTE_RESPONSE.image_prompt,
+        physical_description:
+            typeof payload?.physical_description === 'string' && payload.physical_description.trim()
+                ? payload.physical_description.trim()
+                : gameState.physicalDescription
+    };
+}
+
+async function consultAttributeOracle(currentQuestion, currentAnswer, targetPortraitAge) {
+    try {
+        const response = await fetch('/api/oracle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                system: ATTRIBUTE_SYSTEM_PROMPT,
+                userPrompt: buildAttributeUserPrompt(currentQuestion, currentAnswer, targetPortraitAge)
+            })
+        });
+
+        const data = await readJsonResponse(response, 'Attribute Oracle API failed.');
+        const payload = extractJsonObject(data?.rawText || '{}');
+        return normalizeAttributePayload(payload);
+    } catch (error) {
+        console.error('Error consulting attribute oracle:', error);
+        return {
+            ...FALLBACK_ATTRIBUTE_RESPONSE,
+            physical_description: gameState.physicalDescription
+        };
+    }
+}
+
+function buildFinalDestinyUserPrompt() {
+    let allRounds = '';
+    gameState.answers.forEach((qa, index) => {
+        allRounds += `Q${index + 1}: "${qa.question}"\n`;
+        allRounds += `A${index + 1}: "${qa.answer}"\n\n`;
+    });
+
+    return `Here is the full life record of the child:
+
+CHILD NAME: ${gameState.childName || 'Unknown'}
+CHILD GENDER: ${gameState.childGender || 'Unknown'}
+CHILD RACE: ${gameState.childRace || 'Unknown'}
+FINAL AGE BEFORE ADULTHOOD: ${gameState.currentAge}
+CURRENT PHYSICAL CONTINUITY: ${getContinuityPhysicalDescription()}
+ACCUMULATED CHARACTERISTICS:
+${getValuesSummary()}
+
+ALL QUESTIONS AND ANSWERS:
+${allRounds}
+
+Determine what this person became as an adult.
+Return destiny, moral_alignment, justification, image_prompt, and physical_description.`;
+}
+
+async function consultFinalDestiny() {
+    try {
+        const response = await fetch('/api/oracle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                system: FINAL_DESTINY_SYSTEM_PROMPT,
+                userPrompt: buildFinalDestinyUserPrompt()
+            })
+        });
+
+        const data = await readJsonResponse(response, 'Final destiny API failed.');
+        if (!data?.oracle) {
+            throw new Error('Final destiny response was missing normalized data.');
+        }
+        return data.oracle;
+    } catch (error) {
+        console.error('Error consulting final destiny:', error);
+        return {
+            ...FALLBACK_ORACLE_RESPONSE,
+            image_prompt: buildFinalPortraitPrompt(),
+            physical_description: gameState.physicalDescription
+        };
+    }
+}
+
 async function consultOracle(currentQuestion, currentAnswer, targetPortraitAge, valuesSnapshot = gameState.values) {
     const userPrompt = buildOracleUserPrompt(currentQuestion, currentAnswer, targetPortraitAge, valuesSnapshot);
 
@@ -1652,17 +1959,22 @@ async function startOpeningSequence() {
     gameState.currentAge = 0;
     updateTimelineHeader(0);
     updateProgressBar(0);
-    setInputFeedback('The first reading begins with instinct.', 'muted');
+    setInputFeedback(
+        gameState.mode === 'archive'
+            ? 'The first reading begins with instinct.'
+            : 'The first question begins at birth.',
+        'muted'
+    );
     loadYear(0, { skipImageGeneration: true });
 }
 
-async function beginBirthFlow() {
-    if (!childNameInput) {
+async function beginBirthFlow(mode = 'birth') {
+    if (!childNameInput && mode === 'birth') {
         return;
     }
 
-    const childName = childNameInput.value.trim();
-    if (!childName) {
+    const childName = childNameInput?.value.trim() || '';
+    if (mode === 'birth' && !childName) {
         updateBirthButtonState();
         childNameInput.focus();
         return;
@@ -1673,10 +1985,11 @@ async function beginBirthFlow() {
     const existingQuestions = gameState.questionsData;
 
     gameState = createDefaultGameState(existingQuestions);
-    gameState.childName = childName;
+    gameState.childName = childName || 'Archive Child';
     gameState.childGender = childGender;
     gameState.childRace = portrait.race || portrait.label || 'Unknown';
     gameState.physicalDescription = portrait.physicalDescription || DEFAULT_PHYSICAL_DESCRIPTION;
+    setStoryMode(mode);
 
     resetGameUi();
     showScreen('game');
@@ -1689,7 +2002,7 @@ function loadYear(age, options = {}) {
     const yearData = gameState.questionsData.years.find((year) => year.age === age);
 
     if (!yearData) {
-        endGame();
+        void endGame();
         return;
     }
 
@@ -1734,6 +2047,142 @@ function updateProgressBar(age) {
 }
 
 // Handle answer submission
+async function finishRoundAfterReveal(portraitState, portraitWorkPromise) {
+    const continuePromise = waitForDestinyRevealContinue();
+    showDestinyRevealContinue();
+    await continuePromise;
+    if (!portraitState.isReady) {
+        showPendingPortraitLoading();
+    }
+    hideDestinyRevealOverlay();
+
+    const nextAge = getNextPlayableAge(gameState.currentAge);
+    if (nextAge !== null) {
+        loadYear(nextAge);
+    } else {
+        await endGame();
+    }
+
+    void portraitWorkPromise;
+}
+
+async function runArchiveRound(currentQuestion, answer, targetPortraitAge) {
+    await waitForValueEntry();
+    const valuesSnapshot = [...gameState.values];
+    const oraclePromise = consultOracle(
+        currentQuestion,
+        answer,
+        targetPortraitAge,
+        valuesSnapshot
+    );
+
+    gameState.answers.push({
+        age: gameState.currentAge,
+        question: currentQuestion,
+        answer
+    });
+
+    calculateAnswerScore(answer);
+    const backgroundWorkPromise = oraclePromise.then(async (oracleResponse) => {
+        const revealVoicePromise = requestVoiceAudio(buildFullRevealVoiceText(oracleResponse.destiny));
+        const portraitState = {
+            isReady: false
+        };
+        const portraitWorkPromise = generateChildImage(oracleResponse.image_prompt, {
+            showLoadingOverlay: false,
+            preserveExistingImage: true,
+            fallbackState: {
+                destiny: oracleResponse.destiny,
+                moralAlignment: oracleResponse.moral_alignment,
+                age: targetPortraitAge,
+                physicalDescription: oracleResponse.physical_description
+            }
+        }).finally(() => {
+            portraitState.isReady = true;
+        });
+        const revealVoiceResult = await revealVoicePromise;
+
+        return {
+            oracleResponse,
+            revealVoiceResult,
+            portraitWorkPromise,
+            portraitState
+        };
+    });
+
+    showDestinyRevealOverlay();
+    const {
+        oracleResponse,
+        revealVoiceResult,
+        portraitWorkPromise,
+        portraitState
+    } = await backgroundWorkPromise;
+
+    await runDestinyRevealSequence({
+        oracleResponse,
+        revealVoiceResult
+    });
+    await finishRoundAfterReveal(portraitState, portraitWorkPromise);
+}
+
+async function runBirthRound(currentQuestion, answer, targetPortraitAge) {
+    const attributePromise = consultAttributeOracle(
+        currentQuestion,
+        answer,
+        targetPortraitAge
+    );
+
+    gameState.answers.push({
+        age: gameState.currentAge,
+        question: currentQuestion,
+        answer
+    });
+
+    calculateAnswerScore(answer);
+    const backgroundWorkPromise = attributePromise.then(async (attributeResponse) => {
+        const revealVoicePromise = requestVoiceAudio(
+            buildAttributeRevealVoiceText(attributeResponse.attributes)
+        );
+        const portraitState = {
+            isReady: false
+        };
+        const portraitWorkPromise = generateChildImage(attributeResponse.image_prompt, {
+            showLoadingOverlay: false,
+            preserveExistingImage: true,
+            fallbackState: {
+                attributes: attributeResponse.attributes,
+                moralAlignment: attributeResponse.moral_alignment,
+                age: targetPortraitAge,
+                physicalDescription: attributeResponse.physical_description
+            }
+        }).finally(() => {
+            portraitState.isReady = true;
+        });
+        const revealVoiceResult = await revealVoicePromise;
+
+        return {
+            attributeResponse,
+            revealVoiceResult,
+            portraitWorkPromise,
+            portraitState
+        };
+    });
+
+    showDestinyRevealOverlay();
+    const {
+        attributeResponse,
+        revealVoiceResult,
+        portraitWorkPromise,
+        portraitState
+    } = await backgroundWorkPromise;
+
+    await runAttributeRevealSequence({
+        attributeResponse,
+        revealVoiceResult
+    });
+    await finishRoundAfterReveal(portraitState, portraitWorkPromise);
+}
+
 async function submitAnswer() {
     const answer = playerInput.value.trim();
 
@@ -1756,80 +2205,11 @@ async function submitAnswer() {
     try {
         const currentQuestion = gameState.currentQuestionText || questionText.textContent || '';
         const targetPortraitAge = getNextPlayableAge(gameState.currentAge) ?? gameState.currentAge;
-
-        await waitForValueEntry();
-        const valuesSnapshot = [...gameState.values];
-        const oraclePromise = consultOracle(
-            currentQuestion,
-            answer,
-            targetPortraitAge,
-            valuesSnapshot
-        );
-
-        // Store the answer locally right away so the next round includes it in history.
-        gameState.answers.push({
-            age: gameState.currentAge,
-            question: currentQuestion,
-            answer: answer
-        });
-
-        calculateAnswerScore(answer);
-        const backgroundWorkPromise = oraclePromise.then(async (oracleResponse) => {
-            const revealVoicePromise = requestVoiceAudio(buildFullRevealVoiceText(oracleResponse.destiny));
-            const portraitState = {
-                isReady: false
-            };
-            const portraitWorkPromise = generateChildImage(oracleResponse.image_prompt, {
-                showLoadingOverlay: false,
-                preserveExistingImage: true,
-                fallbackState: {
-                    destiny: oracleResponse.destiny,
-                    moralAlignment: oracleResponse.moral_alignment,
-                    age: targetPortraitAge,
-                    physicalDescription: oracleResponse.physical_description
-                }
-            }).finally(() => {
-                portraitState.isReady = true;
-            });
-            const revealVoiceResult = await revealVoicePromise;
-
-            return {
-                oracleResponse,
-                revealVoiceResult,
-                portraitWorkPromise,
-                portraitState
-            };
-        });
-
-        showDestinyRevealOverlay();
-        const {
-            oracleResponse,
-            revealVoiceResult,
-            portraitWorkPromise,
-            portraitState
-        } = await backgroundWorkPromise;
-
-        await runDestinyRevealSequence({
-            oracleResponse,
-            revealVoiceResult
-        });
-
-        const continuePromise = waitForDestinyRevealContinue();
-        showDestinyRevealContinue();
-        await continuePromise;
-        if (!portraitState.isReady) {
-            showPendingPortraitLoading();
-        }
-        hideDestinyRevealOverlay();
-
-        // Move to next year or end game
-        const nextAge = getNextPlayableAge(gameState.currentAge);
-        if (nextAge !== null) {
-            loadYear(nextAge);
+        if (gameState.mode === 'archive') {
+            await runArchiveRound(currentQuestion, answer, targetPortraitAge);
         } else {
-            endGame();
+            await runBirthRound(currentQuestion, answer, targetPortraitAge);
         }
-        void portraitWorkPromise;
     } catch (error) {
         console.error('Error submitting answer:', error);
         setInputFeedback(error.message || 'The Oracle could not process that answer.');
@@ -2011,9 +2391,18 @@ function showPlaceholderImage(prompt, requestId = activeImageRequestId, fallback
 }
 
 // End game and show results
-function endGame() {
+async function endGame() {
     const maxScore = PLAYABLE_AGES.length * 25;
     const { percentile } = calculateFinalPercentile(gameState.score, maxScore);
+
+    if (gameState.mode === 'birth') {
+        const finalOutcome = await consultFinalDestiny();
+        gameState.destiny = finalOutcome.destiny;
+        gameState.moralAlignment = finalOutcome.moral_alignment;
+        gameState.justification = finalOutcome.justification;
+        gameState.physicalDescription = finalOutcome.physical_description;
+        updateDestiny(finalOutcome.destiny, finalOutcome.justification);
+    }
 
     hideValuesOverlay();
     hideDestinyRevealOverlay();
@@ -2029,6 +2418,10 @@ function endGame() {
     submitBtn.disabled = true;
     setInputFeedback('');
 
+    if (finalScreenLead) {
+        const safeName = gameState.childName || 'Your child';
+        finalScreenLead.textContent = `${safeName} became a`;
+    }
     finalDestiny.textContent = gameState.destiny;
     scoreDisplay.textContent = `${gameState.score} Points`;
     if (successDisplay) {
@@ -2061,7 +2454,15 @@ if (playBtn) {
     playBtn.addEventListener('click', () => {
         cancelTitleVoiceRetry();
         stopActiveVoiceAudio();
-        beginBirthFlow();
+        beginBirthFlow('birth');
+    });
+}
+
+if (archiveBtn) {
+    archiveBtn.addEventListener('click', () => {
+        cancelTitleVoiceRetry();
+        stopActiveVoiceAudio();
+        beginBirthFlow('archive');
     });
 }
 
@@ -2075,7 +2476,7 @@ if (childNameInput) {
             e.preventDefault();
             cancelTitleVoiceRetry();
             stopActiveVoiceAudio();
-            beginBirthFlow();
+            beginBirthFlow('birth');
         }
     });
 }

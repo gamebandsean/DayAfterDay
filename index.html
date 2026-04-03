@@ -29,6 +29,7 @@
                     maxlength="32"
                 />
                 <button id="play-btn" class="play-btn" type="button" disabled>Birth</button>
+                <button id="archive-btn" class="archive-btn" type="button">Archive</button>
             </div>
             <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
         </div>
@@ -87,13 +88,14 @@
             <div id="final-screen-overlay" class="final-screen-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="final-destiny">
                 <div class="final-screen-shell">
                     <div class="final-screen-copy">
+                        <p id="final-screen-lead" class="final-screen-lead"></p>
                         <p id="final-destiny" class="final-destiny"></p>
                     </div>
                     <div class="final-screen-portrait">
                         <img id="final-screen-image" src="" alt="Adult portrait at age 30" />
                         <div id="final-screen-loading" class="final-screen-loading">
                             <div class="spinner"></div>
-                            <p>The Oracle is imagining adulthood...</p>
+                            <p>Imagining adulthood...</p>
                         </div>
                     </div>
                     <div class="final-screen-summary">
@@ -114,6 +116,7 @@
                     <p class="destiny-reveal-eyebrow">The Oracle Sees</p>
                     <div id="destiny-reveal-text" class="destiny-reveal-text">
                         <p id="destiny-reveal-lead" class="destiny-reveal-lead"></p>
+                        <div id="destiny-reveal-attributes" class="destiny-reveal-attributes" aria-live="polite"></div>
                         <p id="destiny-reveal-destiny" class="destiny-reveal-destiny"></p>
                         <p id="destiny-reveal-tail" class="destiny-reveal-tail"></p>
                     </div>
