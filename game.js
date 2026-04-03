@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 83;
+const BUILD_NUMBER = 84;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -1664,7 +1664,7 @@ Rules:
 3. Prefer broad, legible phrases like "Fear of Authority", "Love of Money", "Be Kind to Others", "Greed is Good", "Public Service Matters", "Trust is Dangerous", "Winning is Everything", "Hide Your Feelings", or "Loyalty Above All".
 4. Use the newest answer as the strongest signal, while still considering all earlier answers and existing values.
 5. Existing values should persist and compound over time. Repeated themes should become more deeply rooted and more explicit.
-6. About 10% of the time, include one wildcard value that is unusually unhinged, taboo, or bizarre, while still being traceable to the answer.
+6. About 10% of the time, include one wildcard value that is genuinely unhinged, alarming, taboo, or bizarre, while still being traceable to the answer. Wildcards should feel like deranged life slogans or dangerous personal commandments, not just slightly quirky values.
 7. If you include a wildcard value, explicitly flag it in the JSON with "is_wildcard": true.
 8. Keep the phrases vivid, screenshot-worthy, and easy to understand at a glance.
 9. Avoid therapy-speak and bland self-help language.
@@ -1687,12 +1687,12 @@ Tone examples for normal values:
 - "Image is Survival"
 
 Tone examples for wildcard values:
-- "Pain Means Love"
-- "Applause is Oxygen"
-- "Mercy is for Losers"
-- "Chaos Proves Life"
-- "God Loves Winners"
-- "Attention is Survival"
+- "I Need a Cult"
+- "Must Kill People"
+- "Live Off the Land"
+- "Mercy Gets You Killed"
+- "Chaos is Sacred"
+- "Pain Proves Love"
 
 Response JSON:
 {
