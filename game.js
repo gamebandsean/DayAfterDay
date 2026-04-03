@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 75;
+const BUILD_NUMBER = 76;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -57,12 +57,9 @@ const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 // DOM Elements
 const gameContainer = document.querySelector('.game-container');
 const titleScreen = document.getElementById('title-screen');
-const createScreen = document.getElementById('create-screen');
 const gameScreen = document.getElementById('game-screen');
 const playBtn = document.getElementById('play-btn');
 const childNameInput = document.getElementById('child-name-input');
-const genderOptions = document.getElementById('gender-options');
-const birthBtn = document.getElementById('birth-btn');
 const gameTitle = document.querySelector('.game-title');
 const destinyValue = document.getElementById('destiny-value');
 const questionContainer = document.querySelector('.question-container');
@@ -105,10 +102,8 @@ const debugJustification = document.getElementById('debug-justification');
 const debugPhysical = document.getElementById('debug-physical');
 const screenMap = {
     title: titleScreen,
-    create: createScreen,
     game: gameScreen
 };
-const genderButtons = Array.from(document.querySelectorAll('.gender-btn'));
 let valueEntryResolver = null;
 let destinyRevealResolver = null;
 let activeImageRequestId = 0;
@@ -253,29 +248,25 @@ function showScreen(screenName) {
     }
 }
 
+function pickRandomGender() {
+    const genders = ['male', 'female', 'nonbinary'];
+    return genders[Math.floor(Math.random() * genders.length)];
+}
+
 function updateBirthButtonState() {
-    if (!birthBtn || !childNameInput) {
+    if (!playBtn || !childNameInput) {
         return;
     }
 
     const hasName = childNameInput.value.trim().length > 0;
-    const hasGender = Boolean(gameState.childGender);
-    birthBtn.disabled = !(hasName && hasGender);
-}
-
-function setSelectedGender(gender) {
-    gameState.childGender = gender || '';
-    genderButtons.forEach((button) => {
-        button.classList.toggle('selected', button.dataset.gender === gameState.childGender);
-    });
-    updateBirthButtonState();
+    playBtn.disabled = !hasName;
 }
 
 function resetCreateScreen() {
     if (childNameInput) {
         childNameInput.value = '';
     }
-    setSelectedGender('');
+    updateBirthButtonState();
 }
 
 function getRandomNewbornOption() {
@@ -1573,12 +1564,11 @@ async function startOpeningSequence() {
 }
 
 async function beginBirthFlow() {
-    if (!childNameInput || !gameState.childGender) {
+    if (!childNameInput) {
         return;
     }
 
     const childName = childNameInput.value.trim();
-    const childGender = gameState.childGender;
     if (!childName) {
         updateBirthButtonState();
         childNameInput.focus();
@@ -1586,6 +1576,7 @@ async function beginBirthFlow() {
     }
 
     const portrait = getRandomNewbornOption();
+    const childGender = pickRandomGender();
     const existingQuestions = gameState.questionsData;
 
     gameState = createDefaultGameState(existingQuestions);
@@ -1966,10 +1957,7 @@ if (playBtn) {
     playBtn.addEventListener('click', () => {
         cancelTitleVoiceRetry();
         stopActiveVoiceAudio();
-        showScreen('create');
-        if (childNameInput) {
-            childNameInput.focus();
-        }
+        beginBirthFlow();
     });
 }
 
@@ -1979,27 +1967,12 @@ if (childNameInput) {
     });
 
     childNameInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && birthBtn && !birthBtn.disabled) {
+        if (e.key === 'Enter' && playBtn && !playBtn.disabled) {
             e.preventDefault();
+            cancelTitleVoiceRetry();
+            stopActiveVoiceAudio();
             beginBirthFlow();
         }
-    });
-}
-
-if (genderOptions) {
-    genderOptions.addEventListener('click', (e) => {
-        const button = e.target.closest('.gender-btn');
-        if (!button) {
-            return;
-        }
-
-        setSelectedGender(button.dataset.gender);
-    });
-}
-
-if (birthBtn) {
-    birthBtn.addEventListener('click', () => {
-        beginBirthFlow();
     });
 }
 

@@ -135,24 +135,6 @@ body::before {
     padding-inline: clamp(4px, 1.4vw, 12px);
 }
 
-.title-eyebrow,
-.create-eyebrow {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: color-mix(in oklab, var(--accent-primary-deep) 78%, white 22%);
-}
-
-.title-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(56px, 11vw, 78px);
-    line-height: 0.88;
-    letter-spacing: -0.03em;
-    color: var(--text-primary);
-    text-wrap: balance;
-}
-
 .title-tagline {
     max-width: 34ch;
     margin: -2px 0 0;
@@ -172,6 +154,24 @@ body::before {
         0 8px 20px oklch(0.2 0.04 320 / 0.1);
 }
 
+.title-start-form {
+    display: grid;
+    gap: 10px;
+    width: min(100%, 280px);
+}
+
+.title-name-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--text-secondary) 80%, var(--accent-primary-deep) 20%);
+}
+
+.title-name-input {
+    text-align: center;
+}
+
 .play-btn,
 .birth-btn {
     width: min(100%, 240px);
@@ -179,79 +179,7 @@ body::before {
 }
 
 .title-screen .play-btn {
-    width: min(100%, 120px);
-}
-
-.create-screen {
-    justify-content: center;
-    gap: 12px;
-}
-
-.create-title {
-    margin-bottom: 8px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(34px, 6vw, 48px);
-    line-height: 0.95;
-    color: var(--text-primary);
-    text-wrap: balance;
-}
-
-.create-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: color-mix(in oklab, var(--text-secondary) 82%, var(--accent-primary-deep) 18%);
-}
-
-.create-help {
-    margin-top: 2px;
-    font-size: 12px;
-    line-height: 1.45;
-    color: color-mix(in oklab, var(--text-secondary) 84%, white 16%);
-}
-
-.gender-options {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.gender-btn {
-    min-height: 72px;
-    padding: 10px 12px;
-    border-radius: 16px;
-    border: 1px solid var(--border-soft);
-    background:
-        linear-gradient(180deg, oklch(1 0 0 / 0.82), transparent 100%),
-        color-mix(in oklab, var(--surface-card) 92%, white 8%);
-    color: var(--text-secondary);
-    font: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 10px 24px oklch(0.24 0.05 320 / 0.06);
-    transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.gender-btn.selected {
-    border-color: color-mix(in oklab, var(--accent-highlight) 55%, var(--accent-primary) 45%);
-    background:
-        linear-gradient(180deg, oklch(1 0 0 / 0.56), transparent 100%),
-        linear-gradient(125deg, color-mix(in oklab, var(--accent-highlight) 68%, white 32%), color-mix(in oklab, var(--accent-secondary) 18%, var(--accent-primary) 82%));
-    color: var(--text-primary);
-    box-shadow: 0 18px 30px oklch(0.31 0.08 330 / 0.18);
-}
-
-.gender-btn:hover,
-.play-btn:hover,
-.birth-btn:hover {
-    transform: translateY(-1px);
-}
-
-.gender-btn:hover {
-    border-color: var(--border-strong);
-    box-shadow: 0 16px 32px oklch(0.24 0.05 320 / 0.1);
+    width: 100%;
 }
 
 .game-screen {
@@ -442,7 +370,6 @@ body::before {
 }
 
 .sample-option-btn,
-.gender-btn,
 #submit-btn,
 .play-btn,
 .birth-btn,
@@ -571,6 +498,7 @@ body::before {
 }
 
 #submit-btn:disabled,
+.play-btn:disabled,
 .birth-btn:disabled {
     cursor: not-allowed;
     color: color-mix(in oklab, var(--text-inverse) 70%, transparent);
@@ -1343,10 +1271,6 @@ body::before {
         border-radius: 22px;
     }
 
-    .create-title {
-        font-size: clamp(30px, 9vw, 42px);
-    }
-
     #submit-btn,
     #restart-btn,
     .play-btn,
@@ -1365,10 +1289,6 @@ body::before {
     .destiny-reveal-continue {
         width: 100%;
         justify-content: center;
-    }
-
-    .gender-btn {
-        min-height: 64px;
     }
 
     .values-overlay {
@@ -1439,8 +1359,7 @@ body::before {
         border-radius: 22px;
     }
 
-    .title-screen,
-    .create-screen {
+    .title-screen {
         gap: 10px;
     }
 
@@ -1448,19 +1367,8 @@ body::before {
         border-radius: 18px;
     }
 
-    .title-tagline,
-    .create-help {
+    .title-tagline {
         font-size: 10px;
-    }
-
-    .gender-options {
-        gap: 8px;
-    }
-
-    .gender-btn {
-        min-height: 56px;
-        padding: 8px 10px;
-        font-size: 11px;
     }
 
     .question-container {

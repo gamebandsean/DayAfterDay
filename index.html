@@ -18,28 +18,19 @@
                 alt="Minor Decisions title art showing newborns in career costumes around the game title."
             />
             <p class="title-tagline">Raise your child to become a success... or at least better than your friends'!</p>
-            <button id="play-btn" class="play-btn" type="button">Play Game</button>
-            <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
-        </div>
-
-        <div id="create-screen" class="screen create-screen hidden">
-            <p class="create-eyebrow">A new life begins</p>
-            <h2 class="create-title">Who is being born into your care?</h2>
-            <label class="create-label" for="child-name-input">Child's Name</label>
-            <input
-                id="child-name-input"
-                type="text"
-                placeholder="Choose a name..."
-                autocomplete="off"
-                maxlength="32"
-            />
-            <p class="create-label">Gender</p>
-            <div id="gender-options" class="gender-options" aria-label="Select a gender">
-                <button type="button" class="gender-btn" data-gender="male">Male</button>
-                <button type="button" class="gender-btn" data-gender="female">Female</button>
-                <button type="button" class="gender-btn" data-gender="nonbinary">Nonbinary</button>
+            <div class="title-start-form">
+                <label class="title-name-label" for="child-name-input">Child's Name</label>
+                <input
+                    id="child-name-input"
+                    class="title-name-input"
+                    type="text"
+                    placeholder="Choose a name..."
+                    autocomplete="off"
+                    maxlength="32"
+                />
+                <button id="play-btn" class="play-btn" type="button" disabled>Birth</button>
             </div>
-            <button id="birth-btn" class="birth-btn" type="button" disabled>Birth</button>
+            <p id="build-badge" class="build-badge" aria-label="Current build version">Build --</p>
         </div>
 
         <div id="game-screen" class="screen game-screen hidden">
