@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 86;
+const BUILD_NUMBER = 87;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -54,7 +54,6 @@ const DESTINY_REVEAL_FULL_VO_TIMEOUT_MS = 14000;
 const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.65;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
-const VALUES_SUMMARY_DISPLAY_MS = 1800;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
 const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 const DEFAULT_IMAGE_LOADING_MESSAGE = 'The oracle is sketching a face...';
@@ -113,6 +112,7 @@ const valuesOverlay = document.getElementById('values-overlay');
 const valuesEyebrow = document.querySelector('.values-eyebrow');
 const valuesTitle = document.querySelector('.values-title');
 const currentValuesList = document.getElementById('current-values-list');
+const valuesSummaryContinue = document.getElementById('values-summary-continue');
 const buildBadge = document.getElementById('build-badge');
 
 // Debug Modal Elements
@@ -127,6 +127,7 @@ const screenMap = {
     game: gameScreen
 };
 let valueEntryResolver = null;
+let valuesSummaryResolver = null;
 let destinyRevealResolver = null;
 let activeImageRequestId = 0;
 let activeImageAbortController = null;
@@ -396,6 +397,7 @@ function resetGameUi() {
     cancelPendingFinalImageRequest();
     hideFinalScreenOverlay();
     valueEntryResolver = null;
+    valuesSummaryResolver = null;
     destinyRevealResolver = null;
     hideValuesOverlay();
     hideDestinyRevealOverlay();
@@ -1598,6 +1600,9 @@ function showValuesOverlay() {
         valuesOverlay.classList.remove('values-overlay--summary');
         valuesOverlay.classList.remove('hidden');
     }
+    if (valuesSummaryContinue) {
+        valuesSummaryContinue.classList.add('hidden');
+    }
     if (valuesEyebrow) {
         valuesEyebrow.textContent = 'Instill A Value';
     }
@@ -1618,8 +1623,18 @@ function hideValuesOverlay() {
         valuesOverlay.classList.remove('values-overlay--summary');
         valuesOverlay.classList.add('hidden');
     }
+    if (valuesSummaryContinue) {
+        valuesSummaryContinue.classList.add('hidden');
+    }
+    valuesSummaryResolver = null;
     renderSampleOptions([]);
     setValuesFeedback('');
+}
+
+function waitForValuesSummaryContinue() {
+    return new Promise((resolve) => {
+        valuesSummaryResolver = resolve;
+    });
 }
 
 async function showValuesSummaryOverlay() {
@@ -1635,6 +1650,10 @@ async function showValuesSummaryOverlay() {
         valuesOverlay.classList.add('values-overlay--summary');
         valuesOverlay.classList.remove('hidden');
     }
+    if (valuesSummaryContinue) {
+        valuesSummaryContinue.classList.remove('hidden');
+        valuesSummaryContinue.focus();
+    }
 
     if (valuesEyebrow) {
         valuesEyebrow.textContent = 'Current Values';
@@ -1645,7 +1664,7 @@ async function showValuesSummaryOverlay() {
         valuesTitle.textContent = `${getPossessiveName(safeName)} Values`;
     }
 
-    await sleep(VALUES_SUMMARY_DISPLAY_MS);
+    await waitForValuesSummaryContinue();
     hideValuesOverlay();
 }
 
@@ -2671,6 +2690,17 @@ if (destinyRevealContinue) {
 
         const resolve = destinyRevealResolver;
         destinyRevealResolver = null;
+        resolve();
+    });
+}
+if (valuesSummaryContinue) {
+    valuesSummaryContinue.addEventListener('click', () => {
+        if (!valuesSummaryResolver) {
+            return;
+        }
+
+        const resolve = valuesSummaryResolver;
+        valuesSummaryResolver = null;
         resolve();
     });
 }

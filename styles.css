@@ -446,7 +446,8 @@ body::before {
 
 .sample-option-btn:active,
 #submit-btn:active,
-#restart-btn:active {
+#restart-btn:active,
+.values-summary-continue:active {
     transform: translateY(0);
 }
 
@@ -454,7 +455,8 @@ body::before {
 #submit-btn:focus-visible,
 #player-input:focus-visible,
 .close-debug:focus-visible,
-#restart-btn:focus-visible {
+#restart-btn:focus-visible,
+.values-summary-continue:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
 }
@@ -498,7 +500,8 @@ body::before {
 #submit-btn,
 #restart-btn,
 .play-btn,
-.birth-btn {
+.birth-btn,
+.values-summary-continue {
     border: none;
     cursor: pointer;
     color: var(--text-inverse);
@@ -508,7 +511,8 @@ body::before {
 
 #submit-btn,
 .play-btn,
-.birth-btn {
+.birth-btn,
+.values-summary-continue {
     width: 100%;
     padding: 15px 24px;
     border-radius: 16px;
@@ -519,7 +523,8 @@ body::before {
 #submit-btn:hover,
 #restart-btn:hover,
 .play-btn:hover,
-.birth-btn:hover {
+.birth-btn:hover,
+.values-summary-continue:hover {
     box-shadow: 0 20px 34px oklch(0.28 0.08 330 / 0.34);
 }
 
@@ -650,8 +655,9 @@ body::before {
 }
 
 .values-overlay--summary .values-overlay-shell {
-    gap: 8px;
-    padding: 12px;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 12px 12px;
 }
 
 .values-eyebrow {
@@ -703,7 +709,7 @@ body::before {
 
 .values-overlay--summary .current-values-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    gap: 8px;
 }
 
 .values-empty {
@@ -739,9 +745,9 @@ body::before {
     width: 100%;
     min-width: 0;
     justify-self: stretch;
-    padding: 8px 9px;
-    border-radius: 14px;
-    gap: 6px;
+    padding: 10px 10px;
+    border-radius: 15px;
+    gap: 8px;
 }
 
 .value-pill-label {
@@ -752,8 +758,8 @@ body::before {
 }
 
 .values-overlay--summary .value-pill-label {
-    font-size: 10px;
-    line-height: 1.15;
+    font-size: 11px;
+    line-height: 1.2;
     overflow-wrap: anywhere;
 }
 
@@ -770,16 +776,27 @@ body::before {
 }
 
 .values-overlay--summary .value-pill-count {
-    padding: 3px 6px;
+    padding: 4px 6px;
     font-size: 9px;
 }
 
 .values-overlay--summary .values-title {
-    font-size: clamp(16px, 2.6vw, 22px);
+    font-size: clamp(18px, 2.9vw, 24px);
 }
 
 .values-overlay--summary .values-empty {
-    font-size: 11px;
+    font-size: 12px;
+}
+
+.values-summary-continue {
+    width: min(100%, 220px);
+    justify-self: center;
+    align-self: center;
+    margin-top: 6px;
+}
+
+.values-summary-continue.hidden {
+    display: none;
 }
 
 .destiny-reveal-overlay {
