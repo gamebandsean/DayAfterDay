@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 87;
+const BUILD_NUMBER = 88;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -725,12 +725,13 @@ function renderCurrentValues() {
         label.className = 'value-pill-label';
         label.textContent = value.label;
 
-        const count = document.createElement('span');
-        count.className = 'value-pill-count';
-        count.textContent = `x${value.count}`;
-
         pill.appendChild(label);
-        pill.appendChild(count);
+        if (value.count > 1) {
+            const count = document.createElement('span');
+            count.className = 'value-pill-count';
+            count.textContent = `x${value.count}`;
+            pill.appendChild(count);
+        }
         currentValuesList.appendChild(pill);
     });
 }
