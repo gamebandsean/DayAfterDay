@@ -1,6 +1,7 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 92;
+const BUILD_NUMBER = 93;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
+const FINAL_PORTRAIT_AGE = 38;
 const FALLBACK_NEWBORN_POOL = [
     {
         label: 'Mixed',
@@ -89,6 +90,7 @@ const childImage = document.getElementById('child-image');
 const imageLoading = document.getElementById('image-loading');
 const imageLoadingText = document.getElementById('image-loading-text');
 const finalScreenOverlay = document.getElementById('final-screen-overlay');
+const timeJumpOverlay = document.getElementById('time-jump-overlay');
 const finalScreenLead = document.getElementById('final-screen-lead');
 const finalDestiny = document.getElementById('final-destiny');
 const finalScreenImage = document.getElementById('final-screen-image');
@@ -395,6 +397,7 @@ function resetGameUi() {
     destinyValue.textContent = 'UNKNOWN';
     gameState.currentQuestionText = '';
     cancelPendingFinalImageRequest();
+    hideTimeJumpOverlay();
     hideFinalScreenOverlay();
     valueEntryResolver = null;
     valuesSummaryResolver = null;
@@ -612,6 +615,18 @@ function showFinalScreenStatus(message = '', state = 'muted') {
 
     finalScreenStatus.textContent = message || '';
     finalScreenStatus.dataset.state = state;
+}
+
+function hideTimeJumpOverlay() {
+    if (timeJumpOverlay) {
+        timeJumpOverlay.classList.add('hidden');
+    }
+}
+
+function showTimeJumpOverlay() {
+    if (timeJumpOverlay) {
+        timeJumpOverlay.classList.remove('hidden');
+    }
 }
 
 function hideFinalScreenOverlay() {
@@ -1346,7 +1361,7 @@ function buildFinalPortraitPrompt() {
     const valuesSummary = getValuesSummary();
     const justification = gameState.justification ? `${gameState.justification} ` : '';
 
-    return `semi-realistic portrait of ${nameClause}a 30 year old ${raceClause}${genderClause}adult, head and shoulders, ${physicalDescription}, destiny: ${adulthoodDestiny}, ${justification}${alignmentMood}, wardrobe and background should subtly communicate this life path, mature facial structure, photorealistic, detailed skin texture, cinematic portrait photography${valuesSummary ? `, influenced by values: ${valuesSummary}` : ''}`;
+    return `semi-realistic portrait of ${nameClause}a ${FINAL_PORTRAIT_AGE} year old ${raceClause}${genderClause}adult, head and shoulders, ${physicalDescription}, destiny: ${adulthoodDestiny}, ${justification}${alignmentMood}, wardrobe and background should subtly communicate this life path, mature facial structure, photorealistic, detailed skin texture, cinematic portrait photography${valuesSummary ? `, influenced by values: ${valuesSummary}` : ''}`;
 }
 
 function calculateFinalPercentile(score, maxScore) {
@@ -1419,7 +1434,57 @@ function ensureScreenshotLibrary() {
     return screenshotLibraryPromise;
 }
 
-function buildFinalScreenScreenshotClone(sourceNode) {
+async function waitForImageElementReady(imageElement, timeoutMs = 12000) {
+    if (!imageElement) {
+        return false;
+    }
+
+    const hasReadyImage = () => {
+        const src = imageElement.currentSrc || imageElement.src;
+        return Boolean(src) && imageElement.complete && imageElement.naturalWidth > 0;
+    };
+
+    if (hasReadyImage()) {
+        return true;
+    }
+
+    return new Promise((resolve) => {
+        let settled = false;
+        const cleanup = () => {
+            imageElement.removeEventListener('load', handleLoad);
+            imageElement.removeEventListener('error', handleError);
+            clearTimeout(timer);
+        };
+        const finish = (value) => {
+            if (settled) {
+                return;
+            }
+            settled = true;
+            cleanup();
+            resolve(value);
+        };
+        const handleLoad = () => finish(hasReadyImage());
+        const handleError = () => finish(false);
+        const timer = setTimeout(() => finish(hasReadyImage()), timeoutMs);
+
+        imageElement.addEventListener('load', handleLoad, { once: true });
+        imageElement.addEventListener('error', handleError, { once: true });
+    });
+}
+
+async function waitForFinalPortraitReady(timeoutMs = 12000) {
+    if (!finalScreenImage) {
+        return false;
+    }
+
+    if ((finalScreenImage.currentSrc || finalScreenImage.src) && finalScreenImage.complete && finalScreenImage.naturalWidth > 0) {
+        return true;
+    }
+
+    return waitForImageElementReady(finalScreenImage, timeoutMs);
+}
+
+async function buildFinalScreenScreenshotClone(sourceNode) {
     if (!sourceNode) {
         return null;
     }
@@ -1458,7 +1523,61 @@ function buildFinalScreenScreenshotClone(sourceNode) {
         element.style.transform = 'none';
     });
 
+    const livePortraitSrc = finalScreenImage?.currentSrc || finalScreenImage?.src || '';
+    const clonePortraitImage = clone.querySelector('.final-screen-portrait img');
+    const cloneLoading = clone.querySelector('.final-screen-loading');
+
+    if (clonePortraitImage && livePortraitSrc) {
+        clonePortraitImage.removeAttribute('srcset');
+        clonePortraitImage.src = livePortraitSrc;
+        clonePortraitImage.classList.add('loaded');
+        clonePortraitImage.style.opacity = '1';
+        clonePortraitImage.style.transform = 'none';
+        await waitForImageElementReady(clonePortraitImage, 8000);
+    }
+
+    if (cloneLoading && livePortraitSrc) {
+        cloneLoading.classList.add('hidden');
+    }
+
     return clone;
+}
+
+async function captureFinalScreenImageDataUrl() {
+    if (!finalScreenOverlay) {
+        throw new Error('Final screen was unavailable.');
+    }
+
+    showFinalScreenStatus('Preparing screenshot...', 'muted');
+    const portraitReady = await waitForFinalPortraitReady();
+    if (!portraitReady) {
+        throw new Error('Final portrait is not ready yet.');
+    }
+
+    const { toPng } = await ensureScreenshotLibrary();
+    const screenshotNode = await buildFinalScreenScreenshotClone(finalScreenOverlay);
+    if (!screenshotNode) {
+        throw new Error('Screenshot node was unavailable.');
+    }
+
+    try {
+        document.body.appendChild(screenshotNode);
+        await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+        return await toPng(screenshotNode, {
+            cacheBust: true,
+            pixelRatio: Math.max(2, window.devicePixelRatio || 1)
+        });
+    } finally {
+        if (screenshotNode?.parentNode) {
+            screenshotNode.parentNode.removeChild(screenshotNode);
+        }
+    }
+}
+
+async function captureFinalScreenImageBlob() {
+    const imageUrl = await captureFinalScreenImageDataUrl();
+    const response = await fetch(imageUrl);
+    return response.blob();
 }
 
 async function loadFinalPortrait() {
@@ -1482,7 +1601,7 @@ async function loadFinalPortrait() {
 
         if (data?.usePlaceholder) {
             const rescuePrompt = buildRescuePortraitPrompt({
-                age: 30,
+                age: FINAL_PORTRAIT_AGE,
                 destiny: gameState.destiny,
                 moralAlignment: gameState.moralAlignment,
                 physicalDescription: gameState.physicalDescription
@@ -1527,6 +1646,26 @@ async function handleFinalShare() {
     const shareText = getFinalShareText(percentile);
 
     try {
+        const imageBlob = await captureFinalScreenImageBlob();
+        const safeName = (gameState.childName || 'minor-decisions')
+            .replace(/[^a-z0-9]+/gi, '-')
+            .replace(/^-+|-+$/g, '')
+            .toLowerCase();
+
+        if (navigator.share && imageBlob) {
+            const file = new File([imageBlob], `${safeName || 'minor-decisions'}-final-reading.png`, {
+                type: 'image/png'
+            });
+            if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    text: shareText,
+                    files: [file]
+                });
+                showFinalScreenStatus('Shared.', 'success');
+                return;
+            }
+        }
+
         if (navigator.share) {
             await navigator.share({
                 text: shareText,
@@ -1549,28 +1688,8 @@ async function handleFinalShare() {
 }
 
 async function handleFinalSave() {
-    if (!finalScreenOverlay) {
-        return;
-    }
-
-    let screenshotNode = null;
-
     try {
-        showFinalScreenStatus('Preparing screenshot...', 'muted');
-        const { toPng } = await ensureScreenshotLibrary();
-        screenshotNode = buildFinalScreenScreenshotClone(finalScreenOverlay);
-        if (!screenshotNode) {
-            throw new Error('Screenshot node was unavailable.');
-        }
-
-        document.body.appendChild(screenshotNode);
-        await new Promise((resolve) => requestAnimationFrame(() => resolve()));
-
-        const imageUrl = await toPng(screenshotNode, {
-            cacheBust: true,
-            pixelRatio: Math.max(2, window.devicePixelRatio || 1)
-        });
-
+        const imageUrl = await captureFinalScreenImageDataUrl();
         const link = document.createElement('a');
         const safeName = (gameState.childName || 'minor-decisions')
             .replace(/[^a-z0-9]+/gi, '-')
@@ -1584,11 +1703,12 @@ async function handleFinalSave() {
         showFinalScreenStatus('Screenshot saved to your browser download location.', 'success');
     } catch (error) {
         console.error('Error saving final screen:', error);
-        showFinalScreenStatus('Screenshot capture failed. Please try again.', 'error');
-    } finally {
-        if (screenshotNode?.parentNode) {
-            screenshotNode.parentNode.removeChild(screenshotNode);
-        }
+        showFinalScreenStatus(
+            error?.message === 'Final portrait is not ready yet.'
+                ? 'The final portrait is still rendering. Please try again in a moment.'
+                : 'Screenshot capture failed. Please try again.',
+            'error'
+        );
     }
 }
 
@@ -1779,7 +1899,7 @@ Rules:
 3. Use all answers and all accumulated characteristics as a full-life record. Do not overweight the latest answer just because it happened most recently.
 4. Be specific, surprising, darkly funny, and human. Do not use fantasy language.
 5. The ending can be happy, sad, hollow, or disturbing, but it should always carry at least a slight comedic twist. "Missing Person Cold Case" is a good example of the right funny-sad tone.
-6. Also return a short quote from the child at age 30. The quote must be conversational, under 280 characters, and should summarize the main thing or things they learned from their parent. It should combine themes into an interesting phrase, not just restate the values list, and it should pass subtle judgment on the parent.
+6. Also return a short quote from the child at age ${FINAL_PORTRAIT_AGE}. The quote must be conversational, under 280 characters, and should summarize the main thing or things they learned from their parent. It should combine themes into an interesting phrase, not just restate the values list, and it should pass subtle judgment on the parent.
 7. Also return a concise justification, moral alignment, an adult portrait prompt, and updated physical description.
 8. Return valid JSON only.
 
@@ -2036,6 +2156,7 @@ CHILD GENDER: ${gameState.childGender || 'Unknown'}
 CHILD RACE: ${gameState.childRace || 'Unknown'}
 FINAL AGE BEFORE ADULTHOOD: ${gameState.currentAge}
 CURRENT PHYSICAL CONTINUITY: ${getContinuityPhysicalDescription()}
+ADULT PORTRAIT AGE: ${FINAL_PORTRAIT_AGE}
 ACCUMULATED CHARACTERISTICS:
 ${getValuesSummary()}
 
@@ -2614,9 +2735,12 @@ async function endGame() {
     if (finalScreenLoading) {
         finalScreenLoading.classList.remove('hidden');
     }
-
+    showTimeJumpOverlay();
+    const portraitPromise = loadFinalPortrait();
+    await sleep(1600);
+    hideTimeJumpOverlay();
     showFinalScreenOverlay();
-    loadFinalPortrait();
+    await portraitPromise;
 }
 
 // Restart game
