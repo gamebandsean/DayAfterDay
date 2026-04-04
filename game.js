@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 91;
+const BUILD_NUMBER = 92;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FALLBACK_NEWBORN_POOL = [
     {
@@ -717,9 +717,10 @@ function renderCurrentValues() {
         return;
     }
 
-    groupedValues.forEach((value) => {
+    groupedValues.forEach((value, index) => {
         const pill = document.createElement('div');
         pill.className = 'value-pill';
+        pill.style.setProperty('--value-pill-delay', `${index * 500}ms`);
 
         const label = document.createElement('span');
         label.className = 'value-pill-label';
