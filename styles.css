@@ -712,6 +712,12 @@ body::before {
     gap: 8px;
 }
 
+.values-overlay--summary .current-values-list > .value-pill:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 220px);
+}
+
 .values-empty {
     grid-column: 1 / -1;
     padding: 12px 14px;
