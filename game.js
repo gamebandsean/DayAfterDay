@@ -1,5 +1,5 @@
 const PLAYABLE_AGES = [0, 5, 10, 12, 15, 16, 17];
-const BUILD_NUMBER = 93;
+const BUILD_NUMBER = 94;
 const DEFAULT_PHYSICAL_DESCRIPTION = 'newborn baby with soft features';
 const FINAL_PORTRAIT_AGE = 38;
 const FALLBACK_NEWBORN_POOL = [
@@ -26,6 +26,7 @@ function createDefaultGameState(questionsData = null) {
         moralAlignment: null,
         justification: '',
         adultQuote: '',
+        finalVoiceId: '',
         score: 0,
         values: []
     };
@@ -56,6 +57,29 @@ const DESTINY_REVEAL_VO_PLAYBACK_RATE = 0.65;
 const DESTINY_REVEAL_STARDUST_PAUSE_MS = 350;
 const DESTINY_REVEAL_TAIL_DELAY_MS = 220;
 const TITLE_SCREEN_VOICE_TEXT = 'Minor Decisions: A strange little life simulator.';
+const FINAL_SCREEN_VOICE_PLAYBACK_RATE = 0.92;
+const FINAL_SCREEN_VOICE_TIMEOUT_MS = 18000;
+const FINAL_SCREEN_VOICE_FALLBACK_MS = 4500;
+const FINAL_SCREEN_VOICE_POOL = {
+    male: [
+        { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam' },
+        { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni' },
+        { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh' },
+        { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George' }
+    ],
+    female: [
+        { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice' },
+        { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel' },
+        { id: 'pMsXgVXv3BLzUgSXRplE', name: 'Serena' },
+        { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda' }
+    ],
+    nonbinary: [
+        { id: 'GBv7mTt0atIp3Br8iCZE', name: 'Thomas' },
+        { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie' },
+        { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya' },
+        { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily' }
+    ]
+};
 const PRIMARY_INPUT_PLACEHOLDER = 'Enter your text';
 const DEFAULT_IMAGE_LOADING_MESSAGE = 'The oracle is sketching a face...';
 const FALLBACK_ATTRIBUTE_RESPONSE = {
@@ -299,6 +323,20 @@ function pickRandomGender() {
     return genders[Math.floor(Math.random() * genders.length)];
 }
 
+function pickFinalScreenVoiceId(gender = '') {
+    const voiceOptions =
+        FINAL_SCREEN_VOICE_POOL[gender] ||
+        FINAL_SCREEN_VOICE_POOL.nonbinary ||
+        FINAL_SCREEN_VOICE_POOL.female;
+
+    if (!Array.isArray(voiceOptions) || !voiceOptions.length) {
+        return '';
+    }
+
+    const option = voiceOptions[Math.floor(Math.random() * voiceOptions.length)];
+    return option?.id || '';
+}
+
 function updateBirthButtonState() {
     if (!playBtn || !childNameInput) {
         return;
@@ -396,6 +434,7 @@ function applyStartingPortrait(option) {
 function resetGameUi() {
     destinyValue.textContent = 'UNKNOWN';
     gameState.currentQuestionText = '';
+    stopActiveVoiceAudio();
     cancelPendingFinalImageRequest();
     hideTimeJumpOverlay();
     hideFinalScreenOverlay();
@@ -854,7 +893,8 @@ async function ensureAudioContextResumed() {
     return audioContext;
 }
 
-async function fetchVoiceAudioResult(text) {
+async function fetchVoiceAudioResult(text, options = {}) {
+    const { voiceId = '' } = options;
     if (!text) {
         return {
             voiceResult: null,
@@ -868,7 +908,10 @@ async function fetchVoiceAudioResult(text) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({
+                text,
+                voiceId
+            })
         });
         const data = await readJsonResponse(response, 'Voice generation failed.');
         if (data?.useFallback || !data?.audioBase64) {
@@ -891,8 +934,8 @@ async function fetchVoiceAudioResult(text) {
     }
 }
 
-async function requestVoiceAudio(text) {
-    const { voiceResult } = await fetchVoiceAudioResult(text);
+async function requestVoiceAudio(text, options = {}) {
+    const { voiceResult } = await fetchVoiceAudioResult(text, options);
     return voiceResult;
 }
 
@@ -1221,6 +1264,41 @@ function buildAttributeRevealVoiceText(attributes = []) {
     return `You have instilled in your child the following characteristics: ${spokenAttributes.join('. ')}.`;
 }
 
+function normalizeAdultQuoteText(quote) {
+    return String(quote || FALLBACK_ORACLE_RESPONSE.adult_quote)
+        .trim()
+        .replace(/^["']+|["']+$/g, '');
+}
+
+function buildFinalQuoteVoiceText(quote) {
+    return normalizeAdultQuoteText(quote);
+}
+
+function requestFinalQuoteVoice() {
+    const quoteText = buildFinalQuoteVoiceText(gameState.adultQuote);
+    const voiceId = gameState.finalVoiceId || pickFinalScreenVoiceId(gameState.childGender);
+
+    if (!gameState.finalVoiceId) {
+        gameState.finalVoiceId = voiceId;
+    }
+
+    return fetchVoiceAudioResult(quoteText, { voiceId });
+}
+
+async function playFinalQuoteVoice(quoteVoicePromise) {
+    const { voiceResult } = await quoteVoicePromise;
+    if (!voiceResult || finalScreenOverlay?.classList.contains('hidden')) {
+        return false;
+    }
+
+    stopActiveVoiceAudio();
+    await sleep(180);
+    return playVoiceClip(voiceResult, FINAL_SCREEN_VOICE_FALLBACK_MS, {
+        playbackRate: FINAL_SCREEN_VOICE_PLAYBACK_RATE,
+        timeoutMs: FINAL_SCREEN_VOICE_TIMEOUT_MS
+    });
+}
+
 function applyOracleReveal(oracleResponse) {
     gameState.destiny = oracleResponse.destiny;
     gameState.moralAlignment = oracleResponse.moral_alignment;
@@ -1375,10 +1453,7 @@ function calculateFinalPercentile(score, maxScore) {
 }
 
 function formatAdultQuote(quote) {
-    const normalizedQuote = String(quote || FALLBACK_ORACLE_RESPONSE.adult_quote)
-        .trim()
-        .replace(/^["']+|["']+$/g, '');
-    return `"${normalizedQuote}"`;
+    return `"${normalizeAdultQuoteText(quote)}"`;
 }
 
 function getFinalShareText(percentile) {
@@ -1824,7 +1899,7 @@ function waitForValueEntry() {
 
 const ATTRIBUTE_SYSTEM_PROMPT = `You are a sharp, darkly funny child-development dramatist. You do not speak as an Oracle.
 
-Your job: after each parenting decision, infer 2 or 3 NEW values, beliefs, or worldview rules that the child absorbs from that moment.
+Your job: after each parenting decision, infer exactly 1 NEW value, belief, or worldview rule that the child absorbs from that moment.
 
 These are not symptoms, diagnoses, or narrow personality labels.
 They are broad internal rules for how life works.
@@ -1848,11 +1923,13 @@ Rules:
 3. Prefer broad, legible phrases like "Fear of Authority", "Love of Money", "Be Kind to Others", "Greed is Good", "Public Service Matters", "Trust is Dangerous", "Winning is Everything", "Hide Your Feelings", or "Loyalty Above All".
 4. Use the newest answer as the strongest signal, while still considering all earlier answers and existing values.
 5. Existing values should persist and compound over time. Repeated themes should become more deeply rooted and more explicit.
-6. About 10% of the time, include one wildcard value that is genuinely unhinged, alarming, taboo, or bizarre, while still being traceable to the answer. Wildcards should feel like deranged life slogans or dangerous personal commandments, not just slightly quirky values.
-7. If you include a wildcard value, explicitly flag it in the JSON with "is_wildcard": true.
+6. TONE_DIRECTION controls how you interpret the answer:
+   - When TONE_DIRECTION is "aligned": interpret the trait based on the natural implications of the answer. If the answer suggests harmful, cruel, or neglectful parenting, the trait should reflect that negatively (e.g. a dark, fearful, or aggressive belief). If the answer is kind or nurturing, the trait should be positive.
+   - When TONE_DIRECTION is "twisted": interpret the trait as the OPPOSITE of what the answer would naturally suggest. If the answer seems harmful or cruel, find a surprisingly positive or redemptive lesson the child took from it (e.g. resilience, independence, empathy born from hardship). If the answer seems nurturing or kind, find a dark, ironic, or unexpected negative takeaway (e.g. entitlement, naivety, dependence). The twist should still feel plausible, not random.
+7. If INCLUDE_WILDCARD is true, add exactly one additional wildcard trait IN ADDITION to the main trait. The wildcard must be genuinely unhinged, alarming, taboo, or bizarre, while still being traceable to the answer. Wildcards should feel like deranged life slogans or dangerous personal commandments, not just slightly quirky values. Flag it with "is_wildcard": true. Do NOT include a wildcard unless INCLUDE_WILDCARD is true.
 8. Keep the phrases vivid, screenshot-worthy, and easy to understand at a glance.
 9. Avoid therapy-speak and bland self-help language.
-10. Positive parenting can instill trust, empathy, self-regulation, kindness, fairness, and service. Harsh, authoritarian, rejecting, or neglectful parenting can instill fear, distrust, aggression, emotional concealment, status obsession, or survivalist beliefs.
+10. Positive parenting can instill trust, empathy, self-regulation, kindness, fairness, and service. Harsh, authoritarian, rejecting, or neglectful parenting can instill fear, distrust, aggression, emotional concealment, status obsession, or survivalist beliefs. BUT if TONE_DIRECTION is "twisted", invert this mapping.
 11. Favor broad value/worldview phrases over emotional states. For example, prefer "Trust is Dangerous" over "Anxiety", "Winning is Everything" over "Competitiveness", and "Hide Your Feelings" over "Emotional Suppression".
 12. Also return a portrait prompt for the child's NEXT age that uses the new and existing values to shape their expression, styling, posture, and atmosphere.
 13. Preserve physical continuity with the supplied physical description. The child must look like the same person, just older.
@@ -1878,10 +1955,9 @@ Tone examples for wildcard values:
 - "Chaos is Sacred"
 - "Pain Proves Love"
 
-Response JSON:
+Response JSON (1 main trait, plus optional wildcard if INCLUDE_WILDCARD is true):
 {
   "attributes": [
-    { "text": "string", "is_wildcard": false },
     { "text": "string", "is_wildcard": false }
   ],
   "moral_alignment": "good" | "bad" | "grey",
@@ -2041,12 +2117,14 @@ Weight the latest answer most heavily, keep previous answers in memory, let repe
 Respond with the JSON object only.`;
 }
 
-function buildAttributeUserPrompt(currentQuestion, currentAnswer, targetPortraitAge) {
+function buildAttributeUserPrompt(currentQuestion, currentAnswer, targetPortraitAge, { d20Roll = 10, includeWildcard = false } = {}) {
     let previousRounds = '';
     gameState.answers.forEach((qa, index) => {
         previousRounds += `Q${index + 1}: "${qa.question}"\n`;
         previousRounds += `A${index + 1}: "${qa.answer}"\n\n`;
     });
+
+    const toneDirection = d20Roll >= 16 ? 'twisted' : 'aligned';
 
     return `Here is the current state of the child:
 
@@ -2059,6 +2137,9 @@ CORE PHYSICAL FEATURES: ${getContinuityPhysicalDescription()}
 EXISTING CHARACTERISTICS:
 ${getValuesSummary()}
 
+TONE_DIRECTION: ${toneDirection}
+INCLUDE_WILDCARD: ${includeWildcard}
+
 PREVIOUS QUESTIONS AND ANSWERS:
 ${previousRounds}
 NEW QUESTION:
@@ -2068,7 +2149,7 @@ NEW ANSWER:
 "${currentAnswer}"
 
 Infer what this answer newly instills in the child.
-Return 2 or 3 new characteristics only in the requested JSON shape, plus moral_alignment, image_prompt, and physical_description.`;
+Return exactly 1 new characteristic${includeWildcard ? ' plus 1 additional wildcard characteristic' : ''} in the requested JSON shape, plus moral_alignment, image_prompt, and physical_description.`;
 }
 
 function normalizeAttributePayload(payload) {
@@ -2095,7 +2176,7 @@ function normalizeAttributePayload(payload) {
                 };
             })
             .filter(Boolean)
-            .slice(0, 3)
+            .slice(0, 2)
         : [];
 
     return {
@@ -2117,7 +2198,7 @@ function normalizeAttributePayload(payload) {
     };
 }
 
-async function consultAttributeOracle(currentQuestion, currentAnswer, targetPortraitAge) {
+async function consultAttributeOracle(currentQuestion, currentAnswer, targetPortraitAge, { d20Roll = 10, includeWildcard = false } = {}) {
     try {
         const response = await fetch('/api/oracle', {
             method: 'POST',
@@ -2126,7 +2207,7 @@ async function consultAttributeOracle(currentQuestion, currentAnswer, targetPort
             },
             body: JSON.stringify({
                 system: ATTRIBUTE_SYSTEM_PROMPT,
-                userPrompt: buildAttributeUserPrompt(currentQuestion, currentAnswer, targetPortraitAge)
+                userPrompt: buildAttributeUserPrompt(currentQuestion, currentAnswer, targetPortraitAge, { d20Roll, includeWildcard })
             })
         });
 
@@ -2282,6 +2363,7 @@ async function beginBirthFlow(mode = 'birth') {
     gameState = createDefaultGameState(existingQuestions);
     gameState.childName = childName || 'Archive Child';
     gameState.childGender = childGender;
+    gameState.finalVoiceId = pickFinalScreenVoiceId(childGender);
     gameState.childRace = portrait.race || portrait.label || 'Unknown';
     gameState.physicalDescription = portrait.physicalDescription || DEFAULT_PHYSICAL_DESCRIPTION;
     setStoryMode(mode);
@@ -2426,10 +2508,14 @@ async function runArchiveRound(currentQuestion, answer, targetPortraitAge) {
 }
 
 async function runBirthRound(currentQuestion, answer, targetPortraitAge) {
+    const d20Roll = Math.floor(Math.random() * 20) + 1;
+    const includeWildcard = Math.random() < 0.05;
+
     const attributePromise = consultAttributeOracle(
         currentQuestion,
         answer,
-        targetPortraitAge
+        targetPortraitAge,
+        { d20Roll, includeWildcard }
     );
 
     gameState.answers.push({
@@ -2737,9 +2823,11 @@ async function endGame() {
     }
     showTimeJumpOverlay();
     const portraitPromise = loadFinalPortrait();
+    const quoteVoicePromise = requestFinalQuoteVoice();
     await sleep(1600);
     hideTimeJumpOverlay();
     showFinalScreenOverlay();
+    void playFinalQuoteVoice(quoteVoicePromise);
     await portraitPromise;
 }
 

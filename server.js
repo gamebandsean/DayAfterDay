@@ -103,7 +103,7 @@ app.post('/api/generate-image', async (req, res) => {
 
 app.post('/api/voice', async (req, res) => {
     try {
-        const result = await generateSpeech(req.body?.text);
+        const result = await generateSpeech(req.body?.text, req.body?.voiceId);
         res.json(result);
     } catch (error) {
         console.error('Voice generation fallback:', error);

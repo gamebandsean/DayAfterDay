@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const result = await generateSpeech(req.body?.text);
+        const result = await generateSpeech(req.body?.text, req.body?.voiceId);
         return res.status(200).json(result);
     } catch (error) {
         console.error('Voice generation fallback:', error);
